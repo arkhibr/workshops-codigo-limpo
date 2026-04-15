@@ -15,6 +15,46 @@ O objetivo não é decorar os comentários do gabarito — é desenvolver o **ol
 
 ---
 
+## O que é Code Review?
+
+Code review tem dois propósitos principais que se reforçam mutuamente:
+
+**1. Qualidade técnica:** encontrar bugs, violações de padrões, problemas de segurança e dívida técnica introduzida antes que o código chegue à main. Uma segunda leitura quase sempre encontra algo que o autor não viu — não por incompetência, mas porque o autor tem o contexto que o leitor não tem.
+
+**2. Transferência de conhecimento:** quem revisa aprende sobre a área alterada; quem escreve recebe uma perspectiva externa sobre clareza e design. Com o tempo, o time inteiro passa a conhecer partes do sistema que antes eram território de uma só pessoa.
+
+Estudos de engenharia de software mostram que inspeções de código encontram entre **60 e 90% dos bugs** antes de qualquer teste automatizado (Capers Jones, *Applied Software Measurement*, 2008). Testes automatizados e review se complementam: review encontra problemas de design e clareza que testes não detectam; testes encontram problemas de comportamento em produção que review pode perder.
+
+---
+
+## Como fazer um bom comentário de review
+
+Um comentário de review precisa ser acionável. Crítica sem direção obriga o autor a adivinhar o que fazer.
+
+**Seja específico:** aponte a linha e o elemento exato.
+> "Linha 42: esta função valida o e-mail E envia a confirmação — considere extrair o envio em função separada (`enviar_email_confirmacao`)."
+
+É melhor que:
+> "Esta função está grande."
+
+**Seja construtivo com perguntas:** perguntas convidam o autor a pensar, em vez de impor uma solução.
+> "O que acontece se `usuario` for `None` aqui? Precisa de uma guarda antes da linha 58?"
+
+**Distinga severidade com prefixos:**
+- `[blocker]` — problema que impede o merge (bug, falha de segurança, violação de contrato de API)
+- `[sugestão]` — melhoria relevante mas o PR pode ser mergeado sem ela
+- `[nitpick]` — questão estética ou de preferência; baixíssima prioridade
+
+**Comente o código, não a pessoa:** "este trecho" em vez de "você fez". A frase "este nome não revela intenção" é objetiva; "você usou nome ruim" é pessoal e gera defensividade desnecessária.
+
+| Comentário | Qualidade |
+|---|---|
+| "Isso está errado." | Inútil — não diz o que está errado nem como corrigir |
+| "Variável ruim." | Vago — não aponta o problema específico |
+| "`self.p` não revela o que armazena. Sugiro renomear para `self._itens_do_pedido_atual` para deixar claro que são os itens do pedido em aberto." | Concreto, específico e com sugestão acionável |
+
+---
+
 ## Como Fazer
 
 1. **Leia o código** em [`codigo_para_revisar.py`](codigo_para_revisar.py) do começo ao fim, como se fosse um PR real.
@@ -60,26 +100,6 @@ Use este checklist como guia durante a revisão:
 - [ ] Há múltiplos imports na mesma linha?
 - [ ] Existem linhas com mais de 88 caracteres?
 - [ ] Os métodos estão separados por linhas em branco?
-
----
-
-## O que é um Bom Comentário de Review?
-
-Um comentário de review construtivo tem três partes: **o problema**, **o porquê é um problema** e **a sugestão**. Evite julgamentos vagos ou tom impositivo.
-
-| Comentário | Qualidade |
-|---|---|
-| "Isso está errado." | Inútil — não diz o que está errado nem como corrigir |
-| "Variável ruim." | Vago — não aponta o problema específico |
-| "`self.p` não revela o que armazena. Sugiro renomear para `self._itens_do_pedido_atual` para deixar claro que são os itens do pedido em aberto." | Concreto, específico e com sugestão acionável |
-
-### Regras de Tom
-
-- **Específico:** aponte a linha e o elemento exato, não o arquivo inteiro
-- **Construtivo:** sempre ofereça uma sugestão; crítica sem direção não ajuda
-- **Impessoal:** comente o código, não o autor — "este nome não revela intenção" em vez de "você usou nome ruim"
-- **Gradual:** diferencie blockers (problemas que impedem o merge) de suggestions (melhorias desejáveis mas opcionais)
-- **Breve:** um comentário por problema; não misture vários problemas numa mesma anotação
 
 ---
 

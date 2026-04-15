@@ -9,13 +9,26 @@
 
 Formatação é comunicação. Quando você abre um arquivo e o código está espremido, sem espaços, com imports embaralhados e linhas quilométricas, o seu cérebro gasta energia processando a estrutura antes mesmo de começar a processar a lógica. Esse custo se repete toda vez que alguém lê o arquivo.
 
-Robert Martin classifica a formatação em dois eixos: **vertical** (como o código se organiza de cima para baixo) e **horizontal** (como cada linha está organizada). Ambos seguem uma única ideia: **o código deve parecer escrito por uma só pessoa**, mesmo sendo escrito por dezenas.
+Robert Martin usa no Capítulo 5 a **metáfora do jornal** (p. 80): um bom jornal tem manchetes legíveis de longe, subtítulos que orientam a leitura, e os detalhes só aparecem nos parágrafos inferiores. Quem lê decide em segundos se vale aprofundar. Um arquivo de código deve funcionar do mesmo jeito: lido de cima para baixo, com o nível de detalhe aumentando à medida que você desce. As funções públicas e de alto nível ficam no topo; os detalhes de implementação ficam embaixo.
+
+Martin classifica a formatação em dois eixos: **vertical** (como o código se organiza de cima para baixo) e **horizontal** (como cada linha está organizada). Ambos seguem uma única ideia:
+
+> *"A team of developers should agree upon a single formatting style, and then every member of that team should use that style."*
+> — Robert C. Martin, Clean Code, p. 76
+
+O código deve parecer escrito por uma só pessoa, mesmo sendo escrito por dezenas.
 
 ---
 
 ## 2. Conceito Central
 
 ### Formatação Vertical
+
+**Abertura vertical (blank lines):** cada grupo de linhas relacionadas forma um "parágrafo" de código. Uma linha em branco entre parágrafos diz ao leitor: "este pensamento terminou, o próximo começa". Ausência total de linhas em branco funde conceitos distintos em um bloco visual impenetrável.
+
+**Distância vertical:** conceitos relacionados devem ficar próximos no arquivo. Funções que se chamam devem estar perto uma da outra — idealmente, a função chamadora logo acima da função chamada. Quando um leitor precisa rolar centenas de linhas para encontrar o que uma função chama, o custo cognitivo dispara.
+
+**Declaração perto do uso:** declare variáveis perto de onde são usadas, não no topo da função. Em Python e linguagens modernas, não há razão para declarar todas as variáveis no início — isso é herança do C dos anos 1970. Uma variável declarada 40 linhas antes do uso força o leitor a manter contexto desnecessário.
 
 | Princípio | Descrição |
 |---|---|
@@ -26,12 +39,28 @@ Robert Martin classifica a formatação em dois eixos: **vertical** (como o cód
 
 ### Formatação Horizontal
 
+**Limite de linha:** 88 caracteres para Python (padrão do `black`), 120 para PHP e TypeScript em muitos times — verifique com sua equipe. O limite não é arbitrário: linhas longas exigem scroll horizontal ou zoom out, quebram o modelo mental de leitura linha a linha e dificultam diffs em code review.
+
+**Alinhamento horizontal:** Martin argumenta que alinhar atribuições em colunas com espaços extras (como `nome   = "João"` / `email  = "j@ex"`) parece organizado mas esconde a estrutura real. O leitor lê a coluna de valores e ignora os nomes — exatamente o contrário do que queremos. Formatadores modernos como `black` não fazem esse alinhamento por esse motivo.
+
 | Princípio | Descrição |
 |---|---|
 | **Espaço ao redor de operadores** | `x = a + b`, não `x=a+b` |
 | **Sem espaço entre função e parêntese** | `calcular(x)`, não `calcular (x)` |
 | **Comprimento máximo de linha** | 88 chars (Python/black), 80 chars (PSR-12 PHP) |
-| **Alinhamento consistente** | Atribuições em bloco alinhadas pela coluna do `=` |
+| **Sem alinhamento em colunas** | `x = 1` / `y = 2`, não `x   = 1` / `y   = 2` |
+
+### Regras de time vs. preferências pessoais
+
+A mensagem do Clean Code é clara: formatação pessoal perde para formatação de time. Se o time usa 4 espaços e você prefere 2, use 4 espaços. O objetivo é que o código pareça escrito por uma só mão.
+
+Ferramentas que automatizam e eliminam a discussão:
+- **Python:** `black` (formatador sem opiniões) + `flake8` (linter PEP 8)
+- **TypeScript/JS:** `prettier` + `eslint`
+- **PHP:** `php-cs-fixer` (aplica PSR-12) ou `phpcs` (verifica)
+- **ADVPL/TLPP:** a Totvs recomenda 4 espaços de indentação e alinhamento de atribuições com `:=` em bloco — consulte o guia do TDS
+
+> **👉 ATIVIDADE:** O código da equipe tem um formatador configurado? Se não, qual seria o primeiro passo para adotar um? Discuta com o time qual ferramenta e qual configuração usar antes de sair formatando.
 
 ---
 
@@ -249,6 +278,7 @@ Return Round( nTotal, 2 )
 - **Constantes no topo** — nunca intercaladas com lógica; nomeadas em `SCREAMING_SNAKE_CASE`
 - **Métodos públicos antes dos privados** — o leitor lê a interface pública primeiro, os detalhes depois
 - **Uma linha em branco entre métodos, duas entre classes** — a formatação vertical comunica agrupamento
+- **Delegue ao formatador** — `black`, `prettier`, `php-cs-fixer`: configure uma vez e nunca mais discuta espaçamento em code review
 
 ---
 

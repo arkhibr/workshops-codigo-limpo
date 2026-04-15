@@ -77,6 +77,21 @@ def criar_usuario(nome, email, senha, perfil, ativo, data_nascimento, telefone, 
     }
 
 
+# ─── Problema 5: Violação de CQS (Command-Query Separation) ──────────────────
+#
+# CQS (Bertrand Meyer): uma função deve ser COMANDO (modifica estado, não retorna)
+# OU CONSULTA (retorna valor, não modifica estado) — nunca os dois ao mesmo tempo.
+# A função abaixo registra o acesso (comando) E retorna o total (consulta),
+# o que força quem chama a depender de um efeito colateral para obter informação.
+
+_log_de_acessos: list = []
+
+def registrar_acesso(usuario: str) -> int:
+    """Registra o acesso do usuário E retorna o total de acessos — violação de CQS."""
+    _log_de_acessos.append(usuario)
+    return len(_log_de_acessos)   # faz algo (comando) E retorna algo (consulta)
+
+
 # ─── Execução de demonstração ─────────────────────────────────────────────────
 
 if __name__ == "__main__":
@@ -96,3 +111,7 @@ if __name__ == "__main__":
 
     print("\nVerificar credenciais:", verificar_credenciais("joao@ex.com", "s3nh4S3gur4"))
     print("Sessão após verificação:", sessao_ativa)  # efeito colateral visível aqui
+
+    # Problema 5: quem chama não sabe se vai registrar, contar, ou os dois
+    total = registrar_acesso("joao@ex.com")
+    print(f"\nregistrar_acesso retornou: {total} (efeito colateral oculto no retorno)")

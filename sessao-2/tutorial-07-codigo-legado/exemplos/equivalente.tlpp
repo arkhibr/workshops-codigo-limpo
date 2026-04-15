@@ -1,0 +1,283 @@
+/*
+ * TUTORIAL 07 — Código Legado em ADVPL/TLPP (Totvs Protheus)
+ * Conceito: Extração de Function para tornar código legado testável
+ *
+ * Técnica: quando uma Function legada faz tudo em 80 linhas, extraia
+ * sub-Functions com nomes descritivos. O comportamento externo não muda,
+ * mas cada parte pode ser chamada e testada individualmente.
+ *
+ * Contexto Protheus: Functions globais são o equivalente de métodos
+ * públicos — qualquer ponto do sistema pode chamá-las. Isso torna a
+ * extração de Function a técnica mais segura em ADVPL/TLPP sem alterar
+ * assinaturas existentes.
+ */
+
+// ==========================================================================
+// ANTES — Function legada: faz validação, cálculo, persistência e log
+// em um único bloco de ~80 linhas. Impossível testar o cálculo de imposto
+// sem acionar gravação no banco e geração de log.
+// ==========================================================================
+
+#Include "Protheus.ch"
+
+/*
+ * CALCPED — Calcula e grava pedido de venda
+ * Parametros:
+ *   cCliente  - Codigo do cliente
+ *   nValor    - Valor do pedido
+ *   cTipo     - Tipo do cliente (PJ/PF)
+ *   nQtItens  - Quantidade de itens
+ * Retorno:
+ *   Numero do pedido gravado ou "" em caso de erro
+ */
+Function CALCPED(cCliente, nValor, cTipo, nQtItens)
+
+    Local cNumPed  := ""
+    Local nImposto := 0
+    Local nTotal   := 0
+    Local nDesc    := 0
+    Local cLog     := ""
+    Local lOk      := .T.
+
+    // Validacao de entrada
+    If Empty(cCliente)
+        ConOut("[ERRO] Cliente nao informado")
+        Return ""
+    EndIf
+
+    If nValor <= 0
+        ConOut("[ERRO] Valor invalido: " + cValToChar(nValor))
+        Return ""
+    EndIf
+
+    If Empty(cTipo)
+        cTipo := "PF"  // default silencioso — origem de muitos bugs
+    EndIf
+
+    // Calculo de imposto — regras embutidas sem nomes
+    If cTipo == "PJ"
+        If nValor > 5000
+            nImposto := nValor * 0.12
+        Else
+            nImposto := nValor * 0.065
+        EndIf
+        If nQtItens > 10
+            nImposto := nImposto * 1.15
+        EndIf
+    Else
+        If nValor > 2000
+            nImposto := nValor * 0.075
+        Else
+            nImposto := nValor * 0.03
+        EndIf
+        nImposto := nImposto + 150  // taxa fixa sem documentacao
+    EndIf
+
+    // Desconto por alto valor
+    If nValor > 10000
+        nDesc := nValor * 0.05
+    EndIf
+
+    nTotal := nValor + nImposto - nDesc
+
+    // Geracao do numero do pedido
+    cNumPed := "PED" + DToS(Date()) + StrZero(Seconds(), 6, 0)
+
+    // Persistencia — RecLock direto, sem abstracao
+    DbSelectArea("SC5")
+    SC5->(DbSetOrder(1))
+    SC5->(DbGoTop())
+    SC5->(RecLock("SC5", .T.))
+        SC5->C5_NUM    := cNumPed
+        SC5->C5_CLIENTE := cCliente
+        SC5->C5_TIPO   := cTipo
+        SC5->C5_VALOR  := nValor
+        SC5->C5_IMPOSTO := nImposto
+        SC5->C5_DESC   := nDesc
+        SC5->C5_TOTAL  := nTotal
+    SC5->(MsUnLock())
+
+    // Log
+    cLog := "[OK] Pedido " + cNumPed + " | Cliente: " + cCliente + " | Total: " + cValToChar(nTotal)
+    ConOut(cLog)
+    GravaLog(cLog)
+
+Return cNumPed
+
+
+// ==========================================================================
+// DEPOIS — mesma Function pública, mas com lógica extraída em sub-Functions
+//
+// O que mudou:
+//   1. CALCPED continua com a mesma assinatura — nenhum chamador quebra
+//   2. Cada responsabilidade virou uma Function separada e nomeada
+//   3. CALC_IMPOSTO_PED pode ser chamada em testes unitários sem banco
+//   4. VALIDA_DADOS_PED pode ser testada com dados inválidos em isolamento
+//
+// Regra: extraia para Functions que recebem dados e retornam valores.
+// Evite Functions que leem/escrevem área diretamente — elas criam acoplamento.
+// ==========================================================================
+
+/*
+ * CALCPED — versão refatorada (mesma assinatura pública)
+ */
+Function CALCPED(cCliente, nValor, cTipo, nQtItens)
+
+    Local cNumPed := ""
+    Local aImpostos
+    Local nTotal
+
+    // Validacao extraida — pode ser testada sem banco
+    If !VALIDA_DADOS_PED(cCliente, nValor)
+        Return ""
+    EndIf
+
+    If Empty(cTipo)
+        cTipo := "PF"
+    EndIf
+
+    // Calculo extraido — pode ser testado com qualquer entrada
+    aImpostos := CALC_IMPOSTO_PED(nValor, cTipo, nQtItens)
+    // aImpostos[1] = imposto, aImpostos[2] = desconto, aImpostos[3] = total
+
+    nTotal := aImpostos[3]
+
+    // Geracao do numero do pedido extraida
+    cNumPed := GERA_NUM_PEDIDO()
+
+    // Persistencia isolada — pode ser substituida por stub em testes
+    GRAVA_PEDIDO(cNumPed, cCliente, cTipo, nValor, aImpostos)
+
+    // Log extraido
+    REGISTRA_LOG_PEDIDO(cNumPed, cCliente, nTotal)
+
+Return cNumPed
+
+
+/*
+ * VALIDA_DADOS_PED — valida entrada antes de qualquer calculo
+ * Retorno: .T. se valido, .F. com log de erro
+ */
+Function VALIDA_DADOS_PED(cCliente, nValor)
+
+    If Empty(cCliente)
+        ConOut("[ERRO] Cliente nao informado")
+        Return .F.
+    EndIf
+
+    If nValor <= 0
+        ConOut("[ERRO] Valor invalido: " + cValToChar(nValor))
+        Return .F.
+    EndIf
+
+Return .T.
+
+
+/*
+ * CALC_IMPOSTO_PED — regras fiscais isoladas
+ *
+ * Aliquotas PJ: 12% acima de R$ 5.000, 6,5% abaixo.
+ * Adicional de 15% sobre imposto quando pedido tem mais de 10 itens
+ * (regra interna aprovada em portaria 2021-08).
+ * Aliquotas PF: 7,5% acima de R$ 2.000, 3% abaixo, mais taxa fixa de R$ 150.
+ * Desconto de 5% sobre valor bruto para pedidos acima de R$ 10.000.
+ *
+ * Retorno: Array {nImposto, nDesconto, nTotal}
+ */
+Function CALC_IMPOSTO_PED(nValor, cTipo, nQtItens)
+
+    Local nImposto := 0
+    Local nDesc    := 0
+    Local nTotal   := 0
+
+    If cTipo == "PJ"
+        If nValor > 5000
+            nImposto := nValor * 0.12
+        Else
+            nImposto := nValor * 0.065
+        EndIf
+        If nQtItens > 10
+            nImposto := nImposto * 1.15
+        EndIf
+    Else
+        If nValor > 2000
+            nImposto := nValor * 0.075
+        Else
+            nImposto := nValor * 0.03
+        EndIf
+        nImposto := nImposto + 150
+    EndIf
+
+    If nValor > 10000
+        nDesc := nValor * 0.05
+    EndIf
+
+    nTotal := nValor + nImposto - nDesc
+
+Return {nImposto, nDesc, nTotal}
+
+
+/*
+ * GERA_NUM_PEDIDO — gera identificador unico baseado em data/hora
+ */
+Function GERA_NUM_PEDIDO()
+Return "PED" + DToS(Date()) + StrZero(Seconds(), 6, 0)
+
+
+/*
+ * GRAVA_PEDIDO — persistencia isolada do calculo
+ * Parametro aImpostos: Array {nImposto, nDesconto, nTotal}
+ */
+Function GRAVA_PEDIDO(cNumPed, cCliente, cTipo, nValor, aImpostos)
+
+    DbSelectArea("SC5")
+    SC5->(DbSetOrder(1))
+    SC5->(DbGoTop())
+    SC5->(RecLock("SC5", .T.))
+        SC5->C5_NUM     := cNumPed
+        SC5->C5_CLIENTE := cCliente
+        SC5->C5_TIPO    := cTipo
+        SC5->C5_VALOR   := nValor
+        SC5->C5_IMPOSTO := aImpostos[1]
+        SC5->C5_DESC    := aImpostos[2]
+        SC5->C5_TOTAL   := aImpostos[3]
+    SC5->(MsUnLock())
+
+Return
+
+
+/*
+ * REGISTRA_LOG_PEDIDO — log isolado, facil de substituir ou silenciar em testes
+ */
+Function REGISTRA_LOG_PEDIDO(cNumPed, cCliente, nTotal)
+
+    Local cLog := "[OK] Pedido " + cNumPed + " | Cliente: " + cCliente + " | Total: " + cValToChar(nTotal)
+    ConOut(cLog)
+    GravaLog(cLog)
+
+Return
+
+
+// ==========================================================================
+// Como testar CALC_IMPOSTO_PED em isolamento (sem banco Protheus):
+//
+//   Function U_TESTE_IMPOSTO()
+//       Local aRes
+//
+//       // PJ, valor alto, poucos itens
+//       aRes := CALC_IMPOSTO_PED(8000, "PJ", 2)
+//       Assert(aRes[1] == 960.0,  "Imposto PJ alto incorreto")  // 8000 * 0.12
+//       Assert(aRes[2] == 0,      "Nao deve haver desconto")
+//       Assert(aRes[3] == 8960.0, "Total PJ incorreto")
+//
+//       // PF, valor baixo
+//       aRes := CALC_IMPOSTO_PED(1500, "PF", 1)
+//       Assert(aRes[1] == 195.0,  "Imposto PF incorreto") // 1500*0.03 + 150
+//       Assert(aRes[3] == 1695.0, "Total PF incorreto")
+//
+//       ConOut("Todos os testes passaram.")
+//   Return
+//
+// Antes da extração, testar o cálculo exigia conectar ao banco,
+// abrir área SC5 e lidar com lock. Agora basta chamar CALC_IMPOSTO_PED.
+// ==========================================================================

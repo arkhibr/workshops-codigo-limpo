@@ -96,6 +96,28 @@ def criar_usuario(dados: DadosUsuario) -> dict:
     }
 
 
+# ─── Solução 5: CQS aplicado — comando e consulta separados ──────────────────
+#
+# CQS (Command-Query Separation, Bertrand Meyer):
+#   - COMANDO: modifica estado, retorna None
+#   - CONSULTA: retorna valor, não modifica estado
+#
+# Separe as responsabilidades em dois métodos distintos.
+# Quem quiser registrar chama registrar_acesso().
+# Quem quiser contar chama contar_acessos().
+# Nenhuma surpresa, nenhum efeito colateral acoplado a um valor de retorno.
+
+_log_de_acessos_cqs: list = []
+
+def registrar_acesso(usuario: str) -> None:
+    """Comando: registra o acesso. Não retorna nada."""
+    _log_de_acessos_cqs.append(usuario)
+
+def contar_acessos() -> int:
+    """Consulta: retorna o total de acessos registrados. Não modifica nada."""
+    return len(_log_de_acessos_cqs)
+
+
 # ─── Execução de demonstração ─────────────────────────────────────────────────
 
 if __name__ == "__main__":
@@ -122,3 +144,9 @@ if __name__ == "__main__":
         telefone="11999999999", cidade="São Paulo",
     )
     print("\nUsuário criado:", criar_usuario(dados))
+
+    # Solução 5: CQS — comando e consulta claramente separados
+    registrar_acesso("joao@ex.com")
+    registrar_acesso("maria@ex.com")
+    registrar_acesso("joao@ex.com")
+    print(f"\nTotal de acessos registrados: {contar_acessos()}")  # consulta pura

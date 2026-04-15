@@ -55,6 +55,21 @@ lst_pedidos  = []
 b_ativo      = True
 
 
+# ─── Problema 6: Linguagem inconsistente com o domínio ───────────────────────
+
+# Codebase Python usa snake_case e português, mas estas funções misturam
+# convenções e idiomas — dificultando leitura e buscas no código.
+
+def getUserData(userId):          # camelCase num codebase Python
+    return {"id": userId}
+
+def get_usuario_data(usuario_id): # mistura de português e inglês
+    return {"id": usuario_id}
+
+def fetchActiveClients():         # inglês num domínio todo em português
+    return []
+
+
 # ─── Execução de demonstração ─────────────────────────────────────────────────
 
 if __name__ == "__main__":
@@ -67,3 +82,8 @@ if __name__ == "__main__":
     print("Resultado de calc_hp(3, 4):", calc_hp(3, 4))
     rec = DtRcrdMgr()
     print("gnrtn_ymdhms:", rec.gnrtn_ymdhms)
+
+    # Problema 6: nomes inconsistentes são funcionais mas criam ruído mental
+    print("\ngetUserData('U001'):", getUserData("U001"))
+    print("get_usuario_data('U001'):", get_usuario_data("U001"))
+    print("fetchActiveClients():", fetchActiveClients())

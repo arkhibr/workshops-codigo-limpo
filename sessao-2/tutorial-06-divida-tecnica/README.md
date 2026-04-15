@@ -22,6 +22,12 @@ Ward Cunningham cunhou o termo em 1992: escrever código que funciona mas não e
 > *"A little debt speeds development so long as it is paid back promptly with a rewrite. [...] The danger occurs when the debt is not repaid."*
 > — Ward Cunningham
 
+### A Teoria da Janela Quebrada
+
+O Clean Code menciona no Capítulo 1 (p. 8) o conceito da Teoria da Janela Quebrada: um bairro com uma janela quebrada e não consertada rapidamente deteriora — mais janelas são quebradas, o lixo se acumula, e o estado de abandono se alastra. A mensagem implícita de uma janela quebrada é: "aqui ninguém se importa".
+
+No código o efeito é o mesmo: um arquivo com nomes ruins, funções gigantes e sem testes convida mais código descuidado. Quem chega para modificar esse arquivo tende a "manter o padrão" — afinal, aparentemente não importa. A janela quebrada não é apenas um problema técnico; é um problema cultural que se retroalimenta.
+
 ### O Quadrante da Dívida Técnica
 
 Martin Fowler expandiu o conceito com quatro quadrantes:
@@ -35,6 +41,22 @@ Martin Fowler expandiu o conceito com quatro quadrantes:
 - **Deliberada + Imprudente:** atalho irresponsável — nunca é justificável
 - **Inadvertida + Prudente:** inevitável — todo projeto descobre melhores abordagens ao longo do tempo
 - **Inadvertida + Imprudente:** resultado de falta de conhecimento — combate-se com capacitação (como este workshop)
+
+### Como quantificar dívida técnica
+
+Intuição é útil, mas métricas dão objetividade para priorizar:
+
+- **Complexidade ciclomática** (`radon cc` em Python): mede o número de caminhos independentes numa função. Abaixo de 5 é simples; entre 5 e 10 é moderado; acima de 10 é sinal de alerta — a função provavelmente faz coisas demais e é difícil de testar completamente.
+- **Cobertura de testes:** código sem teste tem custo de mudança muito mais alto. Cada linha sem cobertura é uma dívida latente — você só descobre o preço quando precisar modificar.
+- **Proporção de comentários explicativos no código interno:** muitos comentários explicando "o quê" sinalizam código confuso. Se o código precisa de legenda para ser lido, o código precisa ser reescrito.
+
+### Como priorizar o pagamento da dívida
+
+Nem toda dívida precisa ser paga imediatamente — e tentar pagar tudo de uma vez costuma não funcionar.
+
+- **Priorize dívidas em código que muda frequentemente:** alta frequência de mudança significa alto impacto. Se um módulo é tocado toda sprint, cada dívida nele é paga em juros toda sprint.
+- **Dívidas em código estável que ninguém toca há anos podem esperar:** o risco é baixo porque a probabilidade de precisar mudar é baixa.
+- **Use a Regra do Escoteiro** (Clean Code, p. 14): *"Deixe o código mais limpo do que encontrou."* Cada PR pode pagar uma pequena dívida na área que tocou — renomear uma variável obscura, extrair uma função longa, remover um TODO vencido. Sem sprint de refatoração, sem reunião de alinhamento: apenas o hábito contínuo de deixar o código um pouco melhor.
 
 ### Code Smells Mais Comuns
 
@@ -196,29 +218,29 @@ python3 exercicios/gabarito.py
 
 ## 8. Checklist de Qualidade do Time
 
-Use esta lista no dia a dia — em code reviews, antes de um commit ou ao revisar código legado:
+Use esta lista no dia a dia — em code reviews, antes de um commit ou ao revisar código legado. A sigla entre colchetes indica o tutorial de origem, para que o time saiba onde aprofundar quando encontrar o problema.
 
-**Nomes**
-- [ ] Todas as variáveis, funções e classes têm nomes que revelam intenção?
-- [ ] Não há abreviações obscuras ou notação húngara (exceto prefixos de tipo em ADVPL/TLPP)?
+**Nomes** `[N]`
+- [ ] `[N]` Todas as variáveis, funções e classes têm nomes que revelam intenção?
+- [ ] `[N]` Não há abreviações obscuras ou notação húngara (exceto prefixos de tipo em ADVPL/TLPP)?
 
-**Funções**
-- [ ] Cada função faz uma única coisa?
-- [ ] Nenhuma função tem mais de 20 linhas?
-- [ ] Nenhuma função tem flag booleana como parâmetro?
+**Funções** `[F]`
+- [ ] `[F]` Cada função faz uma única coisa?
+- [ ] `[F]` Nenhuma função tem mais de 20 linhas?
+- [ ] `[F]` Nenhuma função tem flag booleana como parâmetro?
 
-**Comentários**
-- [ ] Os comentários explicam o *porquê*, não o *o quê*?
-- [ ] Não há código comentado sem explicação?
-- [ ] TODOs têm número de ticket e responsável?
+**Comentários** `[C]`
+- [ ] `[C]` Os comentários explicam o *porquê*, não o *o quê*?
+- [ ] `[C]` Não há código comentado sem explicação?
+- [ ] `[C]` TODOs têm número de ticket e responsável?
 
-**Formatação**
-- [ ] O formatador automático foi executado antes do commit? (`black` / `prettier` / `php-cs-fixer`)
-- [ ] Imports estão organizados?
+**Formatação** `[FMT]`
+- [ ] `[FMT]` O formatador automático foi executado antes do commit? (`black` / `prettier` / `php-cs-fixer`)
+- [ ] `[FMT]` Imports estão organizados?
 
-**Dívida Técnica**
-- [ ] Não há magic numbers soltos — todas as constantes têm nome?
-- [ ] Não há duplicação de lógica entre dois ou mais lugares?
+**Dívida Técnica** `[DT]`
+- [ ] `[DT]` Não há magic numbers soltos — todas as constantes têm nome?
+- [ ] `[DT]` Não há duplicação de lógica entre dois ou mais lugares?
 
 > **Placeholder para o time:** substitua os itens acima pelos padrões específicos acordados após este workshop.
 
