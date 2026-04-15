@@ -1,0 +1,99 @@
+/*
+ * EQUIVALENTE ADVPL/TLPP — Comentários
+ * Referência: Clean Code, Cap. 4
+ * Contexto: Totvs Protheus / TLPP
+ */
+
+// ════════════════════════════════════════════════════════════════
+// CONVENÇÃO PROTHEUS: Cabeçalho de Function (padrão do ecossistema)
+// ════════════════════════════════════════════════════════════════
+
+/*/{Protheus.doc} CalcularValorLiquido
+    Calcula o valor líquido retendo ISS na fonte conforme contrato-padrão.
+
+    A alíquota de 2% está fixada na cláusula 7.3 do contrato modelo (rev. 2025).
+    Não utilizar para contratos com alíquota variável de ISS.
+
+    @author  ana.souza
+    @since   14/04/2026
+    @version 1.0
+    @param   nValorBruto  Numeric  Valor bruto antes da retenção
+    @return  Numeric  Valor após dedução do ISS
+/*/
+Function CalcularValorLiquido( nValorBruto )
+    Local nAliquotaISS := 0.02
+Return nValorBruto * ( 1 - nAliquotaISS )
+
+
+// ════════════════════════════════════════════════════════════════
+// PROBLEMA 1: Comentário redundante
+// ════════════════════════════════════════════════════════════════
+
+// ❌ Ruim — o comentário repete o que o código já diz
+Function CalcularTotal_Ruim( nPreco, nQtd )
+    // multiplica preço pela quantidade
+    Local nTotal := nPreco * nQtd
+    // retorna o total
+Return nTotal
+
+// ✅ Bom — sem comentário: nome da função é autoexplicativo
+Function CalcularTotal( nPreco, nQtd )
+    Local nTotal := nPreco * nQtd
+Return nTotal
+
+
+// ════════════════════════════════════════════════════════════════
+// PROBLEMA 2: Código comentado sem explicação
+// ════════════════════════════════════════════════════════════════
+
+// ❌ Ruim — blocos mortos sem contexto
+Function ProcessarPagamento_Ruim( nValor, cMetodo )
+    Local nTaxa := 0
+
+    // If cMetodo == "PIX"
+    //     nTaxa := 0
+    // ElseIf cMetodo == "DEB"
+    //     nTaxa := 0.005
+    // EndIf
+    // nValorFinal := nValor * ( 1 + nTaxa )
+    // EnviarGatewayAntigo( nValorFinal )
+
+    If cMetodo == "CRD"
+        nTaxa := 0.025
+    EndIf
+Return nValor * ( 1 + nTaxa )
+
+// ✅ Bom — código morto removido; histórico fica no controle de versão
+#DEFINE TAXA_CREDITO  0.025
+
+Function ProcessarPagamento( nValor, cMetodo )
+    Local nTaxa := 0
+    If cMetodo == "CRD"
+        nTaxa := TAXA_CREDITO
+    EndIf
+Return nValor * ( 1 + nTaxa )
+
+
+// ════════════════════════════════════════════════════════════════
+// PROBLEMA 3: Comentário de intenção (o "porquê")
+// ════════════════════════════════════════════════════════════════
+
+// ❌ Ruim — TODO sem rastreabilidade
+Function BuscarUsuario_Ruim( cUsuarioId )
+    // TODO: integrar com serviço real
+    // TODO: melhorar depois
+Return { "id" => cUsuarioId, "nome" => "Mock" }
+
+// ✅ Bom — TODO com ticket, responsável e prazo
+Function BuscarUsuario( cUsuarioId )
+    // TODO [PLAT-1847]: substituir mock por chamada ao serviço de usuários.
+    // Responsavel: ana.souza  |  Prazo: Sprint 42 (05/05/2026)
+    // Servico em homologacao; mock garante que os testes passem.
+Return { "id" => cUsuarioId, "nome" => "Mock" }
+
+/*
+ * Nota sobre cabeçalhos Protheus:
+ * O padrão {Protheus.doc} é gerado automaticamente pelo TDS (Totvs Developer Studio)
+ * e deve ser mantido em funções públicas de negócio. Para funções auxiliares privadas
+ * (prefixo underscore ou sufixo "Aux"), um comentário de intenção simples é suficiente.
+ */

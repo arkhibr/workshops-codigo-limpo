@@ -1,0 +1,123 @@
+/*
+ * EQUIVALENTE ADVPL/TLPP — Formatação
+ * Referência: Clean Code, Cap. 5
+ * Contexto: Totvs Protheus / TLPP
+ *
+ * Convenções recomendadas pela Totvs:
+ *   - Indentação: 4 espaços (não tab)
+ *   - Alinhamento de atribuições: colunas alinhadas para o mesmo bloco
+ *   - Linhas: máximo ~100 caracteres
+ *   - Uma instrução por linha
+ *   - Espaço antes e depois de operadores
+ */
+
+// ════════════════════════════════════════════════════════════════
+// ANTES — formatação inconsistente
+// ════════════════════════════════════════════════════════════════
+
+// ❌ Sem espaços, alinhamento inconsistente, tudo junto
+#DEFINE LIMITE 100
+#DEFINE DESCONTO 0.05
+Function AdicionarProduto_Ruim(cCodigo,cNome,nPreco,nQtd)
+Local nTotal:=0
+Local cLog:=""
+If Empty(cCodigo).Or.Empty(cNome)
+Return .F.
+EndIf
+If nPreco<=0
+Return .F.
+EndIf
+nTotal:=nPreco*nQtd
+cLog:="ADICIONADO: "+cCodigo+" - "+cNome
+ConOut(cLog)
+Return .T.
+
+Function CalcularTotal_Ruim(aEstoque,lDesconto,lImposto)
+Local nTotal:=0
+Local nI:=0
+For nI:=1 To Len(aEstoque)
+nTotal:=nTotal+(aEstoque[nI]["preco"]*aEstoque[nI]["qtd"])
+If lDesconto;nTotal:=nTotal*0.95;EndIf
+If lImposto;nTotal:=nTotal*1.12;EndIf
+Next nI
+Return Round(nTotal,2)
+
+
+// ════════════════════════════════════════════════════════════════
+// DEPOIS — 4 espaços, alinhamento, um comando por linha
+// ════════════════════════════════════════════════════════════════
+
+#DEFINE DESCONTO_PADRAO    0.05
+#DEFINE ALIQUOTA_IMPOSTO   0.12
+#DEFINE CAPACIDADE_MAXIMA  100
+
+/*/{Protheus.doc} AdicionarProduto
+    Registra um produto no estoque e retorna .T. em caso de sucesso.
+
+    @author  ana.souza
+    @since   14/04/2026
+    @param   cCodigo  Character  Código único do produto
+    @param   cNome    Character  Nome do produto
+    @param   nPreco   Numeric    Preço unitário (deve ser positivo)
+    @param   nQtd     Numeric    Quantidade inicial em estoque
+    @return  Logical  .T. se adicionado com sucesso, .F. caso contrário
+/*/
+Function AdicionarProduto( cCodigo, cNome, nPreco, nQtd )
+    Local lSucesso := .T.
+    Local cLog     := ""
+
+    If Empty( cCodigo ) .Or. Empty( cNome )
+        lSucesso := .F.
+    EndIf
+
+    If nPreco <= 0
+        lSucesso := .F.
+    EndIf
+
+    If lSucesso
+        cLog := "ADICIONADO: " + cCodigo + " - " + cNome
+        ConOut( cLog )
+    EndIf
+
+Return lSucesso
+
+
+/*/{Protheus.doc} CalcularTotalEstoque
+    Calcula o valor total do estoque, com desconto e/ou imposto opcionais.
+
+    @param   aEstoque   Array    Array de hashes com "preco" e "qtd"
+    @param   lDesconto  Logical  .T. aplica desconto padrão de 5%
+    @param   lImposto   Logical  .T. aplica alíquota de 12% de imposto
+    @return  Numeric  Valor total arredondado em 2 casas decimais
+/*/
+Function CalcularTotalEstoque( aEstoque, lDesconto, lImposto )
+    Local nTotal     := 0
+    Local nValorItem := 0
+    Local nIndice    := 0
+
+    For nIndice := 1 To Len( aEstoque )
+        nValorItem := aEstoque[nIndice]["preco"] * aEstoque[nIndice]["qtd"]
+
+        If lDesconto
+            nValorItem := nValorItem * ( 1 - DESCONTO_PADRAO )
+        EndIf
+
+        If lImposto
+            nValorItem := nValorItem * ( 1 + ALIQUOTA_IMPOSTO )
+        EndIf
+
+        nTotal := nTotal + nValorItem
+    Next nIndice
+
+Return Round( nTotal, 2 )
+
+/*
+ * Boas práticas de formatação ADVPL/TLPP:
+ *
+ * 1. Use 4 espaços para indentação — nunca tab.
+ * 2. Alinhe atribuições de Local em bloco: o := fica na mesma coluna visual.
+ * 3. Coloque espaço dentro dos parênteses de chamadas: Len( aArray ).
+ * 4. Separe funções por pelo menos uma linha em branco.
+ * 5. Prefira um comando por linha — evite uso de ";" para encadear.
+ * 6. Limite as linhas a ~100 caracteres para facilitar o diff no TDS.
+ */

@@ -1,0 +1,60 @@
+/*
+ * EQUIVALENTE ADVPL/TLPP — Funções
+ * Referência: Clean Code, Cap. 3
+ */
+
+// ─── ❌ Function que faz tudo ──────────────────────────────────────────────────
+
+Function ProcessarPedido( cPedidoId, cUsuarioId, aPedidoItens, cCupom, aEndereco )
+    Local nTotal           := 0
+    Local nIndice          := 0
+    Local cEnderecoFormat  := ""
+    // valida, calcula, aplica desconto, formata e salva — tudo aqui
+    If Empty( cUsuarioId )
+        Return { "erro" => "usuário inválido" }
+    EndIf
+    For nIndice := 1 To Len( aPedidoItens )
+        nTotal += aPedidoItens[nIndice]["preco"] * aPedidoItens[nIndice]["quantidade"]
+    Next nIndice
+    If cCupom == "DESCONTO10"
+        nTotal *= 0.90
+    EndIf
+    cEnderecoFormat := aEndereco["rua"] + ", " + aEndereco["numero"]
+Return { "total" => nTotal, "endereco" => cEnderecoFormat }
+
+// ─── ✅ Uma responsabilidade por função ────────────────────────────────────────
+
+Function CalcularTotalItens( aPedidoItens )
+    Local nTotal  := 0
+    Local nIndice := 0
+    For nIndice := 1 To Len( aPedidoItens )
+        nTotal += aPedidoItens[nIndice]["preco"] * aPedidoItens[nIndice]["quantidade"]
+    Next nIndice
+Return nTotal
+
+Function AplicarCupom( nTotal, cCupom )
+    Local nMultiplicador := 1.0
+    Do Case
+        Case cCupom == "DESCONTO10" ; nMultiplicador := 0.90
+        Case cCupom == "DESCONTO20" ; nMultiplicador := 0.80
+    EndCase
+Return nTotal * nMultiplicador
+
+Function FormatarEndereco( aEndereco )
+Return aEndereco["rua"] + ", " + aEndereco["numero"] + " - " + aEndereco["cidade"]
+
+// ─── ❌ Flag booleana ──────────────────────────────────────────────────────────
+
+Function FormatarNome( cNome, lFormal )
+    If lFormal
+        Return "Sr(a). " + cNome
+    EndIf
+Return cNome
+
+// ─── ✅ Duas functions explícitas ──────────────────────────────────────────────
+
+Function FormatarNomeInformal( cNome )
+Return cNome
+
+Function FormatarNomeFormal( cNome )
+Return "Sr(a). " + cNome

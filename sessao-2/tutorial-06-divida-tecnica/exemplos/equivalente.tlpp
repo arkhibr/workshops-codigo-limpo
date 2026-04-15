@@ -1,0 +1,147 @@
+/*
+ * EQUIVALENTE ADVPL/TLPP — Dívida de Função Longa
+ * Referência: Clean Code, Cap. 17
+ * Contexto: Totvs Protheus / TLPP
+ *
+ * Foco: como uma função longa acumula dívida técnica e como
+ * pagar essa dívida extraindo funções auxiliares.
+ */
+
+// ════════════════════════════════════════════════════════════════
+// ANTES — função gigante que faz tudo
+// ════════════════════════════════════════════════════════════════
+
+// ❌ Autenticar() valida, gera hash, gera token, calcula expiração e monta resposta
+//    em uma única função com ~60 linhas e múltiplas responsabilidades.
+
+#DEFINE EXP_BASICO   3600
+#DEFINE EXP_ADMIN    900
+#DEFINE EXP_PERMAN   86400
+
+Function Autenticar_Ruim( cEmail, cSenha, cTipo )
+    Local lOk          := .T.
+    Local cMsg         := ""
+    Local cHash        := ""
+    Local cToken       := ""
+    Local nExp         := 0
+    Local cSemente     := ""
+
+    // valida email
+    If Empty( cEmail ) .Or. Len( cEmail ) < 3
+        lOk  := .F.
+        cMsg := "e-mail invalido"
+    EndIf
+    If lOk .And. !( "@" $ cEmail )
+        lOk  := .F.
+        cMsg := "e-mail invalido"
+    EndIf
+
+    // valida senha
+    If lOk .And. ( Empty( cSenha ) .Or. Len( cSenha ) < 8 )
+        lOk  := .F.
+        cMsg := "senha fraca"
+    EndIf
+    If lOk .And. IsDigit( Left( cSenha, 1 ) ) // simplificacao
+        lOk  := .F.
+        cMsg := "senha invalida"
+    EndIf
+
+    // gera hash
+    If lOk
+        cHash := SHA256( cSenha ) // funcao hipotetica
+    EndIf
+
+    // gera token e calcula expiração
+    If lOk
+        cSemente := cEmail + cHash + cValToChar( Seconds() )
+        cToken   := MD5( cSemente )
+        If cTipo == "admin"
+            nExp := Int( Seconds() ) + EXP_ADMIN
+        ElseIf cTipo == "permanente"
+            nExp := Int( Seconds() ) + EXP_PERMAN
+        Else
+            nExp := Int( Seconds() ) + EXP_BASICO
+        EndIf
+    EndIf
+
+    If lOk
+        Return { "ok" => .T., "token" => cToken, "exp" => nExp, "tipo" => cTipo }
+    EndIf
+Return { "ok" => .F., "msg" => cMsg }
+
+
+// ════════════════════════════════════════════════════════════════
+// DEPOIS — dívida paga com extração de funções auxiliares
+// ════════════════════════════════════════════════════════════════
+
+/*/{Protheus.doc} Autenticar
+    Autentica um usuário validando credenciais e gerando token de sessão.
+
+    @author  ana.souza
+    @since   14/04/2026
+    @param   cEmail  Character  E-mail do usuário
+    @param   cSenha  Character  Senha em texto plano
+    @param   cTipo   Character  "basico" | "admin" | "permanente"
+    @return  Hash  { "ok"=>.T./.F., "token"=>..., "exp"=>..., "msg"=>... }
+/*/
+Function Autenticar( cEmail, cSenha, cTipo )
+    Local aValidacao := ValidarCredenciais( cEmail, cSenha )
+
+    If !aValidacao["valido"]
+        Return { "ok" => .F., "msg" => aValidacao["erros"][1] }
+    EndIf
+
+    Local cHash  := GerarHashSenha( cSenha )
+    Local cToken := GerarToken( cEmail, cHash, cTipo )
+    Local nExp   := CalcularExpiracao( cTipo )
+
+Return { "ok" => .T., "token" => cToken, "exp" => nExp, "tipo" => cTipo }
+
+
+// Função auxiliar: centraliza validação de credenciais
+Function ValidarCredenciais( cEmail, cSenha )
+    Local aErros := {}
+
+    If Empty( cEmail ) .Or. Len( cEmail ) < 3
+        aAdd( aErros, "e-mail invalido" )
+    EndIf
+    If !Empty( cEmail ) .And. !( "@" $ cEmail )
+        aAdd( aErros, "e-mail invalido" )
+    EndIf
+    If Empty( cSenha ) .Or. Len( cSenha ) < 8
+        aAdd( aErros, "senha deve ter ao menos 8 caracteres" )
+    EndIf
+
+Return { "valido" => Len( aErros ) == 0, "erros" => aErros }
+
+
+// Função auxiliar: geração de hash isolada
+Function GerarHashSenha( cSenha )
+Return SHA256( cSenha ) // funcao hipotetica do framework
+
+
+// Função auxiliar: geração de token isolada
+Function GerarToken( cEmail, cHash, cTipo )
+    Local cSufixo  := If( cTipo != "basico", Upper( cTipo ), "" )
+    Local cSemente := cEmail + cHash + cValToChar( Seconds() ) + cSufixo
+Return MD5( cSemente )
+
+
+// Função auxiliar: lógica de expiração isolada e legível
+Function CalcularExpiracao( cTipo )
+    Local nAgora := Int( Seconds() )
+    If cTipo == "admin"
+        Return nAgora + EXP_ADMIN
+    EndIf
+    If cTipo == "permanente"
+        Return nAgora + EXP_PERMAN
+    EndIf
+Return nAgora + EXP_BASICO
+
+/*
+ * Nota sobre ADVPL/TLPP:
+ * Em Protheus, funções "auxiliares" não têm modificador private/protected —
+ * a convenção é prefixar com underscore (_ValidarCredenciais) ou sufixar
+ * com "Aux" (_ValidarCredenciaisAux) para sinalizar que não fazem parte da
+ * API pública do programa.
+ */

@@ -1,0 +1,55 @@
+/*
+ * EQUIVALENTE ADVPL/TLPP — Nomes Significativos
+ * Referência: Clean Code, Cap. 2
+ * Contexto: Totvs Protheus / TLPP
+ */
+
+// ❌ Ruim — nomes herdados da tradição ADVPL de variáveis curtas
+Local nD   := 0
+Local cS   := ""
+Local aLst := {}
+
+Function Proc( aL, cS )
+    Local aR := {}
+    Local nI := 0
+    For nI := 1 To Len( aL )
+        If aL[nI][1] == cS
+            aAdd( aR, aL[nI] )
+        EndIf
+    Next nI
+Return aR
+
+// ✅ Bom — nomes descritivos respeitando prefixos de tipo ADVPL (convenção do ecossistema)
+Local nDiasDesdemCriacao := 0
+Local cStatusFiltro      := ""
+Local aPedidosFiltrados  := {}
+
+/*
+ * Nota: Em ADVPL/TLPP, os prefixos de tipo (n=numérico, c=caractere, a=array,
+ * l=lógico, d=data, o=objeto) são CONVENÇÃO do ecossistema Totvs e devem ser
+ * mantidos. O que se evita são abreviações obscuras ALÉM do prefixo.
+ */
+
+Function FiltrarPedidosPorStatus( aPedidos, cStatus )
+    Local aPedidosFiltrados := {}
+    Local nIndice           := 0
+    For nIndice := 1 To Len( aPedidos )
+        If aPedidos[nIndice][1] == cStatus
+            aAdd( aPedidosFiltrados, aPedidos[nIndice] )
+        EndIf
+    Next nIndice
+Return aPedidosFiltrados
+
+// ❌ Classe com nome obscuro
+Class UsrMgr
+    Data aLst
+    Method New() Constructor
+    Method Add( oU )
+EndClass
+
+// ✅ Classe com nome expressivo
+Class GerenciadorDeUsuarios
+    Data aUsuarios
+    Method New() Constructor
+    Method AdicionarUsuario( oUsuario )
+EndClass
