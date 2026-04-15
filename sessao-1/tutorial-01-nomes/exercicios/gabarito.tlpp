@@ -1,0 +1,102 @@
+/*
+ * GABARITO 01 — Nomes Significativos
+ * Abra este arquivo apenas após tentar o exercício por conta própria.
+ *
+ * Ambiente: Totvs Protheus / TLPP
+ */
+
+// ─── Solução 1 ────────────────────────────────────────────────────────────────
+
+#define SEGUNDOS_POR_DIA    86400
+#define DIAS_POR_SEMANA     7
+#define SEGUNDOS_POR_SEMANA (SEGUNDOS_POR_DIA * DIAS_POR_SEMANA)
+
+Function CalcularDesconto( nPreco, nPercentual )
+Return nPreco * nPercentual / 100
+
+// ─── Solução 2 ────────────────────────────────────────────────────────────────
+
+Class CarrinhoDeCompras
+    Data aItens
+    Data nQuantidade
+    Data nTotal
+
+    Method New() Constructor
+    Method AdicionarItem( cNomeProduto, nPreco )
+    Method RemoverItem( cNomeProduto )
+    Method ListarItens()
+    Method ObterTotal()
+EndClass
+
+Method New() Class CarrinhoDeCompras
+    ::aItens     := {}
+    ::nQuantidade := 0
+    ::nTotal      := 0.0
+Return Self
+
+Method AdicionarItem( cNomeProduto, nPreco ) Class CarrinhoDeCompras
+    aAdd( ::aItens, { cNomeProduto, nPreco } )
+    ::nQuantidade++
+    ::nTotal += nPreco
+Return
+
+Method RemoverItem( cNomeProduto ) Class CarrinhoDeCompras
+    Local nIdx       := 0
+    Local aItensNovos := {}
+    For nIdx := 1 To Len( ::aItens )
+        If ::aItens[nIdx][1] != cNomeProduto
+            aAdd( aItensNovos, ::aItens[nIdx] )
+        EndIf
+    Next nIdx
+    ::aItens      := aItensNovos
+    ::nQuantidade  := Len( ::aItens )
+    ::nTotal       := 0
+    For nIdx := 1 To Len( ::aItens )
+        ::nTotal += ::aItens[nIdx][2]
+    Next nIdx
+Return
+
+Method ListarItens() Class CarrinhoDeCompras
+Return ::aItens
+
+Method ObterTotal() Class CarrinhoDeCompras
+Return ::nTotal
+
+// ─── Solução 3 ────────────────────────────────────────────────────────────────
+
+Function UsuarioTemAcessoAoRecurso( aUsuario, cRecurso, lEhAdministrador )
+    Local nIdx := 0
+    If lEhAdministrador
+        Return .T.
+    EndIf
+    For nIdx := 1 To Len( aUsuario["permissoes"] )
+        If aUsuario["permissoes"][nIdx] == cRecurso
+            Return .T.
+        EndIf
+    Next nIdx
+Return .F.
+
+// ─── Verificação ──────────────────────────────────────────────────────────────
+
+User Function GabaritoNomes()
+    Local oCarrinho := Nil
+    Local aUsuario  := {}
+
+    // Solução 1
+    ConOut( "Segundos por semana: " + cValToChar( SEGUNDOS_POR_SEMANA ) )
+    ConOut( "Desconto de 10% em R$200: " + Transform( CalcularDesconto(200, 10), "@E 999,999.99" ) )
+
+    // Solução 2
+    oCarrinho := CarrinhoDeCompras():New()
+    oCarrinho:AdicionarItem( "Camiseta", 89.90 )
+    oCarrinho:AdicionarItem( "Calca",    159.90 )
+    ConOut( "Total: " + Transform( oCarrinho:ObterTotal(), "@E 999,999.99" ) )
+    oCarrinho:RemoverItem( "Camiseta" )
+    ConOut( "Apos remover Camiseta: " + Transform( oCarrinho:ObterTotal(), "@E 999,999.99" ) )
+
+    // Solução 3
+    aUsuario                  := {}
+    aUsuario["permissoes"]    := { "leitura", "escrita" }
+    ConOut( "Acesso leitura: " + If( UsuarioTemAcessoAoRecurso( aUsuario, "leitura", .F. ), "Verdadeiro", "Falso" ) )
+    ConOut( "Acesso admin:   " + If( UsuarioTemAcessoAoRecurso( aUsuario, "exclusao", .T. ), "Verdadeiro", "Falso" ) )
+Return

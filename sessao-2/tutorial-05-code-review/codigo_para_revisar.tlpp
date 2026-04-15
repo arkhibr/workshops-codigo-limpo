@@ -1,0 +1,147 @@
+// Ambiente: Totvs Protheus
+// sistema_pedidos.tlpp — Sistema de pedidos de uma lanchonete
+
+#include "totvs.ch"
+
+#define DC  0.1
+#define DC2 0.15
+#define LM  500.0
+
+Class Lanchonete
+
+    Data n
+    Data lm
+    Data p
+    Data pd
+    Data x
+
+    Method New( n, lm ) Constructor
+    Method Add( pid, nm, pr, qt )
+    Method Calc( cpd )
+    Method Fechar( cpd, end, obs )
+    Method Itens()
+    Method Hist()
+    Method _Log( msg )
+
+EndClass
+
+Method New( n, lm ) Class Lanchonete
+    // inicializa lanchonete
+    If lm == Nil
+        lm := LM
+    EndIf
+    self:n  := n
+    self:lm := lm
+    self:p  := {}
+    self:pd := {}
+    self:x  := 0
+Return self
+
+Method Add( pid, nm, pr, qt ) Class Lanchonete
+    Local i
+    Local achado := .F.
+    // adiciona item
+    If qt == Nil
+        qt := 1
+    EndIf
+    For i := 1 To Len( self:p )
+        If self:p[i][1] == pid
+            self:p[i][4] += qt
+            achado := .T.
+            Exit
+        EndIf
+    Next i
+    If !achado
+        aAdd( self:p, { pid, nm, pr, qt } )
+    EndIf
+    // atualiza x
+    self:x += 1
+Return Nil
+
+// calcula o total
+Method Calc( cpd ) Class Lanchonete
+    Local t := 0
+    Local i
+    If cpd == Nil
+        cpd := ""
+    EndIf
+    For i := 1 To Len( self:p )
+        t := t + ( self:p[i][3] * self:p[i][4] ) // soma preco * quantidade
+    Next i
+    // aplica desconto
+    If cpd == "PROMO10"
+        // desconto de 10%
+        t := t * 0.9
+    ElseIf cpd == "PROMO15"
+        t := t - ( t * DC2 )
+    ElseIf cpd == "FIDELIDADE"
+        // TODO: implementar desconto fidelidade
+    EndIf
+Return Round( t, 2 )
+
+Method Fechar( cpd, end, obs ) Class Lanchonete
+    Local t
+    Local num
+    Local r
+    // valida
+    If cpd == Nil
+        cpd := ""
+    EndIf
+    If end == Nil
+        end := ""
+    EndIf
+    If obs == Nil
+        obs := ""
+    EndIf
+    If Len( self:p ) == 0
+        Return { "ok" => .F., "msg" => "Pedido vazio" }
+    EndIf
+    t := self:Calc( cpd )
+    If t > self:lm
+        Return { "ok" => .F., "msg" => "Pedido acima do limite de R$ " + cValToChar( self:lm ) }
+    EndIf
+    // TODO: salvar no banco
+    // DbSave( self:p )
+    // NotificarCozinha( self:p )
+    // EnviarSms( self:n, t )
+    num := "PED-" + DtoS( Date() ) + StrTran( Time(), ":", "" )
+    r   := { "ok" => .T., "num" => num, "t" => t, "itens" => self:p, "end" => end, "obs" => obs }
+    aAdd( self:pd, r )
+    self:p := {}
+Return r
+
+Method Itens() Class Lanchonete
+Return self:p // retorna lista de itens
+
+Method Hist() Class Lanchonete
+    // retorna historico
+Return self:pd
+
+Method _Log( msg ) Class Lanchonete
+    // 10/01/2024 - João adicionou este log
+    // 15/02/2024 - Maria mudou o formato
+    // 03/03/2024 - Pedro removeu o arquivo de log
+    ConOut( "[" + self:n + "] " + msg )
+Return Nil
+
+// ── Execução principal ──────────────────────────────────────────────────────
+
+User Function SistemaPedidos()
+    Local l   := Lanchonete():New( "Lanchonete do Bairro" )
+    Local ped
+
+    l:Add( "X001", "X-Burguer", 18.50, 2 )
+    l:Add( "F001", "Fritas Grandes", 8.90 )
+    l:Add( "R001", "Refrigerante", 5.50, 3 )
+    l:Add( "X001", "X-Burguer", 18.50, 1 ) // adiciona mais 1 X-Burguer
+
+    ConOut( "Itens do pedido: " + cValToChar( l:Itens() ) )
+    ConOut( "Total sem cupom: " + cValToChar( l:Calc() ) )
+    ConOut( "Total com PROMO10: " + cValToChar( l:Calc( "PROMO10" ) ) )
+    ConOut( "Total com PROMO15: " + cValToChar( l:Calc( "PROMO15" ) ) )
+
+    ped := l:Fechar( "PROMO10", "Rua das Flores, 42", "Sem cebola no burguer" )
+    ConOut( "" )
+    ConOut( "Pedido fechado: " + cValToChar( ped ) )
+    ConOut( "Historico: " + cValToChar( l:Hist() ) )
+Return Nil

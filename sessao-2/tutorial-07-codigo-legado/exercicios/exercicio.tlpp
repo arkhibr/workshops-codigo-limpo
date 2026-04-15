@@ -1,0 +1,233 @@
+/*
+ * EXERCICIO - Tutorial 07: Gestao de Codigo Legado
+ *
+ * Modulo de calculo de comissoes de vendedores.
+ * Status: em producao desde 2020, nunca teve testes, nunca foi refatorado.
+ *
+ * INSTRUCOES:
+ *   1. Escreva "testes de caracterizacao" para a funcao CalcComm abaixo:
+ *      testes que documentam o comportamento ATUAL antes de qualquer mudanca.
+ *      Use asserts no bloco de execucao ao final do fonte.
+ *      Dica: passe valores conhecidos e verifique o retorno. Se o resultado
+ *      parecer errado, documente-o assim mesmo.
+ *
+ *   2. Identifique e anote com "// SMELL:" cada problema que voce encontrar.
+ *      Exemplos: magic number, nome obscuro, estado global, logica duplicada,
+ *      comentario que mente.
+ *
+ *   3. Refatore o codigo aplicando as tecnicas do tutorial:
+ *      - Constantes nomeadas para os magic numbers
+ *      - Funcoes com responsabilidade unica
+ *      - Eliminar modificacao de estado global dentro de funcao
+ *      - Nomes descritivos para parametros e variaveis
+ *      - Eliminar logica duplicada
+ *
+ *   4. Execute seus testes de caracterizacao na versao refatorada.
+ *      Se algum assert falhar, voce mudou o comportamento — investigue.
+ *
+ * Para compilar/rodar: compile no IDE Totvs ou copie para um fonte ADVPL existente.
+ *
+ * Nota sobre convencoes ADVPL/TLPP:
+ *   Prefixos de tipo sao obrigatorios: n=numerico, c=string, a=array,
+ *   l=logico, d=data, o=objeto. Esta convencao e exigida pela Totvs e
+ *   nao deve ser removida mesmo na versao refatorada.
+ */
+
+// ── Estado e dados globais ────────────────────────────────────────────────────
+
+Static aCache      := {}  // cache de resultados — modificado dentro de funcao
+Static aVendedores := {}  // simulando tabela de banco
+
+Procedure InicializarDados()
+    // Tabela de vendedores (simulando banco de dados)
+    aVendedores := { ;
+        {"V001", "Ana Paula",   "SR", "SP"}, ;
+        {"V002", "Carlos Lima", "JR", "RJ"}, ;
+        {"V003", "Maria Costa", "SR", "MG"}  ;
+    }
+    aCache := {}
+Return
+
+
+// ── Funcao principal de calculo ────────────────────────────────────────────────
+
+// Calcula comissao mensal — atualizado em jan/2020
+// (comentario desatualizado: a logica foi alterada em 2022 sem atualizar o comentario)
+Function CalcComm( cS, nR, cT, nM )
+    // cS = id do vendedor, nR = receita, cT = tipo de meta, nM = meta
+    Local nPos     := 0
+    Local aVend    := {}
+    Local nC       := 0
+
+    // Verifica cache
+    nPos := AScan( aCache, {|a| a[1] == cS} )
+    If nPos > 0
+        Return aCache[nPos][2]
+    EndIf
+
+    // Busca vendedor
+    nPos := AScan( aVendedores, {|a| a[1] == cS} )
+    If nPos == 0
+        Return 0
+    EndIf
+    aVend := aVendedores[nPos]
+
+    // calcula para senior
+    If aVend[3] == "SR"
+        If nR >= nM
+            nC := nR * 0.08
+            If nR > nM * 1.2
+                nC := nC + ( nR - nM * 1.2 ) * 0.03
+            EndIf
+        ElseIf nR >= nM * 0.8
+            nC := nR * 0.05
+        Else
+            nC := nR * 0.03
+        EndIf
+        If cT == "AGR"
+            nC := nC * 1.1
+        EndIf
+        If nR < 5000
+            nC := 0
+        EndIf
+
+    // calcula para junior — copiado e modificado do bloco acima
+    Else
+        If nR >= nM
+            nC := nR * 0.05
+            If nR > nM * 1.2
+                nC := nC + ( nR - nM * 1.2 ) * 0.02
+            EndIf
+        ElseIf nR >= nM * 0.8
+            nC := nR * 0.03  // igual ao bloco abaixo — bug ou intencional?
+        Else
+            nC := nR * 0.03
+        EndIf
+        If cT == "AGR"
+            nC := nC * 1.1
+        EndIf
+        If nR < 5000
+            nC := 0
+        EndIf
+    EndIf
+
+    // Armazena no cache e retorna
+    AAdd( aCache, {cS, Round(nC, 2)} )
+    Return Round(nC, 2)
+
+
+Function BatchCalc( aVendas )
+    // Duplica toda a logica de CalcComm ao inves de chamar a funcao
+    Local nI    := 0
+    Local aRes  := {}
+    Local aVend := {}
+    Local nPos  := 0
+    Local nC    := 0
+    Local cS    := ""
+    Local nR    := 0
+    Local cT    := ""
+    Local nM    := 0
+
+    For nI := 1 To Len(aVendas)
+        cS := aVendas[nI][1]
+        nR := aVendas[nI][2]
+        cT := aVendas[nI][3]
+        nM := aVendas[nI][4]
+
+        nPos := AScan( aVendedores, {|a| a[1] == cS} )
+        If nPos == 0
+            Loop
+        EndIf
+        aVend := aVendedores[nPos]
+
+        If aVend[3] == "SR"
+            If nR >= nM
+                nC := nR * 0.08
+                If nR > nM * 1.2
+                    nC := nC + ( nR - nM * 1.2 ) * 0.03
+                EndIf
+            ElseIf nR >= nM * 0.8
+                nC := nR * 0.05
+            Else
+                nC := nR * 0.03
+            EndIf
+            If cT == "AGR"
+                nC := nC * 1.1
+            EndIf
+            If nR < 5000
+                nC := 0
+            EndIf
+        Else
+            If nR >= nM
+                nC := nR * 0.05
+                If nR > nM * 1.2
+                    nC := nC + ( nR - nM * 1.2 ) * 0.02
+                EndIf
+            ElseIf nR >= nM * 0.8
+                nC := nR * 0.03
+            Else
+                nC := nR * 0.03
+            EndIf
+            If cT == "AGR"
+                nC := nC * 1.1
+            EndIf
+            If nR < 5000
+                nC := 0
+            EndIf
+        EndIf
+
+        AAdd( aRes, {cS, Round(nC, 2)} )
+    Next nI
+
+    Return aRes
+
+
+// ── Bloco de execucao ─────────────────────────────────────────────────────────
+
+User Function ExercicioT07()
+    Local nRes  := 0
+    Local aLote := {}
+    Local aRes  := {}
+    Local nI    := 0
+
+    InicializarDados()
+
+    // -----------------------------------------------------------------------
+    // ETAPA 1: Escreva aqui seus testes de caracterizacao
+    // Documente o comportamento atual ANTES de refatorar.
+    // Exemplo:
+    //   nRes := CalcComm("V001", 10000, "STD", 8000)
+    //   If nRes <> ???
+    //       ConOut("FALHOU: esperado ???, obtido " + cValToChar(nRes))
+    //   EndIf
+    // -----------------------------------------------------------------------
+
+    ConOut("=== Testes de caracterizacao ===")
+    ConOut("(implemente seus asserts aqui antes de refatorar)")
+    ConOut("")
+
+    // Exemplos de chamadas para explorar o comportamento:
+    nRes := CalcComm("V001", 10000, "STD", 8000)
+    ConOut("SR, receita=10000, meta=8000, tipo=STD: " + cValToChar(nRes))
+
+    InicializarDados()  // limpa cache antes de nova chamada
+    nRes := CalcComm("V003", 4000, "STD", 8000)
+    ConOut("SR, receita=4000,  meta=8000, tipo=STD: " + cValToChar(nRes))
+
+    InicializarDados()
+    nRes := CalcComm("V002", 6000, "AGR", 5000)
+    ConOut("JR, receita=6000,  meta=5000, tipo=AGR: " + cValToChar(nRes))
+
+    ConOut("")
+    ConOut("=== Batch ===")
+    InicializarDados()
+    aLote := { ;
+        {"V001", 10000, "STD", 8000}, ;
+        {"V002", 6000,  "AGR", 5000}  ;
+    }
+    aRes := BatchCalc(aLote)
+    For nI := 1 To Len(aRes)
+        ConOut("  " + aRes[nI][1] + ": " + cValToChar(aRes[nI][2]))
+    Next nI
+
+Return

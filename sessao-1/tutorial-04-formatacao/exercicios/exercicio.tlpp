@@ -1,0 +1,147 @@
+// Ambiente: Totvs Protheus
+// EXERCICIO — Tutorial 04: Formatacao
+// Referencia: Clean Code, Cap. 5
+//
+// TAREFA: Formate o codigo abaixo seguindo as convencoes Totvs ADVPL/TLPP.
+// Nao altere a logica — apenas a formatacao.
+//
+// O que corrigir:
+//   1. Indentacao inconsistente — use 4 espacos
+//   2. Variaveis sem prefixo de tipo OU com prefixo errado
+//   3. Magic numbers inline — extraia como constantes no topo
+//   4. Metodos sem separacao por comentario de secao
+//   5. Atribuicoes sem alinhamento visual
+//   6. Blocos longos sem respiro visual (linhas em branco)
+
+#define STAT_APROVADO "aprovado"
+#define STAT_RECUSADO "recusado"
+#define STAT_PENDENTE "pendente"
+
+Class ProcessadorDePagamentos
+    Data nomeCom
+    Data limDiario
+    Data totHoje
+    Data hist
+    Data ultTrans
+
+Method New(nom, lim) Class ProcessadorDePagamentos
+Method ValidarPgto(val, met, cart, cpf, desc) Class ProcessadorDePagamentos
+Method ProcessarPgto(val, met, cart, cpf, desc) Class ProcessadorDePagamentos
+Method GerarComp(idTrans) Class ProcessadorDePagamentos
+Method CalcTaxas() Class ProcessadorDePagamentos
+Method ResumoDia() Class ProcessadorDePagamentos
+
+EndClass
+
+Method New(nom, lim) Class ProcessadorDePagamentos
+if lim == Nil
+lim := 10000
+EndIf
+self:nomeCom := nom
+self:limDiario := lim
+self:totHoje := 0
+self:hist := {}
+self:ultTrans := Nil
+Return self
+
+Method ValidarPgto(val, met, cart, cpf, desc) Class ProcessadorDePagamentos
+Local erros := {}
+if val < 1
+AAdd(erros, "Valor minimo e R$ 1,00")
+EndIf
+if self:totHoje + val > self:limDiario
+AAdd(erros, "Limite diario de R$ " + Str(self:limDiario) + " seria excedido")
+EndIf
+if !( met == "credito" .Or. met == "debito" .Or. met == "pix" .Or. met == "boleto" )
+AAdd(erros, "Metodo de pagamento invalido: " + met)
+EndIf
+if (met == "credito" .Or. met == "debito") .And. cart == Nil
+AAdd(erros, "Dados do cartao sao obrigatorios para pagamento com cartao")
+EndIf
+Return {Len(erros) == 0, erros}
+
+Method ProcessarPgto(val, met, cart, cpf, desc) Class ProcessadorDePagamentos
+Local result := self:ValidarPgto(val, met, cart, cpf, desc)
+Local taxa := 0
+Local liq := 0
+Local idTrans := ""
+Local reg := {}
+if !result[1]
+Return {STAT_RECUSADO, result[2], val}
+EndIf
+if met == "credito"
+taxa := val * 0.025
+Else
+taxa := 0
+EndIf
+liq := val - taxa
+self:totHoje := self:totHoje + val
+idTrans := "TRX-" + DToS(Date()) + Time()
+reg := {idTrans, val, Round(taxa,2), Round(liq,2), met, STAT_APROVADO, DToS(Date())+" "+Time(), desc}
+AAdd(self:hist, reg)
+self:ultTrans := reg
+Return {STAT_APROVADO, idTrans, Round(liq,2), Round(taxa,2)}
+
+Method GerarComp(idTrans) Class ProcessadorDePagamentos
+Local i := 0
+Local trans := Nil
+Local linhas := {}
+For i := 1 To Len(self:hist)
+if self:hist[i][1] == idTrans
+trans := self:hist[i]
+Exit
+EndIf
+Next i
+if trans == Nil
+Return ""
+EndIf
+AAdd(linhas, Replicate("=",50))
+AAdd(linhas, "COMPROVANTE DE PAGAMENTO")
+AAdd(linhas, "Comerciante: " + self:nomeCom)
+AAdd(linhas, Replicate("=",50))
+AAdd(linhas, "ID Transacao : " + trans[1])
+AAdd(linhas, "Data/Hora    : " + trans[7])
+AAdd(linhas, "Metodo       : " + Upper(trans[5]))
+AAdd(linhas, "Valor Bruto  : R$ " + Str(trans[2]))
+AAdd(linhas, "Taxa         : R$ " + Str(trans[3]))
+AAdd(linhas, "Valor Liquido: R$ " + Str(trans[4]))
+AAdd(linhas, "Status       : " + Upper(trans[6]))
+AAdd(linhas, Replicate("=",50))
+if !Empty(trans[8])
+AAdd(linhas, "Descricao    : " + trans[8])
+EndIf
+Return linhas
+
+Method CalcTaxas() Class ProcessadorDePagamentos
+Local i := 0
+Local total := 0
+For i := 1 To Len(self:hist)
+total := total + self:hist[i][3]
+Next i
+Return total
+
+Method ResumoDia() Class ProcessadorDePagamentos
+Return {self:totHoje, Len(self:hist), self:CalcTaxas(), self:limDiario - self:totHoje}
+
+Function Main()
+Local oProc := Nil
+Local aRes1 := {}
+Local aRes2 := {}
+Local aRes3 := {}
+Local aComp := {}
+Local i := 0
+oProc := ProcessadorDePagamentos():New("Restaurante do Ze", 5000)
+aRes1 := oProc:ProcessarPgto(150, "credito", {"numero"=>"****1234"}, Nil, "Almoco executivo")
+ConOut("Transacao 1: " + aRes1[1] + " | id: " + aRes1[2])
+aRes2 := oProc:ProcessarPgto(0.50, "pix", Nil, Nil, "Teste abaixo do minimo")
+ConOut("Transacao 2 (invalida): " + aRes2[1])
+aRes3 := oProc:ProcessarPgto(80, "pix", Nil, Nil, "Sobremesa")
+ConOut("Transacao 3: " + aRes3[1] + " | id: " + aRes3[2])
+if aRes1[1] == STAT_APROVADO
+aComp := oProc:GerarComp(aRes1[2])
+For i := 1 To Len(aComp)
+ConOut(aComp[i])
+Next i
+EndIf
+ConOut("Resumo do dia: total=" + Str(oProc:ResumoDia()[1]) + " transacoes=" + Str(oProc:ResumoDia()[2]))
+Return

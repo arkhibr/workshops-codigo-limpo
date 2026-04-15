@@ -1,0 +1,223 @@
+// Ambiente: Totvs Protheus
+// GABARITO — Tutorial 04: Formatacao
+// Referencia: Clean Code, Cap. 5
+//
+// Formatacao: convencoes Totvs ADVPL/TLPP
+// Logica: identica ao exercicio.tlpp — apenas formatacao alterada.
+
+// ════════════════════════════════════════════════════════════════════════════════
+// Constantes
+// ════════════════════════════════════════════════════════════════════════════════
+
+#define STAT_APROVADO          "aprovado"
+#define STAT_RECUSADO          "recusado"
+#define STAT_PENDENTE          "pendente"
+
+#define TAXA_PROCESSAMENTO     0.025
+#define LIMITE_DIARIO_PADRAO   10000
+#define VALOR_MINIMO_PGTO      1
+
+// ════════════════════════════════════════════════════════════════════════════════
+// Classe
+// ════════════════════════════════════════════════════════════════════════════════
+
+Class ProcessadorDePagamentos
+
+    Data cNomeComercianteprivate
+    Data nLimitePrivateDiario
+    Data nTotalProcessadoHoje
+    Data aHistorico
+    Data oUltimaTransacao
+
+    Method New( cNome, nLimite )        Class ProcessadorDePagamentos
+    Method ValidarPagamento( nValor, cMetodo, aCartao, cCpf, cDescricao )   Class ProcessadorDePagamentos
+    Method ProcessarPagamento( nValor, cMetodo, aCartao, cCpf, cDescricao ) Class ProcessadorDePagamentos
+    Method GerarComprovante( cIdTransacao )                                  Class ProcessadorDePagamentos
+    Method CalcularTotalTaxas()                                              Class ProcessadorDePagamentos
+    Method ObterResumoDoDia()                                                Class ProcessadorDePagamentos
+
+EndClass
+
+// ── New ───────────────────────────────────────────────────────────────────────
+
+Method New( cNome, nLimite ) Class ProcessadorDePagamentos
+
+    If nLimite == Nil
+        nLimite := LIMITE_DIARIO_PADRAO
+    EndIf
+
+    self:cNomeComercianteprivate := cNome
+    self:nLimitePrivateDiario    := nLimite
+    self:nTotalProcessadoHoje    := 0
+    self:aHistorico              := {}
+    self:oUltimaTransacao        := Nil
+
+Return self
+
+// ── ValidarPagamento ──────────────────────────────────────────────────────────
+
+Method ValidarPagamento( nValor, cMetodo, aCartao, cCpf, cDescricao ) Class ProcessadorDePagamentos
+
+    Local aErros := {}
+
+    If nValor < VALOR_MINIMO_PGTO
+        AAdd( aErros, "Valor minimo e R$ 1,00" )
+    EndIf
+
+    If self:nTotalProcessadoHoje + nValor > self:nLimitePrivateDiario
+        AAdd( aErros, "Limite diario de R$ " + Str( self:nLimitePrivateDiario ) + " seria excedido" )
+    EndIf
+
+    If !( cMetodo == "credito" .Or. cMetodo == "debito" .Or. ;
+          cMetodo == "pix"     .Or. cMetodo == "boleto" )
+        AAdd( aErros, "Metodo de pagamento invalido: " + cMetodo )
+    EndIf
+
+    If ( cMetodo == "credito" .Or. cMetodo == "debito" ) .And. aCartao == Nil
+        AAdd( aErros, "Dados do cartao sao obrigatorios para pagamento com cartao" )
+    EndIf
+
+Return { Len( aErros ) == 0, aErros }
+
+// ── ProcessarPagamento ────────────────────────────────────────────────────────
+
+Method ProcessarPagamento( nValor, cMetodo, aCartao, cCpf, cDescricao ) Class ProcessadorDePagamentos
+
+    Local aValidacao  := self:ValidarPagamento( nValor, cMetodo, aCartao, cCpf, cDescricao )
+    Local nTaxa       := 0
+    Local nLiquido    := 0
+    Local cIdTransacao := ""
+    Local aRegistro   := {}
+
+    If !aValidacao[1]
+        Return { STAT_RECUSADO, aValidacao[2], nValor }
+    EndIf
+
+    If cMetodo == "credito"
+        nTaxa := nValor * TAXA_PROCESSAMENTO
+    Else
+        nTaxa := 0
+    EndIf
+
+    nLiquido := nValor - nTaxa
+
+    self:nTotalProcessadoHoje := self:nTotalProcessadoHoje + nValor
+    cIdTransacao := "TRX-" + DToS( Date() ) + StrTran( Time(), ":", "" )
+
+    aRegistro := { ;
+        cIdTransacao,           ;
+        nValor,                 ;
+        Round( nTaxa, 2 ),      ;
+        Round( nLiquido, 2 ),   ;
+        cMetodo,                ;
+        STAT_APROVADO,          ;
+        DToS( Date() ) + " " + Time(), ;
+        cDescricao              ;
+    }
+
+    AAdd( self:aHistorico, aRegistro )
+    self:oUltimaTransacao := aRegistro
+
+Return { STAT_APROVADO, cIdTransacao, Round( nLiquido, 2 ), Round( nTaxa, 2 ) }
+
+// ── GerarComprovante ──────────────────────────────────────────────────────────
+
+Method GerarComprovante( cIdTransacao ) Class ProcessadorDePagamentos
+
+    Local nI      := 0
+    Local aTransacao := Nil
+    Local aLinhas := {}
+
+    For nI := 1 To Len( self:aHistorico )
+        If self:aHistorico[nI][1] == cIdTransacao
+            aTransacao := self:aHistorico[nI]
+            Exit
+        EndIf
+    Next nI
+
+    If aTransacao == Nil
+        Return {}
+    EndIf
+
+    AAdd( aLinhas, Replicate( "=", 50 ) )
+    AAdd( aLinhas, "COMPROVANTE DE PAGAMENTO" )
+    AAdd( aLinhas, "Comerciante: " + self:cNomeComercianteprivate )
+    AAdd( aLinhas, Replicate( "=", 50 ) )
+    AAdd( aLinhas, "ID Transacao : " + aTransacao[1] )
+    AAdd( aLinhas, "Data/Hora    : " + aTransacao[7] )
+    AAdd( aLinhas, "Metodo       : " + Upper( aTransacao[5] ) )
+    AAdd( aLinhas, "Valor Bruto  : R$ " + Str( aTransacao[2] ) )
+    AAdd( aLinhas, "Taxa         : R$ " + Str( aTransacao[3] ) )
+    AAdd( aLinhas, "Valor Liquido: R$ " + Str( aTransacao[4] ) )
+    AAdd( aLinhas, "Status       : " + Upper( aTransacao[6] ) )
+    AAdd( aLinhas, Replicate( "=", 50 ) )
+
+    If !Empty( aTransacao[8] )
+        AAdd( aLinhas, "Descricao    : " + aTransacao[8] )
+    EndIf
+
+Return aLinhas
+
+// ── ObterResumoDoDia ──────────────────────────────────────────────────────────
+
+Method ObterResumoDoDia() Class ProcessadorDePagamentos
+Return { ;
+    self:nTotalProcessadoHoje,                                  ;
+    Len( self:aHistorico ),                                     ;
+    self:CalcularTotalTaxas(),                                  ;
+    self:nLimitePrivateDiario - self:nTotalProcessadoHoje       ;
+}
+
+// ── CalcularTotalTaxas (privado) ──────────────────────────────────────────────
+
+Method CalcularTotalTaxas() Class ProcessadorDePagamentos
+
+    Local nI     := 0
+    Local nTotal := 0
+
+    For nI := 1 To Len( self:aHistorico )
+        nTotal := nTotal + self:aHistorico[nI][3]
+    Next nI
+
+Return nTotal
+
+// ════════════════════════════════════════════════════════════════════════════════
+// Execucao de demonstracao
+// ════════════════════════════════════════════════════════════════════════════════
+
+Function Main()
+
+    Local oProcessador  := Nil
+    Local aResultado1   := {}
+    Local aResultado2   := {}
+    Local aResultado3   := {}
+    Local aComprovante  := {}
+    Local aResumo       := {}
+    Local nI            := 0
+
+    oProcessador := ProcessadorDePagamentos():New( "Restaurante do Ze", 5000 )
+
+    aResultado1 := oProcessador:ProcessarPagamento( ;
+        150, "credito", { "numero" => "****1234" }, Nil, "Almoco executivo" ;
+    )
+    ConOut( "Transacao 1: " + aResultado1[1] + " | id: " + aResultado1[2] )
+
+    aResultado2 := oProcessador:ProcessarPagamento( ;
+        0.50, "pix", Nil, Nil, "Teste abaixo do minimo" ;
+    )
+    ConOut( "Transacao 2 (invalida): " + aResultado2[1] )
+
+    aResultado3 := oProcessador:ProcessarPagamento( 80, "pix", Nil, Nil, "Sobremesa" )
+    ConOut( "Transacao 3: " + aResultado3[1] + " | id: " + aResultado3[2] )
+
+    If aResultado1[1] == STAT_APROVADO
+        aComprovante := oProcessador:GerarComprovante( aResultado1[2] )
+        For nI := 1 To Len( aComprovante )
+            ConOut( aComprovante[nI] )
+        Next nI
+    EndIf
+
+    aResumo := oProcessador:ObterResumoDoDia()
+    ConOut( "Resumo do dia: total=" + Str( aResumo[1] ) + " transacoes=" + Str( aResumo[2] ) )
+
+Return

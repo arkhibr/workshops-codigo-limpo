@@ -1,0 +1,97 @@
+// Ambiente: Totvs Protheus
+// GABARITO — Tutorial 03: Comentarios
+// Referencia: Clean Code, Cap. 4
+
+// ════════════════════════════════════════════════════════════════════════════════
+// PROBLEMA 1 — RESOLVIDO
+// ════════════════════════════════════════════════════════════════════════════════
+//
+// O que foi feito:
+//   - "Chk" renomeado para "VerificarUsuarioAtivo"; parametro "aU" → "aUsuario";
+//     chave "st" → "status". Sem comentario: o nome ja diz tudo.
+//   - "Calc" renomeado para "CalcularPrecoComDesconto"; parametros "nP","nD"
+//     → "nPreco","nDesconto". Todos os comentarios redundantes removidos.
+//   - "RegistrarAcesso": TODO reescrito com rastreabilidade; codigo comentado
+//     removido (fica no historico do git); diario de bordo removido de CalcularMulta.
+
+Function VerificarUsuarioAtivo( aUsuario )
+Return aUsuario["status"] == 1
+
+Function CalcularPrecoComDesconto( nPreco, nDesconto )
+Return nPreco - nDesconto
+
+Function RegistrarAcesso( cUsuarioId, cTimestamp )
+    Local nContador := 1
+    // TODO [OPS-304]: persistir no banco de acessos.
+    // Responsavel: @carlos.lima  |  Prazo: Sprint 43
+    ConOut( "[LOG] Acesso registrado: " + cUsuarioId + " em " + cTimestamp )
+Return nContador
+
+// 2% ao dia — definido em contrato (clausula 9.1, rev. 2024)
+#define TAXA_MULTA_DIARIA 0.02
+
+Function CalcularMulta( nDiasAtraso, nValorOriginal )
+Return nValorOriginal * TAXA_MULTA_DIARIA * nDiasAtraso
+
+// ════════════════════════════════════════════════════════════════════════════════
+// PROBLEMA 2 — RESOLVIDO
+// ════════════════════════════════════════════════════════════════════════════════
+//
+// O comentario adicionado explica o "porque" (formula de Price / amortizacao
+// constante) — algo que nunca ficaria obvio so lendo o codigo.
+
+Function CalcularParcelaFinanciamento( nValorPrincipal, nTaxaMensal, nNumeroParcelas )
+    Local nFator   := 0
+    Local nParcela := 0
+    If nTaxaMensal == 0
+        Return Round( nValorPrincipal / nNumeroParcelas, 2 )
+    EndIf
+    // Formula de Price (Sistema Frances de Amortizacao):
+    //   PMT = PV * (i * (1+i)^n) / ((1+i)^n - 1)
+    // onde PV = valor principal, i = taxa mensal, n = numero de parcelas.
+    // Usamos Price porque o contrato preve parcelas fixas — ao contrario do
+    // SAC, onde as parcelas decrescem ao longo do tempo.
+    nFator   := ( 1 + nTaxaMensal ) ^ nNumeroParcelas
+    nParcela := nValorPrincipal * ( nTaxaMensal * nFator ) / ( nFator - 1 )
+Return Round( nParcela, 2 )
+
+// ════════════════════════════════════════════════════════════════════════════════
+// Bloco de verificacao — saida identica ao exercicio.tlpp
+// ════════════════════════════════════════════════════════════════════════════════
+
+Function Main()
+    Local aUsuarioAtivo   := {}
+    Local aUsuarioInativo := {}
+    Local lResultado      := .F.
+
+    ConOut( "=== Verificacao do Gabarito ===" )
+    ConOut( "" )
+
+    // As funcoes foram renomeadas no Problema 1 — ajustamos as chamadas:
+    aUsuarioAtivo             := {}
+    aUsuarioAtivo["status"]   := 1
+    aUsuarioAtivo["nome"]     := "Maria"
+
+    aUsuarioInativo           := {}
+    aUsuarioInativo["status"] := 0
+    aUsuarioInativo["nome"]   := "Joao"
+
+    lResultado := VerificarUsuarioAtivo( aUsuarioAtivo )
+    ConOut( "VerificarUsuarioAtivo (ativo): " + If( lResultado, ".T.", ".F." ) )     // .T.
+
+    lResultado := VerificarUsuarioAtivo( aUsuarioInativo )
+    ConOut( "VerificarUsuarioAtivo (inativo): " + If( lResultado, ".T.", ".F." ) )   // .F.
+
+    ConOut( "CalcularPrecoComDesconto(100, 15): " + Str( CalcularPrecoComDesconto( 100.0, 15.0 ) ) ) // 85
+
+    RegistrarAcesso( "U001", "2026-04-14 10:00:00" )
+
+    ConOut( "CalcularMulta(5 dias, 200): " + Str( CalcularMulta( 5, 200.0 ) ) )    // 20
+
+    ConOut( "" )
+    ConOut( "CalcularParcelaFinanciamento:" )
+    ConOut( "  R$10000 / 12x / 1% a.m.: " + Str( CalcularParcelaFinanciamento( 10000.0, 0.01, 12 ) ) )
+    ConOut( "  R$5000 / 24x / 0.8% a.m.: " + Str( CalcularParcelaFinanciamento( 5000.0, 0.008, 24 ) ) )
+    ConOut( "  R$3000 / 10x / 0% (sem juros): " + Str( CalcularParcelaFinanciamento( 3000.0, 0.0, 10 ) ) )
+
+Return

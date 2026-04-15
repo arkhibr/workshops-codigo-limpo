@@ -1,0 +1,120 @@
+/*
+ * EXERCÍCIO 01 — Nomes Significativos
+ * Tempo estimado: 10 minutos
+ * Referência: Clean Code, Cap. 2
+ *
+ * INSTRUÇÕES:
+ *   Renomeie todas as variáveis, parâmetros, Functions e Classes abaixo
+ *   para que os nomes revelem claramente a intenção do código.
+ *   Não altere a lógica — apenas os nomes.
+ *
+ * Nota: prefixos de tipo (n, c, a, l, d, o) são CONVENÇÃO OBRIGATÓRIA
+ * em ADVPL/TLPP. O princípio de Clean Code se aplica ao nome APÓS o prefixo.
+ *
+ * Ambiente: Totvs Protheus / TLPP
+ */
+
+// ─── Problema 1 ───────────────────────────────────────────────────────────────
+// O que este código calcula? Renomeie para tornar óbvio.
+
+Static Function Prob1()
+    Local nx  := 86400
+    Local ny  := 7
+    Local nz  := nx * ny
+    ConOut( "nx=" + cValToChar(nx) + ", ny=" + cValToChar(ny) + ", nz=" + cValToChar(nz) )
+    ConOut( "Calc(200, 10) = " + cValToChar( Calc(200, 10) ) )
+Return
+
+Function Calc( nA, nB )
+Return nA * nB / 100
+
+// ─── Problema 2 ───────────────────────────────────────────────────────────────
+// Esta classe gerencia um carrinho de compras.
+// Renomeie tudo para refletir isso.
+
+Class Mgr
+    Data aLst
+    Data nCnt
+    Data nTtl
+
+    Method New() Constructor
+    Method Add( cItm, nPrc )
+    Method Rmv( cItm )
+    Method GtAll()
+    Method GtTtl()
+EndClass
+
+Method New() Class Mgr
+    ::aLst := {}
+    ::nCnt := 0
+    ::nTtl := 0.0
+Return Self
+
+Method Add( cItm, nPrc ) Class Mgr
+    aAdd( ::aLst, { cItm, nPrc } )
+    ::nCnt++
+    ::nTtl += nPrc
+Return
+
+Method Rmv( cItm ) Class Mgr
+    Local nIdx      := 0
+    Local aNovaLst  := {}
+    For nIdx := 1 To Len( ::aLst )
+        If ::aLst[nIdx][1] != cItm
+            aAdd( aNovaLst, ::aLst[nIdx] )
+        EndIf
+    Next nIdx
+    ::aLst := aNovaLst
+    ::nCnt := Len( ::aLst )
+    ::nTtl := 0
+    For nIdx := 1 To Len( ::aLst )
+        ::nTtl += ::aLst[nIdx][2]
+    Next nIdx
+Return
+
+Method GtAll() Class Mgr
+Return ::aLst
+
+Method GtTtl() Class Mgr
+Return ::nTtl
+
+// ─── Problema 3 ───────────────────────────────────────────────────────────────
+// Esta função verifica se um usuário pode acessar um recurso.
+// Renomeie os parâmetros e a função.
+
+Function Proc( aU, cR, lAdm )
+    Local nIdx := 0
+    If lAdm
+        Return .T.
+    EndIf
+    For nIdx := 1 To Len( aU["prms"] )
+        If aU["prms"][nIdx] == cR
+            Return .T.
+        EndIf
+    Next nIdx
+Return .F.
+
+// ─── Verificação ──────────────────────────────────────────────────────────────
+// Chame a partir do RPO / SmartClient do Protheus para ver o output no console.
+
+User Function ExercicioNomes()
+    Local oMgr    := Nil
+    Local aUsuario := {}
+
+    // Problema 1
+    Prob1()
+
+    // Problema 2
+    oMgr := Mgr():New()
+    oMgr:Add( "Camiseta", 89.90 )
+    oMgr:Add( "Calca",    159.90 )
+    ConOut( "Total: " + Transform( oMgr:GtTtl(), "@E 999,999.99" ) )
+    oMgr:Rmv( "Camiseta" )
+    ConOut( "Apos remover Camiseta: " + Transform( oMgr:GtTtl(), "@E 999,999.99" ) )
+
+    // Problema 3
+    aUsuario         := {}
+    aUsuario["prms"] := { "leitura", "escrita" }
+    ConOut( "Acesso leitura: " + If( Proc( aUsuario, "leitura", .F. ), "Verdadeiro", "Falso" ) )
+    ConOut( "Acesso admin:   " + If( Proc( aUsuario, "exclusao", .T. ), "Verdadeiro", "Falso" ) )
+Return

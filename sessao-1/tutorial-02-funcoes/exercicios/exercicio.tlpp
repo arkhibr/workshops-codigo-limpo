@@ -1,0 +1,113 @@
+/*
+ * EXERCÍCIO 02 — Funções
+ * Tempo estimado: 15 minutos
+ * Referência: Clean Code, Cap. 3
+ *
+ * INSTRUÇÕES:
+ *   Refatore as funções abaixo aplicando os princípios do Clean Code:
+ *   - Cada Function deve fazer UMA coisa
+ *   - Extraia Functions auxiliares com nomes descritivos
+ *   - Elimine flags booleanas (crie Functions separadas)
+ *   - Elimine efeitos colaterais ocultos
+ *
+ *   Não mude o comportamento externo — apenas a organização interna.
+ *
+ * Nota: prefixos de tipo (n, c, a, l, d, o) são CONVENÇÃO OBRIGATÓRIA.
+ *
+ * Ambiente: Totvs Protheus / TLPP
+ */
+
+// ─── Problema 1 ───────────────────────────────────────────────────────────────
+// Esta Function faz pelo menos 4 coisas diferentes. Quebre-a.
+//
+// aFuncionarios: array de arrays { cNome, nSalario, lAtivo }
+
+Function GerarRelatorio( aFuncionarios, lIncluirInativos, cFormato )
+    Local aResultado     := {}
+    Local nIdx           := 0
+    Local nSalarioLiquido := 0
+    Local nBonus          := 0
+    Local nTotal          := 0
+    Local cLinha          := ""
+    For nIdx := 1 To Len( aFuncionarios )
+        If !lIncluirInativos .And. !aFuncionarios[nIdx][3]
+            Loop
+        EndIf
+        nSalarioLiquido := aFuncionarios[nIdx][2] - ( aFuncionarios[nIdx][2] * 0.275 )
+        If aFuncionarios[nIdx][2] > 5000
+            nBonus := aFuncionarios[nIdx][2] * 0.10
+        Else
+            nBonus := aFuncionarios[nIdx][2] * 0.05
+        EndIf
+        nTotal := nSalarioLiquido + nBonus
+        If cFormato == "resumido"
+            cLinha := aFuncionarios[nIdx][1] + ": R$" + Transform( nTotal, "@E 9,999,999.99" )
+        Else
+            cLinha := "Nome: " + aFuncionarios[nIdx][1] + ;
+                      " | Salario bruto: R$" + Transform( aFuncionarios[nIdx][2], "@E 9,999,999.99" ) + ;
+                      " | Liquido: R$"       + Transform( nSalarioLiquido, "@E 9,999,999.99" ) + ;
+                      " | Bonus: R$"         + Transform( nBonus, "@E 9,999,999.99" ) + ;
+                      " | Total: R$"         + Transform( nTotal, "@E 9,999,999.99" )
+        EndIf
+        aAdd( aResultado, cLinha )
+    Next nIdx
+Return aResultado
+
+// ─── Problema 2 ───────────────────────────────────────────────────────────────
+// Flag booleana — crie duas Functions distintas.
+//
+// aUsuario: array { cEmail }
+
+Function EnviarNotificacao( aUsuario, cMensagem, lUrgente )
+    If lUrgente
+        ConOut( "[URGENTE] Para: " + aUsuario[1] + " | " + cMensagem )
+    Else
+        ConOut( "Para: " + aUsuario[1] + " | " + cMensagem )
+    EndIf
+Return
+
+// ─── Problema 3 ───────────────────────────────────────────────────────────────
+// Efeito colateral oculto — torne o efeito explícito no retorno.
+
+Static aCarrinhoGlobal := { {}, 0.0 }   // { aItens, nTotal }
+
+Function AdicionarProduto( cNome, nPreco, nQuantidade )
+    Local nSubtotal := nPreco * nQuantidade
+    aAdd( aCarrinhoGlobal[1], { cNome, nPreco, nQuantidade } )
+    aCarrinhoGlobal[2] += nSubtotal   // efeito colateral oculto!
+Return nSubtotal
+
+// ─── Verificação ──────────────────────────────────────────────────────────────
+
+User Function ExercicioFuncoes()
+    Local aFuncionarios := {}
+    Local aResultado    := {}
+    Local nIdx          := 0
+    Local aUsuario      := {}
+
+    aAdd( aFuncionarios, { "Ana",   6000.0, .T. } )
+    aAdd( aFuncionarios, { "Bruno", 4000.0, .F. } )
+    aAdd( aFuncionarios, { "Carla", 3500.0, .T. } )
+
+    ConOut( "=== Relatorio resumido (todos) ===" )
+    aResultado := GerarRelatorio( aFuncionarios, .T., "resumido" )
+    For nIdx := 1 To Len( aResultado )
+        ConOut( aResultado[nIdx] )
+    Next nIdx
+
+    ConOut( "=== Relatorio detalhado (apenas ativos) ===" )
+    aResultado := GerarRelatorio( aFuncionarios, .F., "detalhado" )
+    For nIdx := 1 To Len( aResultado )
+        ConOut( aResultado[nIdx] )
+    Next nIdx
+
+    ConOut( "=== Notificacoes ===" )
+    aUsuario := { "ana@empresa.com" }
+    EnviarNotificacao( aUsuario, "Reuniao amanha as 9h", .F. )
+    EnviarNotificacao( aUsuario, "Servidor fora do ar!", .T. )
+
+    ConOut( "=== Carrinho ===" )
+    AdicionarProduto( "Teclado", 250.0, 1 )
+    AdicionarProduto( "Mouse",   80.0,  2 )
+    ConOut( "Total no carrinho: R$ " + Transform( aCarrinhoGlobal[2], "@E 9,999,999.99" ) )
+Return

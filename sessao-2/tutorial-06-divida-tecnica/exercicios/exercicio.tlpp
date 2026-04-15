@@ -1,0 +1,139 @@
+// Ambiente: Totvs Protheus
+// exercicio.tlpp — Cálculo de fretes para transportadora fictícia
+// EXERCÍCIO — Tutorial 06: Dívida Técnica
+//
+// TAREFA:
+//   Parte 1 — IDENTIFICAR: leia o código abaixo e adicione um comentário
+//   antes de cada dívida encontrada no formato:
+//       // DÍVIDA [TIPO]: <descrição do problema>
+//   Onde TIPO pode ser: NOMES, FUNCOES, DUPLICACAO, MAGIC_NUMBER
+//
+//   Parte 2 — REFATORAR: implemente a versão refatorada na seção
+//   marcada ao final deste arquivo.
+
+#include "totvs.ch"
+
+// ════════════════════════════════════════════════════════════════════════════════
+// CÓDIGO COM DÍVIDA TÉCNICA — identifique e anote as dívidas
+// ════════════════════════════════════════════════════════════════════════════════
+
+Static Function CalcFrete( tp, kg, km, urg )
+    Local t := 0.0
+    If urg == Nil
+        urg := .F.
+    EndIf
+    If tp == "A"
+        If kg <= 5
+            t := 15.0
+        ElseIf kg <= 20
+            t := 15.0 + ( kg - 5 ) * 2.5
+        Else
+            t := 15.0 + ( 20 - 5 ) * 2.5 + ( kg - 20 ) * 1.8
+        EndIf
+        t += km * 0.12
+    ElseIf tp == "B"
+        If kg <= 5
+            t := 25.0
+        ElseIf kg <= 20
+            t := 25.0 + ( kg - 5 ) * 3.2
+        Else
+            t := 25.0 + ( 20 - 5 ) * 3.2 + ( kg - 20 ) * 2.1
+        EndIf
+        t += km * 0.18
+    ElseIf tp == "C"
+        If kg <= 5
+            t := 40.0
+        ElseIf kg <= 20
+            t := 40.0 + ( kg - 5 ) * 4.0
+        Else
+            t := 40.0 + ( 20 - 5 ) * 4.0 + ( kg - 20 ) * 2.8
+        EndIf
+        t += km * 0.25
+    EndIf
+    If urg
+        t := t * 1.3
+    EndIf
+Return Round( t, 2 )
+
+
+Static Function Estimar( tp, kg, km )
+    Local t := 0.0
+    If tp == "A"
+        If kg <= 5
+            t := 15.0
+        ElseIf kg <= 20
+            t := 15.0 + ( kg - 5 ) * 2.5
+        Else
+            t := 15.0 + ( 20 - 5 ) * 2.5 + ( kg - 20 ) * 1.8
+        EndIf
+        t += km * 0.12
+    ElseIf tp == "B"
+        If kg <= 5
+            t := 25.0
+        ElseIf kg <= 20
+            t := 25.0 + ( kg - 5 ) * 3.2
+        Else
+            t := 25.0 + ( 20 - 5 ) * 3.2 + ( kg - 20 ) * 2.1
+        EndIf
+        t += km * 0.18
+    ElseIf tp == "C"
+        If kg <= 5
+            t := 40.0
+        ElseIf kg <= 20
+            t := 40.0 + ( kg - 5 ) * 4.0
+        Else
+            t := 40.0 + ( 20 - 5 ) * 4.0 + ( kg - 20 ) * 2.8
+        EndIf
+        t += km * 0.25
+    EndIf
+Return Round( t, 2 )
+
+
+// ════════════════════════════════════════════════════════════════════════════════
+// IMPLEMENTE AQUI A VERSÃO REFATORADA
+// ════════════════════════════════════════════════════════════════════════════════
+
+// Dica: comece pelas constantes (#define ou variáveis locais), depois
+// extraia uma function auxiliar CalcFretePorModalidade.
+
+// Static Function CalcFretePorModalidade( ... )
+//     ...
+// Return ...
+
+// Static Function CalcularFrete( ... )
+//     ...
+// Return ...
+
+// Static Function EstimarFrete( ... )
+//     ...
+// Return ...
+
+
+// ════════════════════════════════════════════════════════════════════════════════
+// Bloco de verificação — não altere
+// ════════════════════════════════════════════════════════════════════════════════
+
+User Function ExercicioFrete()
+    ConOut( "=== Verificação: Cálculo de Frete ===" )
+    ConOut( "" )
+
+    // Usando funções originais (com dívida)
+    ConOut( "Frete A, 3kg, 100km: "          + cValToChar( CalcFrete( "A",  3, 100 ) ) )
+    ConOut( "Frete A, 15kg, 200km: "         + cValToChar( CalcFrete( "A", 15, 200 ) ) )
+    ConOut( "Frete A, 30kg, 300km: "         + cValToChar( CalcFrete( "A", 30, 300 ) ) )
+    ConOut( "Frete B, 10kg, 150km: "         + cValToChar( CalcFrete( "B", 10, 150 ) ) )
+    ConOut( "Frete C, 25kg, 400km: "         + cValToChar( CalcFrete( "C", 25, 400 ) ) )
+    ConOut( "Frete A urgente, 5kg, 100km: "  + cValToChar( CalcFrete( "A",  5, 100, .T. ) ) )
+    ConOut( "Estimativa A, 3kg, 100km: "     + cValToChar( Estimar( "A", 3, 100 ) ) )
+
+    // Após implementar, descomente e verifique que os valores batem:
+    // ConOut( "" )
+    // ConOut( "--- Versão Refatorada ---" )
+    // ConOut( "Frete A, 3kg, 100km: "         + cValToChar( CalcularFrete( "A",  3, 100 ) ) )
+    // ConOut( "Frete A, 15kg, 200km: "        + cValToChar( CalcularFrete( "A", 15, 200 ) ) )
+    // ConOut( "Frete A, 30kg, 300km: "        + cValToChar( CalcularFrete( "A", 30, 300 ) ) )
+    // ConOut( "Frete B, 10kg, 150km: "        + cValToChar( CalcularFrete( "B", 10, 150 ) ) )
+    // ConOut( "Frete C, 25kg, 400km: "        + cValToChar( CalcularFrete( "C", 25, 400 ) ) )
+    // ConOut( "Frete A urgente, 5kg, 100km: " + cValToChar( CalcularFrete( "A",  5, 100, .T. ) ) )
+    // ConOut( "Estimativa A, 3kg, 100km: "    + cValToChar( EstimarFrete( "A", 3, 100 ) ) )
+Return Nil

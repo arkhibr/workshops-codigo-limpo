@@ -1,0 +1,334 @@
+/*
+ * GABARITO - Tutorial 07: Gestao de Codigo Legado
+ *
+ * Para compilar/rodar: compile no IDE Totvs ou copie para um fonte ADVPL existente.
+ */
+
+// ============================================================================
+// ETAPA 1: Testes de Caracterizacao (executados sobre o codigo original)
+// ============================================================================
+
+Static aVendedoresGab := {}
+
+Procedure InicializarDadosGab()
+    aVendedoresGab := { ;
+        {"V001", "Ana Paula",   "SR", "SP"}, ;
+        {"V002", "Carlos Lima", "JR", "RJ"}, ;
+        {"V003", "Maria Costa", "SR", "MG"}  ;
+    }
+Return
+
+
+Function CalcCommOriginal( cS, nR, cT, nM )
+    Local aCacheLocal := {}
+    Return _CalcCommCore( cS, nR, cT, nM, aVendedoresGab, @aCacheLocal )
+
+Function _CalcCommCore( cS, nR, cT, nM, aVends, aCache )
+    Local nPos  := 0
+    Local aVend := {}
+    Local nC    := 0
+
+    nPos := AScan( aCache, {|a| a[1] == cS} )
+    If nPos > 0
+        Return aCache[nPos][2]
+    EndIf
+
+    nPos := AScan( aVends, {|a| a[1] == cS} )
+    If nPos == 0
+        Return 0
+    EndIf
+    aVend := aVends[nPos]
+
+    If aVend[3] == "SR"
+        If nR >= nM
+            nC := nR * 0.08
+            If nR > nM * 1.2
+                nC := nC + ( nR - nM * 1.2 ) * 0.03
+            EndIf
+        ElseIf nR >= nM * 0.8
+            nC := nR * 0.05
+        Else
+            nC := nR * 0.03
+        EndIf
+        If cT == "AGR" ; nC := nC * 1.1 ; EndIf
+        If nR < 5000   ; nC := 0         ; EndIf
+    Else
+        If nR >= nM
+            nC := nR * 0.05
+            If nR > nM * 1.2
+                nC := nC + ( nR - nM * 1.2 ) * 0.02
+            EndIf
+        Else
+            nC := nR * 0.03
+        EndIf
+        If cT == "AGR" ; nC := nC * 1.1 ; EndIf
+        If nR < 5000   ; nC := 0         ; EndIf
+    EndIf
+
+    AAdd( aCache, {cS, Round(nC, 2)} )
+    Return Round(nC, 2)
+
+
+Procedure ExecutarTestesCaracterizacao()
+    Local lOk  := .T.
+    Local nRes := 0
+
+    InicializarDadosGab()
+
+    // SR, receita=10000, meta=8000, tipo=STD → 10000*0.08 + (10000-9600)*0.03 = 812
+    nRes := CalcCommOriginal("V001", 10000, "STD", 8000)
+    If nRes <> 812
+        ConOut("FALHOU: SR 10000/8000 STD — esperado 812, obtido " + cValToChar(nRes))
+        lOk := .F.
+    EndIf
+
+    InicializarDadosGab()
+    // SR, receita abaixo do minimo → comissao zerada
+    nRes := CalcCommOriginal("V001", 4000, "STD", 8000)
+    If nRes <> 0
+        ConOut("FALHOU: SR receita < 5000 — esperado 0, obtido " + cValToChar(nRes))
+        lOk := .F.
+    EndIf
+
+    InicializarDadosGab()
+    // SR, receita entre 80%-100% da meta → 7000*0.05 = 350
+    nRes := CalcCommOriginal("V003", 7000, "STD", 8000)
+    If nRes <> 350
+        ConOut("FALHOU: SR parcial 7000/8000 — esperado 350, obtido " + cValToChar(nRes))
+        lOk := .F.
+    EndIf
+
+    InicializarDadosGab()
+    // JR, receita acima da meta → 6000*0.05 = 300
+    nRes := CalcCommOriginal("V002", 6000, "STD", 5000)
+    If nRes <> 300
+        ConOut("FALHOU: JR 6000/5000 STD — esperado 300, obtido " + cValToChar(nRes))
+        lOk := .F.
+    EndIf
+
+    InicializarDadosGab()
+    // JR com meta AGR → 300 * 1.1 = 330
+    nRes := CalcCommOriginal("V002", 6000, "AGR", 5000)
+    If nRes <> 330
+        ConOut("FALHOU: JR 6000/5000 AGR — esperado 330, obtido " + cValToChar(nRes))
+        lOk := .F.
+    EndIf
+
+    InicializarDadosGab()
+    // JR, receita abaixo do minimo → zerada
+    nRes := CalcCommOriginal("V002", 4000, "STD", 5000)
+    If nRes <> 0
+        ConOut("FALHOU: JR receita < 5000 — esperado 0, obtido " + cValToChar(nRes))
+        lOk := .F.
+    EndIf
+
+    InicializarDadosGab()
+    // Vendedor inexistente → 0
+    nRes := CalcCommOriginal("V999", 10000, "STD", 8000)
+    If nRes <> 0
+        ConOut("FALHOU: vendedor inexistente — esperado 0, obtido " + cValToChar(nRes))
+        lOk := .F.
+    EndIf
+
+    If lOk
+        ConOut("[OK] Todos os testes de caracterizacao passaram.")
+    EndIf
+Return
+
+
+// ============================================================================
+// ETAPA 2: Smells identificados
+//
+// SMELL: variaveis Static (aCache, aVendedores) modificadas dentro de funcao
+//   → viola isolamento; duas chamadas com o mesmo vendedor retornam o valor
+//     da primeira, ignorando receita e meta diferentes.
+//
+// SMELL: parametros obscuros cS, nR, cT, nM
+//   → impossivel entender a assinatura sem ler o corpo inteiro.
+//
+// SMELL: magic numbers 0.08, 0.05, 0.03, 0.02, 1.1, 5000, 1.2
+//   → sem contexto; qualquer alteracao exige reentender a regra de negocio.
+//
+// SMELL: logica duplicada entre CalcComm e BatchCalc
+//   → mudanca na regra precisa ser feita em dois lugares.
+//
+// SMELL: comentario desatualizado ("atualizado em jan/2020")
+//
+// SMELL: dois ramos com aliquotas identicas para JR
+//   → `ElseIf nR >= nM*0.8 ... nC := nR*0.03`
+//      `Else                ... nC := nR*0.03`
+//      as duas ramificacoes fazem o mesmo — bug ou intencao?
+// ============================================================================
+
+
+// ============================================================================
+// ETAPA 3: Versao Refatorada
+// ============================================================================
+
+// Constantes nomeadas — cada numero tem contexto e pode ser alterado com seguranca
+#define ALIQUOTA_SR_META_ATINGIDA   0.08
+#define ALIQUOTA_SR_BONUS_EXCEDENTE 0.03
+#define ALIQUOTA_SR_PARCIAL         0.05
+#define ALIQUOTA_SR_ABAIXO          0.03
+
+#define ALIQUOTA_JR_META_ATINGIDA   0.05
+#define ALIQUOTA_JR_BONUS_EXCEDENTE 0.02
+#define ALIQUOTA_JR_ABAIXO          0.03
+
+#define MULTIPLICADOR_META_BONUS    1.2
+#define MULTIPLICADOR_META_PARCIAL  0.8
+#define MULTIPLICADOR_META_AGRICOLA 1.1
+#define RECEITA_MINIMA_COMISSAO     5000
+
+
+Function ComissaoSenior( nReceita, nMeta )
+    Local nComissao := 0
+
+    If nReceita >= nMeta
+        nComissao := nReceita * ALIQUOTA_SR_META_ATINGIDA
+        If nReceita > nMeta * MULTIPLICADOR_META_BONUS
+            nComissao += ( nReceita - nMeta * MULTIPLICADOR_META_BONUS ) * ALIQUOTA_SR_BONUS_EXCEDENTE
+        EndIf
+    ElseIf nReceita >= nMeta * MULTIPLICADOR_META_PARCIAL
+        nComissao := nReceita * ALIQUOTA_SR_PARCIAL
+    Else
+        nComissao := nReceita * ALIQUOTA_SR_ABAIXO
+    EndIf
+
+    Return nComissao
+
+
+Function ComissaoJunior( nReceita, nMeta )
+    Local nComissao := 0
+
+    If nReceita >= nMeta
+        nComissao := nReceita * ALIQUOTA_JR_META_ATINGIDA
+        If nReceita > nMeta * MULTIPLICADOR_META_BONUS
+            nComissao += ( nReceita - nMeta * MULTIPLICADOR_META_BONUS ) * ALIQUOTA_JR_BONUS_EXCEDENTE
+        EndIf
+    Else
+        // Nota: no original, parcial e abaixo usavam a mesma aliquota para JR.
+        // Comportamento preservado.
+        nComissao := nReceita * ALIQUOTA_JR_ABAIXO
+    EndIf
+
+    Return nComissao
+
+
+Function CalcularComissao( cVendedorId, nReceita, cTipoMeta, nMeta, aVends )
+    // Sem estado global — recebe os dados por parametro
+    Local nPos      := 0
+    Local aVend     := {}
+    Local nComissao := 0
+
+    If nReceita < RECEITA_MINIMA_COMISSAO
+        Return 0
+    EndIf
+
+    nPos := AScan( aVends, {|a| a[1] == cVendedorId} )
+    If nPos == 0
+        Return 0
+    EndIf
+    aVend := aVends[nPos]
+
+    If aVend[3] == "SR"
+        nComissao := ComissaoSenior( nReceita, nMeta )
+    Else
+        nComissao := ComissaoJunior( nReceita, nMeta )
+    EndIf
+
+    If cTipoMeta == "AGR"
+        nComissao := nComissao * MULTIPLICADOR_META_AGRICOLA
+    EndIf
+
+    Return Round( nComissao, 2 )
+
+
+Function CalcularLote( aVendas, aVends )
+    // Chama CalcularComissao — sem duplicar logica
+    Local aResultados := {}
+    Local nI          := 0
+
+    For nI := 1 To Len(aVendas)
+        AAdd( aResultados, { ;
+            aVendas[nI][1], ;
+            CalcularComissao( aVendas[nI][1], aVendas[nI][2], ;
+                              aVendas[nI][3], aVendas[nI][4], aVends ) ;
+        })
+    Next nI
+
+    Return aResultados
+
+
+// ============================================================================
+// ETAPA 4: Verificacao — os testes devem passar na versao refatorada
+// ============================================================================
+
+Procedure ExecutarTestesRefatorados( aVends )
+    Local lOk  := .T.
+    Local nRes := 0
+
+    nRes := CalcularComissao("V001", 10000, "STD", 8000, aVends)
+    If nRes <> 812 ; ConOut("FALHOU: SR 10000/8000 STD") ; lOk := .F. ; EndIf
+
+    nRes := CalcularComissao("V001", 4000, "STD", 8000, aVends)
+    If nRes <> 0   ; ConOut("FALHOU: SR receita < 5000")  ; lOk := .F. ; EndIf
+
+    nRes := CalcularComissao("V003", 7000, "STD", 8000, aVends)
+    If nRes <> 350 ; ConOut("FALHOU: SR parcial 7000/8000") ; lOk := .F. ; EndIf
+
+    nRes := CalcularComissao("V002", 6000, "STD", 5000, aVends)
+    If nRes <> 300 ; ConOut("FALHOU: JR 6000/5000 STD") ; lOk := .F. ; EndIf
+
+    nRes := CalcularComissao("V002", 6000, "AGR", 5000, aVends)
+    If nRes <> 330 ; ConOut("FALHOU: JR 6000/5000 AGR") ; lOk := .F. ; EndIf
+
+    nRes := CalcularComissao("V002", 4000, "STD", 5000, aVends)
+    If nRes <> 0   ; ConOut("FALHOU: JR receita < 5000")  ; lOk := .F. ; EndIf
+
+    nRes := CalcularComissao("V999", 10000, "STD", 8000, aVends)
+    If nRes <> 0   ; ConOut("FALHOU: vendedor inexistente") ; lOk := .F. ; EndIf
+
+    If lOk
+        ConOut("[OK] Todos os testes de caracterizacao passaram na versao refatorada.")
+    EndIf
+Return
+
+
+// ── Bloco de execucao ─────────────────────────────────────────────────────────
+
+User Function GabaritoT07()
+    Local aVends := { ;
+        {"V001", "Ana Paula",   "SR", "SP"}, ;
+        {"V002", "Carlos Lima", "JR", "RJ"}, ;
+        {"V003", "Maria Costa", "SR", "MG"}  ;
+    }
+    Local aLote  := {}
+    Local aRes   := {}
+    Local nI     := 0
+
+    ConOut("=== Etapa 1: Testes de Caracterizacao (versao original) ===")
+    ExecutarTestesCaracterizacao()
+    ConOut("")
+
+    ConOut("=== Etapa 4: Verificacao (versao refatorada) ===")
+    ExecutarTestesRefatorados(aVends)
+    ConOut("")
+
+    ConOut("=== Demonstracao da versao refatorada ===")
+    ConOut("Ana Paula (SR): " + cValToChar(CalcularComissao("V001", 10000, "STD", 8000, aVends)))
+    ConOut("Carlos Lima (JR, AGR): " + cValToChar(CalcularComissao("V002", 6000, "AGR", 5000, aVends)))
+
+    ConOut("")
+    ConOut("=== Calculo em lote ===")
+    aLote := { ;
+        {"V001", 10000, "STD", 8000}, ;
+        {"V002", 6000,  "AGR", 5000}, ;
+        {"V003", 7000,  "STD", 8000}  ;
+    }
+    aRes := CalcularLote(aLote, aVends)
+    For nI := 1 To Len(aRes)
+        ConOut("  " + aRes[nI][1] + ": " + cValToChar(aRes[nI][2]))
+    Next nI
+
+Return

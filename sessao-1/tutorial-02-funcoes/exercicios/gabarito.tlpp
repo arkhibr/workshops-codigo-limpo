@@ -1,0 +1,121 @@
+/*
+ * GABARITO 02 — Funções
+ * Abra este arquivo apenas após tentar o exercício por conta própria.
+ *
+ * Ambiente: Totvs Protheus / TLPP
+ */
+
+// ─── Solução 1: Quebrar função grande em responsabilidades únicas ─────────────
+
+#define ALIQUOTA_INSS 0.275
+
+Function CalcularSalarioLiquido( nSalarioBruto )
+Return nSalarioBruto * ( 1 - ALIQUOTA_INSS )
+
+Function CalcularBonus( nSalarioBruto )
+    If nSalarioBruto > 5000
+        Return nSalarioBruto * 0.10
+    EndIf
+Return nSalarioBruto * 0.05
+
+Function FormatarLinhaResumida( aFuncionario, nTotal )
+Return aFuncionario[1] + ": R$" + Transform( nTotal, "@E 9,999,999.99" )
+
+Function FormatarLinhaDetalhada( aFuncionario, nSalarioLiquido, nBonus, nTotal )
+Return "Nome: "           + aFuncionario[1] + ;
+       " | Salario bruto: R$" + Transform( aFuncionario[2], "@E 9,999,999.99" ) + ;
+       " | Liquido: R$"       + Transform( nSalarioLiquido,  "@E 9,999,999.99" ) + ;
+       " | Bonus: R$"         + Transform( nBonus,           "@E 9,999,999.99" ) + ;
+       " | Total: R$"         + Transform( nTotal,           "@E 9,999,999.99" )
+
+Function FormatarLinhaFuncionario( aFuncionario, cFormato )
+    Local nLiquido := CalcularSalarioLiquido( aFuncionario[2] )
+    Local nBonus   := CalcularBonus( aFuncionario[2] )
+    Local nTotal   := nLiquido + nBonus
+    If cFormato == "resumido"
+        Return FormatarLinhaResumida( aFuncionario, nTotal )
+    EndIf
+Return FormatarLinhaDetalhada( aFuncionario, nLiquido, nBonus, nTotal )
+
+Function FiltrarFuncionarios( aFuncionarios, lIncluirInativos )
+    Local aFiltrados := {}
+    Local nIdx       := 0
+    If lIncluirInativos
+        Return aFuncionarios
+    EndIf
+    For nIdx := 1 To Len( aFuncionarios )
+        If aFuncionarios[nIdx][3]
+            aAdd( aFiltrados, aFuncionarios[nIdx] )
+        EndIf
+    Next nIdx
+Return aFiltrados
+
+Function GerarRelatorio( aFuncionarios, lIncluirInativos, cFormato )
+    Local aSelecionados := FiltrarFuncionarios( aFuncionarios, lIncluirInativos )
+    Local aResultado    := {}
+    Local nIdx          := 0
+    For nIdx := 1 To Len( aSelecionados )
+        aAdd( aResultado, FormatarLinhaFuncionario( aSelecionados[nIdx], cFormato ) )
+    Next nIdx
+Return aResultado
+
+// ─── Solução 2: Duas Functions em vez de flag booleana ───────────────────────
+
+Function EnviarNotificacaoNormal( aUsuario, cMensagem )
+    ConOut( "Para: " + aUsuario[1] + " | " + cMensagem )
+Return
+
+Function EnviarNotificacaoUrgente( aUsuario, cMensagem )
+    ConOut( "[URGENTE] Para: " + aUsuario[1] + " | " + cMensagem )
+Return
+
+// ─── Solução 3: Efeito colateral explícito no retorno ────────────────────────
+// Recebe o carrinho atual e retorna um novo array com o item adicionado.
+// aCarrinho: { aItens, nTotal }
+
+Function AdicionarProdutoAoCarrinho( aCarrinho, cNome, nPreco, nQuantidade )
+    Local nSubtotal  := nPreco * nQuantidade
+    Local aItensNovos := {}
+    Local nIdx        := 0
+    For nIdx := 1 To Len( aCarrinho[1] )
+        aAdd( aItensNovos, aCarrinho[1][nIdx] )
+    Next nIdx
+    aAdd( aItensNovos, { cNome, nPreco, nQuantidade } )
+Return { aItensNovos, aCarrinho[2] + nSubtotal }
+
+// ─── Verificação ──────────────────────────────────────────────────────────────
+
+User Function GabaritoFuncoes()
+    Local aFuncionarios := {}
+    Local aResultado    := {}
+    Local nIdx          := 0
+    Local aUsuario      := {}
+    Local aCarrinho     := {}
+
+    aAdd( aFuncionarios, { "Ana",   6000.0, .T. } )
+    aAdd( aFuncionarios, { "Bruno", 4000.0, .F. } )
+    aAdd( aFuncionarios, { "Carla", 3500.0, .T. } )
+
+    ConOut( "=== Relatorio resumido (todos) ===" )
+    aResultado := GerarRelatorio( aFuncionarios, .T., "resumido" )
+    For nIdx := 1 To Len( aResultado )
+        ConOut( aResultado[nIdx] )
+    Next nIdx
+
+    ConOut( "=== Relatorio detalhado (apenas ativos) ===" )
+    aResultado := GerarRelatorio( aFuncionarios, .F., "detalhado" )
+    For nIdx := 1 To Len( aResultado )
+        ConOut( aResultado[nIdx] )
+    Next nIdx
+
+    ConOut( "=== Notificacoes ===" )
+    aUsuario := { "ana@empresa.com" }
+    EnviarNotificacaoNormal(  aUsuario, "Reuniao amanha as 9h" )
+    EnviarNotificacaoUrgente( aUsuario, "Servidor fora do ar!" )
+
+    ConOut( "=== Carrinho (sem estado global) ===" )
+    aCarrinho := { {}, 0.0 }
+    aCarrinho := AdicionarProdutoAoCarrinho( aCarrinho, "Teclado", 250.0, 1 )
+    aCarrinho := AdicionarProdutoAoCarrinho( aCarrinho, "Mouse",   80.0,  2 )
+    ConOut( "Total no carrinho: R$ " + Transform( aCarrinho[2], "@E 9,999,999.99" ) )
+Return

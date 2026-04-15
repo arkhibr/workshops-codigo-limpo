@@ -1,0 +1,128 @@
+// Ambiente: Totvs Protheus
+// gabarito.tlpp — Cálculo de fretes refatorado
+// GABARITO — Tutorial 06: Dívida Técnica
+//
+// Dívidas identificadas e pagas:
+//   1. MAGIC_NUMBER — 15.0, 25.0, 40.0, 2.5, 3.2, 4.0, 1.8, 2.1, 2.8, 0.12, 0.18, 0.25, 1.3
+//   2. DUPLICACAO   — lógica de cálculo por faixa de peso copiada em CalcFrete e Estimar
+//   3. FUNCOES      — CalcFrete faz validação de modalidade, cálculo por faixa, km e urgência
+//   4. NOMES        — tp, kg, km, t, urg não revelam intenção; Estimar é ambíguo
+
+#include "totvs.ch"
+
+// ── Constantes ──────────────────────────────────────────────────────────────────
+// Dívida 1 paga: todos os magic numbers têm nome e estão agrupados por modalidade
+
+// Limites das faixas de peso
+#define LIMITE_FAIXA_1_KG   5
+#define LIMITE_FAIXA_2_KG   20
+
+// Fator de acréscimo para entrega urgente
+#define FATOR_URGENCIA      1.3
+
+// Tarifas — Modalidade A (Econômica)
+#define TAXA_BASE_A         15.0
+#define CUSTO_FAIXA2_KG_A    2.5
+#define CUSTO_FAIXA3_KG_A    1.8
+#define CUSTO_KM_A           0.12
+
+// Tarifas — Modalidade B (Padrão)
+#define TAXA_BASE_B         25.0
+#define CUSTO_FAIXA2_KG_B    3.2
+#define CUSTO_FAIXA3_KG_B    2.1
+#define CUSTO_KM_B           0.18
+
+// Tarifas — Modalidade C (Expressa)
+#define TAXA_BASE_C         40.0
+#define CUSTO_FAIXA2_KG_C    4.0
+#define CUSTO_FAIXA3_KG_C    2.8
+#define CUSTO_KM_C           0.25
+
+
+// ── Funções auxiliares ──────────────────────────────────────────────────────────
+// Dívida 3 paga: cada função faz uma única coisa
+
+Static Function CalcCustoPeloPeso( nPesoKg, nTaxaBase, nCustoFaixa2, nCustoFaixa3 )
+    Local nCusto := 0.0
+    If nPesoKg <= LIMITE_FAIXA_1_KG
+        nCusto := nTaxaBase
+    ElseIf nPesoKg <= LIMITE_FAIXA_2_KG
+        nCusto := nTaxaBase + ( nPesoKg - LIMITE_FAIXA_1_KG ) * nCustoFaixa2
+    Else
+        // Faixa 3: acima de 20 kg
+        nCusto := nTaxaBase + ;
+                  ( LIMITE_FAIXA_2_KG - LIMITE_FAIXA_1_KG ) * nCustoFaixa2 + ;
+                  ( nPesoKg - LIMITE_FAIXA_2_KG ) * nCustoFaixa3
+    EndIf
+Return nCusto
+
+
+// ── Função central ──────────────────────────────────────────────────────────────
+// Dívida 2 paga: lógica centralizada em CalcFretePorModalidade;
+//               CalcularFrete e EstimarFrete chamam a mesma base
+
+Static Function CalcFretePorModalidade( cModalidade, nPesoKg, nDistanciaKm )
+    Local nValorBase    := 0.0
+    Local nTaxaBase     := 0.0
+    Local nCustoFaixa2  := 0.0
+    Local nCustoFaixa3  := 0.0
+    Local nCustoKm      := 0.0
+
+    // Dívida 4 paga: parâmetros com prefixo e nomes descritivos
+    If cModalidade == "A"
+        nTaxaBase    := TAXA_BASE_A
+        nCustoFaixa2 := CUSTO_FAIXA2_KG_A
+        nCustoFaixa3 := CUSTO_FAIXA3_KG_A
+        nCustoKm     := CUSTO_KM_A
+    ElseIf cModalidade == "B"
+        nTaxaBase    := TAXA_BASE_B
+        nCustoFaixa2 := CUSTO_FAIXA2_KG_B
+        nCustoFaixa3 := CUSTO_FAIXA3_KG_B
+        nCustoKm     := CUSTO_KM_B
+    ElseIf cModalidade == "C"
+        nTaxaBase    := TAXA_BASE_C
+        nCustoFaixa2 := CUSTO_FAIXA2_KG_C
+        nCustoFaixa3 := CUSTO_FAIXA3_KG_C
+        nCustoKm     := CUSTO_KM_C
+    Else
+        ConOut( "Modalidade inválida: " + cModalidade + ". Use A, B ou C." )
+        Return 0.0
+    EndIf
+
+    nValorBase := CalcCustoPeloPeso( nPesoKg, nTaxaBase, nCustoFaixa2, nCustoFaixa3 )
+    nValorBase += nDistanciaKm * nCustoKm
+Return nValorBase
+
+
+Static Function CalcularFrete( cModalidade, nPesoKg, nDistanciaKm, lUrgente )
+    Local nValorBase := 0.0
+    If lUrgente == Nil
+        lUrgente := .F.
+    EndIf
+    nValorBase := CalcFretePorModalidade( cModalidade, nPesoKg, nDistanciaKm )
+    If lUrgente
+        // Taxa de urgência: 30% de acréscimo — definido em contrato comercial
+        nValorBase := nValorBase * FATOR_URGENCIA
+    EndIf
+Return Round( nValorBase, 2 )
+
+
+Static Function EstimarFrete( cModalidade, nPesoKg, nDistanciaKm )
+    // Estimativa sem urgência — delega para CalcularFrete sem flag de urgência
+Return CalcularFrete( cModalidade, nPesoKg, nDistanciaKm, .F. )
+
+
+// ── Execução de demonstração ────────────────────────────────────────────────────
+
+User Function GabaritoFrete()
+    ConOut( "=== Gabarito: Cálculo de Frete Refatorado ===" )
+    ConOut( "" )
+
+    ConOut( "Frete A, 3kg, 100km: "          + cValToChar( CalcularFrete( "A",  3, 100 ) ) )
+    ConOut( "Frete A, 15kg, 200km: "         + cValToChar( CalcularFrete( "A", 15, 200 ) ) )
+    ConOut( "Frete A, 30kg, 300km: "         + cValToChar( CalcularFrete( "A", 30, 300 ) ) )
+    ConOut( "Frete B, 10kg, 150km: "         + cValToChar( CalcularFrete( "B", 10, 150 ) ) )
+    ConOut( "Frete C, 25kg, 400km: "         + cValToChar( CalcularFrete( "C", 25, 400 ) ) )
+    ConOut( "Frete A urgente, 5kg, 100km: "  + cValToChar( CalcularFrete( "A",  5, 100, .T. ) ) )
+    ConOut( "Estimativa A, 3kg, 100km: "     + cValToChar( EstimarFrete( "A", 3, 100 ) ) )
+Return Nil
