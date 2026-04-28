@@ -7,6 +7,31 @@ Workshop de 4 horas dividido em duas sessões, baseado em **Clean Code** de Robe
 
 ---
 
+## Agenda
+
+### Sessão 1 — Os Fundamentos da Escrita Limpa · 2 horas
+
+| # | Tutorial | Teoria | Prática | Total |
+|---|---|---|---|---|
+| 01 | Nomes Significativos | 15 min | 15 min | 30 min |
+| 02 | Funções | 15 min | 15 min | 30 min |
+| 03 | Comentários | 15 min | 15 min | 30 min |
+| 04 | Formatação | 10 min | 10 min | 20 min |
+| — | **Pulmão** | | | **10 min** |
+| | **Total** | **55 min** | **55 min** | **120 min** |
+
+### Sessão 2 — Trabalhando com Código em Escala · 2 horas
+
+| # | Tutorial | Teoria | Prática | Total |
+|---|---|---|---|---|
+| 05 | Code Review Simulado ⭐ | 15 min | 15 min | 30 min |
+| 06 | Dívida Técnica | 20 min | 20 min | 40 min |
+| 07 | Gestão de Código Legado | 20 min | 20 min | 40 min |
+| — | **Pulmão** | | | **10 min** |
+| | **Total** | **55 min** | **55 min** | **120 min** |
+
+---
+
 ## Sessão 1 — Os Fundamentos da Escrita Limpa (2 horas)
 
 | # | Tutorial | Conceito central | Referência |

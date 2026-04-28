@@ -1,6 +1,5 @@
 # Tutorial 01 — Nomes Significativos
 
-> **Sessão 1 · Bloco 1 · 20 min de teoria + 10 min de exercício**
 > Referência: *Clean Code*, Capítulo 2 — Meaningful Names
 
 ---

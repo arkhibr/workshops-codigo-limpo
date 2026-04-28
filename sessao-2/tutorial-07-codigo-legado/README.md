@@ -9,7 +9,9 @@ A definição de Feathers é deliberadamente provocadora. Código legado não é
 
 O problema central não é técnico. É psicológico. Ninguém quer tocar em código que pode quebrar silenciosamente. Sem testes, qualquer modificação é um salto no escuro: você altera uma função, o sistema compila, os logs não mostram nada — e três semanas depois um cliente reporta que os valores de um relatório estão errados. O medo paralisa. O código cresce ao redor do núcleo problemático, nunca dentro dele.
 
-Robert C. Martin descreve a **Regra do Escoteiro** em *Clean Code* (p. 14): *"Leave the campground cleaner than you found it."* Aplicada ao código, a regra é simples: cada vez que você toca um arquivo, deixe-o um pouco mais limpo do que estava — um nome melhor, uma função extraída, um magic number nomeado. Não é preciso um "sprint de refatoração". O progresso acontece de forma incremental, commit a commit, ao longo de meses.
+> [!Tip]
+> Robert C. Martin descreve a **Regra do Escoteiro** em *Clean Code* (p. 14): *"Leave the campground cleaner than you found it."* 
+Aplicada ao código, a regra é simples: cada vez que você toca um arquivo, deixe-o um pouco mais limpo do que estava — um nome melhor, uma função extraída, um magic number nomeado. Não é preciso um "sprint de refatoração". O progresso acontece de forma incremental, commit a commit, ao longo de meses.
 
 Esses dois princípios — testes como pré-requisito para mudança, e melhoria incremental a cada toque — formam a base deste tutorial.
 

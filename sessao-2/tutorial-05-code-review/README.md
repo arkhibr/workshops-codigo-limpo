@@ -1,6 +1,5 @@
 # Tutorial 05 — Code Review Simulado
 
-> **Sessão 2 · Exercício Âncora · 30 min**
 > Este exercício integra todos os tutoriais anteriores em uma revisão real de código.
 
 ---

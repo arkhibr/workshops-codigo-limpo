@@ -1,6 +1,5 @@
 # Tutorial 04 — Formatação
 
-> **Sessão 2 · Bloco 1 · 20 min de teoria + 10 min de exercício**
 > Referência: *Clean Code*, Capítulo 5 — Formatting
 
 ---
@@ -41,14 +40,28 @@ O código deve parecer escrito por uma só pessoa, mesmo sendo escrito por dezen
 
 **Limite de linha:** 88 caracteres para Python (padrão do `black`), 120 para PHP e TypeScript em muitos times — verifique com sua equipe. O limite não é arbitrário: linhas longas exigem scroll horizontal ou zoom out, quebram o modelo mental de leitura linha a linha e dificultam diffs em code review.
 
-**Alinhamento horizontal:** Martin argumenta que alinhar atribuições em colunas com espaços extras (como `nome   = "João"` / `email  = "j@ex"`) parece organizado mas esconde a estrutura real. O leitor lê a coluna de valores e ignora os nomes — exatamente o contrário do que queremos. Formatadores modernos como `black` não fazem esse alinhamento por esse motivo.
+**Alinhamento horizontal:** Martin argumenta contra alinhar atribuições em colunas com espaços extras. Exemplo:
+
+```python
+# ❌ Alinhar em coluna (parece organizado mas é prejudicial)
+nome   = "João"
+email  = "j@example.com"
+idade  = 30
+
+# ✅ Sem alinhamento (estrutura clara)
+nome = "João"
+email = "j@example.com"
+idade = 30
+```
+
+Por que é ruim? Quando você alinha os valores em coluna, o olho do leitor é atraído para aquela coluna de dados, não para os nomes das variáveis. Você lê a coluna de valores em vez de ler "variável = valor". Além disso, quando alguém adiciona um novo campo com nome mais longo, todo o alinhamento quebra. Formatadores modernos como `black` não fazem esse alinhamento por esses motivos.
 
 | Princípio | Descrição |
 |---|---|
 | **Espaço ao redor de operadores** | `x = a + b`, não `x=a+b` |
 | **Sem espaço entre função e parêntese** | `calcular(x)`, não `calcular (x)` |
 | **Comprimento máximo de linha** | 88 chars (Python/black), 80 chars (PSR-12 PHP) |
-| **Sem alinhamento em colunas** | `x = 1` / `y = 2`, não `x   = 1` / `y   = 2` |
+| **Sem alinhamento em colunas** | Cada linha com seu tamanho natural, sem espaços extras para alinhar valores |
 
 ### Regras de time vs. preferências pessoais
 

@@ -1,6 +1,5 @@
 # Tutorial 03 — Comentários
 
-> **Sessão 1 · Bloco 3 · 20 min de teoria + 10 min de exercício**
 > Referência: *Clean Code*, Capítulo 4 — Comments
 
 ---
@@ -26,7 +25,7 @@ O Clean Code categoriza comentários em dois grupos: os que agregam valor e os q
 
 **Legal** — cabeçalho de licença ou copyright. Obrigação contratual ou legal, não uma escolha.
 ```python
-# Copyright (c) 2026 Arkhi Sistemas Ltda. Licença MIT — veja LICENSE.txt
+# Copyright (c) 2026 Arkhi Business Agility Ltda. Licença MIT — veja LICENSE.txt
 ```
 
 **Informativo** — explica o formato de um retorno que o tipo não consegue expressar sozinho.

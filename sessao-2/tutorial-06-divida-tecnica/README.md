@@ -1,6 +1,5 @@
 # Tutorial 06 — Dívida Técnica
 
-> **Sessão 2 · Bloco 4 · 15 min de teoria + 15 min de exercício + 5 min de checklist**
 > Referência: *Clean Code*, Capítulo 17 — Smells and Heuristics
 
 ---
