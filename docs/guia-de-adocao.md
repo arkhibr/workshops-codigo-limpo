@@ -84,7 +84,25 @@ No próximo arquivo que você abrir, delete todo o código comentado. Se sentir 
 
 ## Tutorial 04 — Formatação
 
-<!-- placeholder — preenchido na Task 6 -->
+### Recomendação forte
+
+1. **Formatter automático, sem debate** — configure o formatter padrão da sua linguagem e ative-o no CI. Discussão de estilo em PR é tempo desperdiçado.
+2. **Funções relacionadas ficam próximas** — quem lê o código não deve pular entre arquivos ou entre o início e o fim do arquivo para entender um fluxo.
+3. **Abstrações de cima para baixo** — a função mais geral aparece antes das funções de detalhe que ela chama. (Stepdown Rule)
+
+### Sinais do seu contexto
+
+- PRs têm comentários sobre indentação, aspas simples vs. duplas ou espaçamento? → Instale um formatter e elimine essa classe de comentário para sempre.
+- É difícil seguir o fluxo de uma função porque ela chama outras definidas 200 linhas acima? → Reorganize com a Stepdown Rule.
+
+### Primeiro passo esta semana
+
+Configure o formatter padrão da sua linguagem principal e rode-o no projeto:
+- Python: `black .`
+- TypeScript/JavaScript: `prettier --write .`
+- PHP: `php-cs-fixer fix`
+
+Se o projeto já tem formatter, verifique se ele está ativo no CI.
 
 ---
 
