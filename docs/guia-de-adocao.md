@@ -44,7 +44,21 @@ No próximo arquivo que você tocar, renomeie as 3 primeiras variáveis cujo pro
 
 ## Tutorial 02 — Funções
 
-<!-- placeholder — preenchido na Task 4 -->
+### Recomendação forte
+
+1. **Uma função faz uma coisa** — se precisar de "e" para descrever o que ela faz, divida-a em duas.
+2. **Sem parâmetros booleanos** — `processar(enviar_email=True)` é uma função disfarçada de duas. Crie `processar()` e `processar_e_notificar()`.
+3. **Comando ou consulta, nunca os dois** — funções que mudam estado não retornam valor; funções que retornam valor não têm efeitos colaterais. (CQS: Command-Query Separation)
+
+### Sinais do seu contexto
+
+- A função tem mais de 20 linhas? → Provavelmente está fazendo mais de uma coisa.
+- Você precisa rolar a tela para ver o início e o fim de uma função? → Divida-a.
+- A função tem um parâmetro chamado `modo`, `tipo` ou `flag`? → Esse parâmetro está pedindo para virar duas funções.
+
+### Primeiro passo esta semana
+
+Encontre uma função que faz mais de uma coisa e extraia a segunda responsabilidade para uma nova função com nome próprio. Comece pela menor extração possível — não precisa refatorar tudo de uma vez.
 
 ---
 
