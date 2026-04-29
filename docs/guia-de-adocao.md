@@ -19,6 +19,8 @@ Qual o maior problema de qualidade de código que você enfrenta hoje?
 
 ## Tutorial 01 — Nomes Significativos
 
+> Material de referência: [sessao-1/tutorial-01-nomes/README.md](../sessao-1/tutorial-01-nomes/README.md)
+
 Qual idioma você vai adotar nos identificadores do seu projeto?
 > _:_
 
@@ -40,6 +42,8 @@ O que você vai fazer quando encontrar nomes que misturam idiomas?
 ---
 
 ## Tutorial 02 — Funções
+
+> Material de referência: [sessao-1/tutorial-02-funcoes/README.md](../sessao-1/tutorial-02-funcoes/README.md)
 
 Qual tamanho máximo você vai aceitar para uma função?
 > _:_
@@ -63,6 +67,8 @@ O que você vai fazer quando uma lista de parâmetros crescer demais?
 
 ## Tutorial 03 — Comentários
 
+> Material de referência: [sessao-1/tutorial-03-comentarios/README.md](../sessao-1/tutorial-03-comentarios/README.md)
+
 Que tipo de informação justifica um comentário no seu código?
 > _:_
 
@@ -81,6 +87,8 @@ Como você vai decidir se um trecho confuso precisa de comentário ou de refator
 ---
 
 ## Tutorial 04 — Formatação
+
+> Material de referência: [sessao-1/tutorial-04-formatacao/README.md](../sessao-1/tutorial-04-formatacao/README.md)
 
 Qual formatter você vai configurar no seu projeto?
 > _:_
@@ -101,6 +109,8 @@ Como você vai tratar comentários de estilo que aparecerem em PRs?
 
 ## Tutorial 05 — Code Review
 
+> Material de referência: [sessao-2/tutorial-05-code-review/README.md](../sessao-2/tutorial-05-code-review/README.md)
+
 Quais critérios vão compor o seu checklist mínimo de revisão?
 > _:_
 
@@ -120,6 +130,8 @@ O que você vai fazer quando discordar de uma escolha técnica numa revisão?
 
 ## Tutorial 06 — Dívida Técnica
 
+> Material de referência: [sessao-2/tutorial-06-divida-tecnica/README.md](../sessao-2/tutorial-06-divida-tecnica/README.md)
+
 Qual será a sua regra de melhoria incremental a cada PR que você tocar?
 > _:_
 
@@ -138,6 +150,8 @@ Como você vai decidir quando vale parar para pagar uma dívida maior?
 ---
 
 ## Tutorial 07 — Código Legado
+
+> Material de referência: [sessao-2/tutorial-07-codigo-legado/README.md](../sessao-2/tutorial-07-codigo-legado/README.md)
 
 Qual será a sua regra antes de modificar código sem cobertura de testes?
 > _:_
