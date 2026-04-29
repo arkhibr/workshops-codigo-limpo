@@ -128,7 +128,21 @@ No próximo PR que você revisar, aplique os critérios dos tutoriais 01 a 04 co
 
 ## Tutorial 06 — Dívida Técnica
 
-<!-- placeholder — preenchido na Task 8 -->
+### Recomendação forte
+
+1. **Regra do Escoteiro em todo PR** — deixe o código melhor do que encontrou. Não precisa ser muito: renomear uma variável ou extrair uma constante já conta.
+2. **Dívida não documentada acumula juros invisíveis** — quando não puder pagar agora, registre: crie um issue ou card descrevendo o problema e o impacto estimado.
+3. **Magic numbers são dívida técnica visível** — `if status == 3` não diz nada. `if status == STATUS_AGUARDANDO_APROVACAO` diz tudo. Extraia para constantes nomeadas.
+
+### Sinais do seu contexto
+
+- Há módulos que ninguém quer tocar com medo de quebrar algo? → Esses módulos têm dívida técnica crítica acumulada. Não ignore — registre e planeje.
+- As estimativas de prazo sempre incluem uma margem para "consertar antes de entregar"? → A dívida está controlando o ritmo do time.
+- O mesmo bloco de código aparece em mais de dois lugares? → Duplicação é dívida técnica. Extraia para uma função compartilhada.
+
+### Primeiro passo esta semana
+
+No próximo PR, encontre um magic number ou string literal espalhado pelo código e extraia para uma constante com nome que revele intenção. Uma mudança pequena, mas que melhora a leitura imediatamente.
 
 ---
 
