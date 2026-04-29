@@ -75,6 +75,81 @@ Ferramentas que automatizam e eliminam a discussão:
 
 > **👉 ATIVIDADE:** O código da equipe tem um formatador configurado? Se não, qual seria o primeiro passo para adotar um? Discuta com o time qual ferramenta e qual configuração usar antes de sair formatando.
 
+### Convenções de Nomenclatura (Casing)
+
+Parte da formatação é invisível para os formatadores automáticos: a **forma como os nomes são escritos**. Existem quatro convenções principais, e misturá-las sem critério é tão prejudicial quanto código sem espaços — o leitor perde o padrão e gasta energia decodificando a estrutura em vez de entender a lógica.
+
+| Convenção | Aparência | Regra |
+|---|---|---|
+| **snake_case** | `calcular_total_pedido` | tudo minúsculo, palavras separadas por `_` |
+| **camelCase** | `calcularTotalPedido` | primeira palavra minúscula, demais com inicial maiúscula |
+| **PascalCase** | `CalcularTotalPedido` | todas as palavras com inicial maiúscula (também chamado de *UpperCamelCase*) |
+| **kebab-case** | `calcular-total-pedido` | tudo minúsculo, palavras separadas por `-` (inválido como identificador na maioria das linguagens) |
+| **SCREAMING_SNAKE_CASE** | `DESCONTO_PADRAO` | tudo maiúsculo, palavras separadas por `_`; reservado para constantes |
+
+#### Recomendações por linguagem
+
+**Python** (conforme PEP 8):
+
+| Elemento | Convenção | Exemplo |
+|---|---|---|
+| Variáveis e funções | `snake_case` | `calcular_desconto()` |
+| Classes | `PascalCase` | `GerenciadorDeEstoque` |
+| Constantes de módulo | `SCREAMING_SNAKE_CASE` | `DESCONTO_PADRAO = 0.05` |
+| Parâmetros e atributos | `snake_case` | `self.nome_loja` |
+
+**PHP** (conforme PSR-1 e PSR-12):
+
+| Elemento | Convenção | Exemplo |
+|---|---|---|
+| Variáveis e parâmetros | `camelCase` | `$nomeCliente` |
+| Métodos | `camelCase` | `adicionarProduto()` |
+| Classes e interfaces | `PascalCase` | `GerenciadorDeEstoque` |
+| Constantes de classe | `SCREAMING_SNAKE_CASE` | `const LIMITE_ITENS = 100` |
+| Namespaces | `PascalCase` | `App\Services\Estoque` |
+
+**TypeScript / JavaScript** (conforme convenções da comunidade e ESLint):
+
+| Elemento | Convenção | Exemplo |
+|---|---|---|
+| Variáveis e funções | `camelCase` | `calcularDesconto()` |
+| Classes e tipos | `PascalCase` | `GerenciadorDeEstoque` |
+| Interfaces | `PascalCase` (sem prefixo `I`) | `Produto`, não `IProduto` |
+| Constantes globais | `SCREAMING_SNAKE_CASE` | `const DESCONTO_PADRAO = 0.05` |
+| Nomes de arquivos | `kebab-case` | `gerenciador-de-estoque.ts` |
+| Enums | `PascalCase` (membros em `PascalCase` ou `SCREAMING_SNAKE_CASE`) | `enum StatusPedido { Pendente, Aprovado }` |
+
+**ADVPL/TLPP** (conforme guia Totvs/TDS):
+
+| Elemento | Convenção | Exemplo |
+|---|---|---|
+| Variáveis locais | Prefixo de tipo + `PascalCase` | `nTotal`, `cNome`, `lAtivo`, `aItens` |
+| Funções e métodos | `PascalCase` | `CalcularTotalEstoque()` |
+| Classes | `PascalCase` | `GerenciadorEstoque` |
+| Constantes | `SCREAMING_SNAKE_CASE` | `#DEFINE DESCONTO_PADRAO 0.05` |
+
+> O prefixo de tipo em ADVPL/TLPP (`n` para numérico, `c` para caractere, `l` para lógico, `a` para array, `o` para objeto) é uma convenção da plataforma — não é opcional. O TDS e os linters da Totvs verificam esse padrão.
+
+#### O erro mais comum: misturar convenções no mesmo escopo
+
+```python
+# ❌ Mistura de convenções no mesmo arquivo Python
+class gerenciador_estoque:          # deveria ser PascalCase
+    def AdicionarProduto(self, ...): # deveria ser snake_case
+        NomeCliente = "João"         # deveria ser snake_case
+        DESCONTO = 0.05             # correto para constante, mas aqui é variável local
+```
+
+```python
+# ✅ Convenções corretas e consistentes
+class GerenciadorDeEstoque:
+    def adicionar_produto(self, ...):
+        nome_cliente = "João"
+        desconto_aplicado = 0.05
+```
+
+A mistura é particularmente danosa porque **engana o leitor**: `PascalCase` sinaliza "isto é uma classe"; quando uma função usa `PascalCase`, o leitor para e pensa — e esse custo cognitivo se acumula.
+
 ---
 
 ## 3. O Problema na Prática
