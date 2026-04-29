@@ -24,7 +24,21 @@ Este guia ajuda você a transformar o que aprendeu no workshop em ações concre
 
 ## Tutorial 01 — Nomes Significativos
 
-<!-- placeholder — preenchido na Task 3 -->
+### Recomendação forte
+
+1. **Nomes revelam intenção** — se precisar de um comentário para explicar o que uma variável faz, renomeie-a.
+2. **Idioma consistente** — se o domínio do negócio está em português, use português em todos os identificadores. Misturar idiomas cria fricção desnecessária.
+3. **Sem abreviações inventadas** — `qtd_it_ped` não é mais rápido de ler do que `quantidade_itens_pedido`. É apenas mais difícil.
+
+### Sinais do seu contexto
+
+- Alguém do time perguntou o que uma variável significa? → Esse nome precisa mudar agora.
+- Você abriu um arquivo e não conseguiu entender o que a função principal faz em menos de 30 segundos? → Comece pelos nomes das funções.
+- O código mistura inglês e português nos identificadores? → Escolha um idioma e aplique como padrão de equipe.
+
+### Primeiro passo esta semana
+
+No próximo arquivo que você tocar, renomeie as 3 primeiras variáveis cujo propósito não é imediatamente óbvio pelo nome. Não é necessário pedir aprovação — renomear uma variável é a mudança mais segura que existe.
 
 ---
 
