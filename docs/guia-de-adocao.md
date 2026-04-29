@@ -116,7 +116,7 @@ Se o projeto já tem formatter, verifique se ele está ativo no CI.
 
 ### Sinais do seu contexto
 
-- PRs são aprovadas em menos de 2 minutos sem comentários? → O processo de revisão precisa de estrutura.
+- PRs são aprovados em menos de 2 minutos sem comentários? → O processo de revisão precisa de estrutura.
 - Os mesmos problemas aparecem repetidamente nas revisões? → Transforme-os em um checklist compartilhado pelo time.
 - Revisores ficam em dúvida sobre o que verificar? → O checklist dos 4 primeiros tutoriais é o ponto de partida.
 
