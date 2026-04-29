@@ -108,7 +108,21 @@ Se o projeto já tem formatter, verifique se ele está ativo no CI.
 
 ## Tutorial 05 — Code Review
 
-<!-- placeholder — preenchido na Task 7 -->
+### Recomendação forte
+
+1. **"LGTM" sem análise não é revisão** — toda aprovação deve ter pelo menos uma observação genuína sobre o código.
+2. **Checklist mínimo antes de aprovar:** nomes revelam intenção? funções fazem uma coisa? comentários desnecessários removidos? formatter aplicado?
+3. **Feedback no código, não na pessoa** — "essa função pode ser dividida em duas" é acionável. "Você escreveu isso de forma confusa" não é.
+
+### Sinais do seu contexto
+
+- PRs são aprovadas em menos de 2 minutos sem comentários? → O processo de revisão precisa de estrutura.
+- Os mesmos problemas aparecem repetidamente nas revisões? → Transforme-os em um checklist compartilhado pelo time.
+- Revisores ficam em dúvida sobre o que verificar? → O checklist dos 4 primeiros tutoriais é o ponto de partida.
+
+### Primeiro passo esta semana
+
+No próximo PR que você revisar, aplique os critérios dos tutoriais 01 a 04 como checklist explícito e deixe pelo menos 2 observações concretas — mesmo que seja para elogiar uma boa escolha de nome.
 
 ---
 
