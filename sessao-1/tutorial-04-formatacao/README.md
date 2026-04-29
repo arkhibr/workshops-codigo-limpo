@@ -68,9 +68,9 @@ Por que é ruim? Quando você alinha os valores em coluna, o olho do leitor é a
 A mensagem do Clean Code é clara: formatação pessoal perde para formatação de time. Se o time usa 4 espaços e você prefere 2, use 4 espaços. O objetivo é que o código pareça escrito por uma só mão.
 
 Ferramentas que automatizam e eliminam a discussão:
-- **Python:** `black` (formatador sem opiniões) + `flake8` (linter PEP 8)
-- **TypeScript/JS:** `prettier` + `eslint`
-- **PHP:** `php-cs-fixer` (aplica PSR-12) ou `phpcs` (verifica)
+- **Python:** [`black`](https://black.readthedocs.io/) (formatador sem opiniões) + [`flake8`](https://flake8.pycqa.org/) (linter PEP 8)
+- **TypeScript/JS:** [`prettier`](https://prettier.io/) + [`eslint`](https://eslint.org/) — ou [`Biome`](https://biomejs.dev/pt-br/) (substitui ambos com uma única ferramenta, escrito em Rust)
+- **PHP:** [`php-cs-fixer`](https://github.com/PHP-CS-Fixer/PHP-CS-Fixer) (aplica PSR-12) ou [`phpcs`](https://github.com/squizlabs/PHP_CodeSniffer) (verifica)
 - **ADVPL/TLPP:** a Totvs recomenda 4 espaços de indentação e alinhamento de atribuições com `:=` em bloco — consulte o guia do TDS
 
 > **👉 ATIVIDADE:** O código da equipe tem um formatador configurado? Se não, qual seria o primeiro passo para adotar um? Discuta com o time qual ferramenta e qual configuração usar antes de sair formatando.
@@ -288,9 +288,9 @@ class GerenciadorDeEstoque
 }
 ```
 
-Ferramentas: `phpcs --standard=PSR12` para verificar; `php-cs-fixer fix` para corrigir automaticamente.
+Ferramentas: [`phpcs`](https://github.com/squizlabs/PHP_CodeSniffer) (`phpcs --standard=PSR12` para verificar); [`php-cs-fixer`](https://github.com/PHP-CS-Fixer/PHP-CS-Fixer) (`php-cs-fixer fix` para corrigir automaticamente).
 
-### TypeScript (ESLint + Prettier)
+### TypeScript (ESLint + Prettier / Biome)
 
 ```typescript
 // ❌ Ruim
@@ -321,7 +321,7 @@ class GerenciadorDeEstoque {
 }
 ```
 
-Ferramentas: `prettier --write` para formatar; `eslint --fix` para regras semânticas.
+Ferramentas: [`prettier`](https://prettier.io/) (`prettier --write`) para formatar; [`eslint`](https://eslint.org/) (`eslint --fix`) para regras semânticas. Alternativa moderna: [`Biome`](https://biomejs.dev/pt-br/) faz as duas coisas com um único comando (`biome check --write`).
 
 ### ADVPL/TLPP
 
@@ -366,7 +366,7 @@ Return Round( nTotal, 2 )
 - **Constantes no topo** — nunca intercaladas com lógica; nomeadas em `SCREAMING_SNAKE_CASE`
 - **Métodos públicos antes dos privados** — o leitor lê a interface pública primeiro, os detalhes depois
 - **Uma linha em branco entre métodos, duas entre classes** — a formatação vertical comunica agrupamento
-- **Delegue ao formatador** — `black`, `prettier`, `php-cs-fixer`: configure uma vez e nunca mais discuta espaçamento em code review
+- **Delegue ao formatador** — [`black`](https://black.readthedocs.io/), [`prettier`](https://prettier.io/) / [`Biome`](https://biomejs.dev/pt-br/), [`php-cs-fixer`](https://github.com/PHP-CS-Fixer/PHP-CS-Fixer): configure uma vez e nunca mais discuta espaçamento em code review
 
 ---
 
@@ -399,7 +399,10 @@ flake8 exercicios/gabarito.py --max-line-length 88
 - Ferramenta Python: [`black`](https://black.readthedocs.io/) — formatador automático sem configuração
 - Ferramenta Python: [`flake8`](https://flake8.pycqa.org/) — linter que verifica PEP 8
 - Ferramenta TS/JS: [`prettier`](https://prettier.io/) — formatador automático para TS, JS, JSON, CSS
+- Ferramenta TS/JS: [`eslint`](https://eslint.org/) — linter com regras semânticas e de estilo para JS/TS
+- Ferramenta TS/JS: [`Biome`](https://biomejs.dev/pt-br/) — substitui Prettier + ESLint; escrito em Rust, ~25× mais rápido
 - Ferramenta PHP: [`php-cs-fixer`](https://github.com/PHP-CS-Fixer/PHP-CS-Fixer) — aplica PSR-12 automaticamente
+- Ferramenta PHP: [`phpcs`](https://github.com/squizlabs/PHP_CodeSniffer) — verifica conformidade com PSR-12 e outros padrões
 
 ---
 
