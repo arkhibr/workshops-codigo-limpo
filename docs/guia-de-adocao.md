@@ -1,165 +1,169 @@
 # Guia de Adoção — Clean Code na Prática
 
-Este guia ajuda você a transformar o que aprendeu no workshop em ações concretas no seu trabalho. Ele não é um resumo do material — é uma ferramenta de decisão.
-
-**Como usar:**
-- **Logo após o workshop:** leia a tabela de prioridades e escolha o que aplicar primeiro
-- **Nos próximos meses:** volte à seção do tutorial relevante quando um tema aparecer no seu trabalho
+Responda as perguntas abaixo no seu próprio contexto. Ao final, suas respostas formam o seu guia prático de adoção.
 
 ---
 
-## Tabela de Prioridades
+## Meu Projeto
 
-| Tutorial | Aplique sempre | Aplique se… |
-|---|---|---|
-| **01 — Nomes** | Nomes que revelam intenção; idioma consistente no projeto | …o time demora para entender o que uma variável ou função faz |
-| **02 — Funções** | Uma função faz uma coisa; sem parâmetros booleanos | …funções têm mais de 20 linhas ou fazem duas coisas distintas |
-| **03 — Comentários** | Comentar só o *porquê*; TODOs com número de issue ou card | …o código herdado tem comentários enganosos ou código comentado |
-| **04 — Formatação** | Formatter automático ativo no projeto | …ainda não há formatter configurado ou PRs têm ruído de espaçamento |
-| **05 — Code Review** | Checklist mínimo antes de aprovar qualquer PR | …revisões hoje são informais ou os mesmos problemas se repetem |
-| **06 — Dívida Técnica** | Regra do Escoteiro em cada PR — deixe melhor do que encontrou | …há módulos que ninguém quer tocar com medo de quebrar algo |
-| **07 — Código Legado** | Testes de caracterização antes de qualquer mudança em código sem testes | …vai refatorar código sem cobertura de testes |
+Qual linguagem principal você usa?
+> _:_
+
+Qual o tamanho do seu time?
+> _:_
+
+Qual o maior problema de qualidade de código que você enfrenta hoje?
+> _:_
 
 ---
 
 ## Tutorial 01 — Nomes Significativos
 
-### Recomendação forte
+Qual idioma você vai adotar nos identificadores do seu projeto?
+> _:_
 
-1. **Nomes revelam intenção** — se precisar de um comentário para explicar o que uma variável faz, renomeie-a.
-2. **Idioma consistente** — se o domínio do negócio está em português, use português em todos os identificadores. Misturar idiomas cria fricção desnecessária.
-3. **Sem abreviações inventadas** — `qtd_it_ped` não é mais rápido de ler do que `quantidade_itens_pedido`. É apenas mais difícil.
+Como você vai nomear variáveis que representam coleções ou listas?
+> _:_
 
-### Sinais do seu contexto
+O que você vai fazer quando encontrar uma abreviação obscura no código?
+> _:_
 
-- Alguém do time perguntou o que uma variável significa? → Esse nome precisa mudar agora.
-- Você abriu um arquivo e não conseguiu entender o que a função principal faz em menos de 30 segundos? → Comece pelos nomes das funções.
-- O código mistura inglês e português nos identificadores? → Escolha um idioma e aplique como padrão de equipe.
+Que critério você vai usar para decidir se um nome precisa ser renomeado?
+> _:_
 
-### Primeiro passo esta semana
+O que você vai fazer quando encontrar nomes que misturam idiomas?
+> _:_
 
-No próximo arquivo que você tocar, renomeie as 3 primeiras variáveis cujo propósito não é imediatamente óbvio pelo nome. Não é necessário pedir aprovação — renomear uma variável é a mudança mais segura que existe.
+**Minha decisão para este tutorial:**
+> _:_
 
 ---
 
 ## Tutorial 02 — Funções
 
-### Recomendação forte
+Qual tamanho máximo você vai aceitar para uma função?
+> _:_
 
-1. **Uma função faz uma coisa** — se precisar de "e" para descrever o que ela faz, divida-a em duas.
-2. **Sem parâmetros booleanos** — `processar(enviar_email=True)` é uma função disfarçada de duas. Crie `processar()` e `processar_e_notificar()`.
-3. **Comando ou consulta, nunca os dois** — funções que mudam estado não retornam valor; funções que retornam valor não têm efeitos colaterais. (CQS: Command-Query Separation)
+Como você vai tratar uma função que claramente faz mais de uma coisa?
+> _:_
 
-### Sinais do seu contexto
+O que você vai fazer quando encontrar um parâmetro booleano em uma função?
+> _:_
 
-- A função tem mais de 20 linhas? → Provavelmente está fazendo mais de uma coisa.
-- Você precisa rolar a tela para ver o início e o fim de uma função? → Divida-a.
-- A função tem um parâmetro chamado `modo`, `tipo` ou `flag`? → Esse parâmetro está pedindo para virar duas funções.
+Como você vai separar funções que mudam estado das que retornam valor?
+> _:_
 
-### Primeiro passo esta semana
+O que você vai fazer quando uma lista de parâmetros crescer demais?
+> _:_
 
-Encontre uma função que faz mais de uma coisa e extraia a segunda responsabilidade para uma nova função com nome próprio. Comece pela menor extração possível — não precisa refatorar tudo de uma vez.
+**Minha decisão para este tutorial:**
+> _:_
 
 ---
 
 ## Tutorial 03 — Comentários
 
-### Recomendação forte
+Que tipo de informação justifica um comentário no seu código?
+> _:_
 
-1. **Comentários explicam o *porquê*, não o *o quê*** — o código já diz o que faz. Se precisar explicar o que faz, melhore o código.
-2. **Código comentado é lixo** — delete-o. O histórico do Git guarda o passado; o arquivo não precisa guardar.
-3. **TODOs têm dono e rastreabilidade** — `# TODO: refatorar isso` sem contexto nunca será resolvido. Use `# TODO [#123]: refatorar após migração de schema`.
+O que você vai fazer quando encontrar código comentado no projeto?
+> _:_
 
-### Sinais do seu contexto
+Qual formato você vai adotar para TODOs rastreáveis no seu projeto?
+> _:_
 
-- O arquivo tem blocos de código comentado que ninguém toca? → Delete-os no próximo PR.
-- Os comentários descrevem o que o código faz em vez de por que ele faz? → Substitua pelo nome correto da função ou variável.
-- Há TODOs sem número de issue no projeto? → Eles nunca serão feitos ou nunca deveriam ser feitos — decida qual.
+Como você vai decidir se um trecho confuso precisa de comentário ou de refatoração?
+> _:_
 
-### Primeiro passo esta semana
-
-No próximo arquivo que você abrir, delete todo o código comentado. Se sentir insegurança, lembre: o Git tem tudo.
+**Minha decisão para este tutorial:**
+> _:_
 
 ---
 
 ## Tutorial 04 — Formatação
 
-### Recomendação forte
+Qual formatter você vai configurar no seu projeto?
+> _:_
 
-1. **Formatter automático, sem debate** — configure o formatter padrão da sua linguagem e ative-o no CI. Discussão de estilo em PR é tempo desperdiçado.
-2. **Funções relacionadas ficam próximas** — quem lê o código não deve pular entre arquivos ou entre o início e o fim do arquivo para entender um fluxo.
-3. **Abstrações de cima para baixo** — a função mais geral aparece antes das funções de detalhe que ela chama. (Stepdown Rule)
+Em que momento do fluxo de trabalho você vai rodar o formatter?
+> _:_
 
-### Sinais do seu contexto
+Como você vai organizar a ordem das funções dentro de um arquivo?
+> _:_
 
-- PRs têm comentários sobre indentação, aspas simples vs. duplas ou espaçamento? → Instale um formatter e elimine essa classe de comentário para sempre.
-- É difícil seguir o fluxo de uma função porque ela chama outras definidas 200 linhas acima? → Reorganize com a Stepdown Rule.
+Como você vai tratar comentários de estilo que aparecerem em PRs?
+> _:_
 
-### Primeiro passo esta semana
-
-Configure o formatter padrão da sua linguagem principal e rode-o no projeto:
-- Python: `black .`
-- TypeScript/JavaScript: `prettier --write .`
-- PHP: `php-cs-fixer fix`
-
-Se o projeto já tem formatter, verifique se ele está ativo no CI.
+**Minha decisão para este tutorial:**
+> _:_
 
 ---
 
 ## Tutorial 05 — Code Review
 
-### Recomendação forte
+Quais critérios vão compor o seu checklist mínimo de revisão?
+> _:_
 
-1. **"LGTM" sem análise não é revisão** — toda aprovação deve ter pelo menos uma observação genuína sobre o código.
-2. **Checklist mínimo antes de aprovar:** nomes revelam intenção? funções fazem uma coisa? comentários desnecessários removidos? formatter aplicado?
-3. **Feedback no código, não na pessoa** — "essa função pode ser dividida em duas" é acionável. "Você escreveu isso de forma confusa" não é.
+Quanto tempo mínimo você vai dedicar a cada revisão?
+> _:_
 
-### Sinais do seu contexto
+Como você vai formatar um comentário sobre código problemático?
+> _:_
 
-- PRs são aprovados em menos de 2 minutos sem comentários? → O processo de revisão precisa de estrutura.
-- Os mesmos problemas aparecem repetidamente nas revisões? → Transforme-os em um checklist compartilhado pelo time.
-- Revisores ficam em dúvida sobre o que verificar? → O checklist dos 4 primeiros tutoriais é o ponto de partida.
+O que você vai fazer quando discordar de uma escolha técnica numa revisão?
+> _:_
 
-### Primeiro passo esta semana
-
-No próximo PR que você revisar, aplique os critérios dos tutoriais 01 a 04 como checklist explícito e deixe pelo menos 2 observações concretas — mesmo que seja para elogiar uma boa escolha de nome.
+**Minha decisão para este tutorial:**
+> _:_
 
 ---
 
 ## Tutorial 06 — Dívida Técnica
 
-### Recomendação forte
+Qual será a sua regra de melhoria incremental a cada PR que você tocar?
+> _:_
 
-1. **Regra do Escoteiro em todo PR** — deixe o código melhor do que encontrou. Não precisa ser muito: renomear uma variável ou extrair uma constante já conta.
-2. **Dívida não documentada acumula juros invisíveis** — quando não puder pagar agora, registre: crie um issue ou card descrevendo o problema e o impacto estimado.
-3. **Magic numbers são dívida técnica visível** — `if status == 3` não diz nada. `if status == STATUS_AGUARDANDO_APROVACAO` diz tudo. Extraia para constantes nomeadas.
+Como você vai registrar dívida técnica que não pode resolver agora?
+> _:_
 
-### Sinais do seu contexto
+O que você vai fazer quando encontrar magic numbers ou strings literais no código?
+> _:_
 
-- Há módulos que ninguém quer tocar com medo de quebrar algo? → Esses módulos têm dívida técnica crítica acumulada. Não ignore — registre e planeje.
-- As estimativas de prazo sempre incluem uma margem para "consertar antes de entregar"? → A dívida está controlando o ritmo do time.
-- O mesmo bloco de código aparece em mais de dois lugares? → Duplicação é dívida técnica. Extraia para uma função compartilhada.
+Como você vai decidir quando vale parar para pagar uma dívida maior?
+> _:_
 
-### Primeiro passo esta semana
-
-No próximo PR, encontre um magic number ou string literal espalhado pelo código e extraia para uma constante com nome que revele intenção. Uma mudança pequena, mas que melhora a leitura imediatamente.
+**Minha decisão para este tutorial:**
+> _:_
 
 ---
 
 ## Tutorial 07 — Código Legado
 
-### Recomendação forte
+Qual será a sua regra antes de modificar código sem cobertura de testes?
+> _:_
 
-1. **Testes de caracterização antes de qualquer mudança** — antes de alterar código legado sem testes, escreva testes que documentem o comportamento atual. Eles são sua rede de segurança.
-2. **Encontre as costuras antes de refatorar** — uma costura (seam) é um ponto onde você pode isolar e substituir comportamento sem mudar o código de produção. Procure-as antes de sair mudando.
-3. **Mudanças incrementais são mais seguras que reescritas** — o Strangler Fig Pattern (substituir partes do sistema gradualmente) tem muito mais chances de sucesso do que uma reescrita completa.
+Como você vai escrever testes de caracterização para um módulo que não conhece bem?
+> _:_
 
-### Sinais do seu contexto
+O que você vai fazer quando precisar refatorar um módulo legado grande?
+> _:_
 
-- Vai alterar uma função que não tem testes? → Escreva testes de caracterização primeiro. Não é opcional.
-- O módulo tem mais de 500 linhas e foi escrito há mais de 2 anos sem testes? → Considere o Strangler Fig: construa a nova versão ao lado e redirecione gradualmente.
-- Você não sabe ao certo o que o código faz, mas não pode quebrá-lo? → Escreva testes que provem o comportamento atual antes de entender o código em profundidade.
+Em que situação você vai propor o Strangler Fig em vez de refatoração incremental?
+> _:_
 
-### Primeiro passo esta semana
+**Minha decisão para este tutorial:**
+> _:_
 
-Escolha uma função legada que você precisará alterar em breve e escreva 3 testes de caracterização que documentem o comportamento atual — incluindo comportamentos que pareçam estranhos. Eles são o contrato do código hoje.
+---
+
+## Meu Plano de Adoção
+
+| Tutorial | Minha decisão principal |
+|---|---|
+| 01 — Nomes | |
+| 02 — Funções | |
+| 03 — Comentários | |
+| 04 — Formatação | |
+| 05 — Code Review | |
+| 06 — Dívida Técnica | |
+| 07 — Código Legado | |
