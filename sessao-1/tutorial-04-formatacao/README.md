@@ -8,66 +8,21 @@
 
 Formatação é comunicação. Quando você abre um arquivo e o código está espremido, sem espaços, com imports embaralhados e linhas quilométricas, o seu cérebro gasta energia processando a estrutura antes mesmo de começar a processar a lógica. Esse custo se repete toda vez que alguém lê o arquivo.
 
-Robert Martin usa no Capítulo 5 a **metáfora do jornal** (p. 80): um bom jornal tem manchetes legíveis de longe, subtítulos que orientam a leitura, e os detalhes só aparecem nos parágrafos inferiores. Quem lê decide em segundos se vale aprofundar. Um arquivo de código deve funcionar do mesmo jeito: lido de cima para baixo, com o nível de detalhe aumentando à medida que você desce. As funções públicas e de alto nível ficam no topo; os detalhes de implementação ficam embaixo.
+Robert Martin usa no Capítulo 5 a **metáfora do jornal** (p. 80): um bom jornal tem manchetes legíveis de longe, subtítulos que orientam a leitura, e os detalhes só aparecem nos parágrafos inferiores. Quem lê decide em segundos se vale aprofundar. Um arquivo de código deve funcionar do mesmo jeito: lido de cima para baixo, com o nível de detalhe aumentando à medida que você desce.
 
 Martin classifica a formatação em dois eixos: **vertical** (como o código se organiza de cima para baixo) e **horizontal** (como cada linha está organizada). Ambos seguem uma única ideia:
 
 > *"A team of developers should agree upon a single formatting style, and then every member of that team should use that style."*
 > — Robert C. Martin, Clean Code, p. 76
 
-O código deve parecer escrito por uma só pessoa, mesmo sendo escrito por dezenas.
-
 ---
 
-## 2. Conceito Central
+## 2. A Regra Fundamental: Código é para Times
 
-### Formatação Vertical
+A mensagem mais importante do Clean Code sobre formatação não é sobre espaços ou chaves — é sobre **consistência de time**. Formatação pessoal perde para formatação de time. Se o time usa 4 espaços e você prefere 2, use 4 espaços. O objetivo é que o código pareça escrito por uma só mão.
 
-**Abertura vertical (blank lines):** cada grupo de linhas relacionadas forma um "parágrafo" de código. Uma linha em branco entre parágrafos diz ao leitor: "este pensamento terminou, o próximo começa". Ausência total de linhas em branco funde conceitos distintos em um bloco visual impenetrável.
+Na prática, a melhor decisão é delegar ao formatador e nunca mais discutir o assunto em code review:
 
-**Distância vertical:** conceitos relacionados devem ficar próximos no arquivo. Funções que se chamam devem estar perto uma da outra — idealmente, a função chamadora logo acima da função chamada. Quando um leitor precisa rolar centenas de linhas para encontrar o que uma função chama, o custo cognitivo dispara.
-
-**Declaração perto do uso:** declare variáveis perto de onde são usadas, não no topo da função. Em Python e linguagens modernas, não há razão para declarar todas as variáveis no início — isso é herança do C dos anos 1970. Uma variável declarada 40 linhas antes do uso força o leitor a manter contexto desnecessário.
-
-| Princípio | Descrição |
-|---|---|
-| **Conceitos relacionados ficam juntos** | Variáveis declaradas perto de onde são usadas |
-| **Conceitos não relacionados ficam separados** | Linha em branco entre grupos lógicos distintos |
-| **Dependências ficam próximas** | Funções que chamam outras ficam logo acima ou abaixo |
-| **Ordem de leitura natural** | Funções públicas no topo; funções privadas abaixo |
-
-### Formatação Horizontal
-
-**Limite de linha:** 88 caracteres para Python (padrão do `black`), 120 para PHP e TypeScript em muitos times — verifique com sua equipe. O limite não é arbitrário: linhas longas exigem scroll horizontal ou zoom out, quebram o modelo mental de leitura linha a linha e dificultam diffs em code review.
-
-**Alinhamento horizontal:** Martin argumenta contra alinhar atribuições em colunas com espaços extras. Exemplo:
-
-```python
-# ❌ Alinhar em coluna (parece organizado mas é prejudicial)
-nome   = "João"
-email  = "j@example.com"
-idade  = 30
-
-# ✅ Sem alinhamento (estrutura clara)
-nome = "João"
-email = "j@example.com"
-idade = 30
-```
-
-Por que é ruim? Quando você alinha os valores em coluna, o olho do leitor é atraído para aquela coluna de dados, não para os nomes das variáveis. Você lê a coluna de valores em vez de ler "variável = valor". Além disso, quando alguém adiciona um novo campo com nome mais longo, todo o alinhamento quebra. Formatadores modernos como `black` não fazem esse alinhamento por esses motivos.
-
-| Princípio | Descrição |
-|---|---|
-| **Espaço ao redor de operadores** | `x = a + b`, não `x=a+b` |
-| **Sem espaço entre função e parêntese** | `calcular(x)`, não `calcular (x)` |
-| **Comprimento máximo de linha** | 88 chars (Python/black), 80 chars (PSR-12 PHP) |
-| **Sem alinhamento em colunas** | Cada linha com seu tamanho natural, sem espaços extras para alinhar valores |
-
-### Regras de time vs. preferências pessoais
-
-A mensagem do Clean Code é clara: formatação pessoal perde para formatação de time. Se o time usa 4 espaços e você prefere 2, use 4 espaços. O objetivo é que o código pareça escrito por uma só mão.
-
-Ferramentas que automatizam e eliminam a discussão:
 - **Python:** [`black`](https://black.readthedocs.io/) (formatador sem opiniões) + [`flake8`](https://flake8.pycqa.org/) (linter PEP 8)
 - **TypeScript/JS:** [`prettier`](https://prettier.io/) + [`eslint`](https://eslint.org/) — ou [`Biome`](https://biomejs.dev/pt-br/) (substitui ambos com uma única ferramenta, escrito em Rust)
 - **PHP:** [`php-cs-fixer`](https://github.com/PHP-CS-Fixer/PHP-CS-Fixer) (aplica PSR-12) ou [`phpcs`](https://github.com/squizlabs/PHP_CodeSniffer) (verifica)
@@ -75,7 +30,9 @@ Ferramentas que automatizam e eliminam a discussão:
 
 > **👉 ATIVIDADE:** O código da equipe tem um formatador configurado? Se não, qual seria o primeiro passo para adotar um? Discuta com o time qual ferramenta e qual configuração usar antes de sair formatando.
 
-### Convenções de Nomenclatura (Casing)
+---
+
+## 3. Convenções de Nomenclatura (Casing)
 
 Parte da formatação é invisível para os formatadores automáticos: a **forma como os nomes são escritos**. Existem quatro convenções principais, e misturá-las sem critério é tão prejudicial quanto código sem espaços — o leitor perde o padrão e gasta energia decodificando a estrutura em vez de entender a lógica.
 
@@ -87,7 +44,7 @@ Parte da formatação é invisível para os formatadores automáticos: a **forma
 | **kebab-case** | `calcular-total-pedido` | tudo minúsculo, palavras separadas por `-` (inválido como identificador na maioria das linguagens) |
 | **SCREAMING_SNAKE_CASE** | `DESCONTO_PADRAO` | tudo maiúsculo, palavras separadas por `_`; reservado para constantes |
 
-#### Recomendações por linguagem
+### Recomendações por linguagem
 
 **Python** (conforme PEP 8):
 
@@ -130,7 +87,7 @@ Parte da formatação é invisível para os formatadores automáticos: a **forma
 
 > O prefixo de tipo em ADVPL/TLPP (`n` para numérico, `c` para caractere, `l` para lógico, `a` para array, `o` para objeto) é uma convenção da plataforma — não é opcional. O TDS e os linters da Totvs verificam esse padrão.
 
-#### O erro mais comum: misturar convenções no mesmo escopo
+### O erro mais comum: misturar convenções no mesmo escopo
 
 ```python
 # ❌ Mistura de convenções no mesmo arquivo Python
@@ -152,7 +109,37 @@ A mistura é particularmente danosa porque **engana o leitor**: `PascalCase` sin
 
 ---
 
-## 3. O Problema na Prática
+## 4. Formatação Vertical
+
+**Abertura vertical (blank lines):** cada grupo de linhas relacionadas forma um "parágrafo" de código. Uma linha em branco entre parágrafos diz ao leitor: "este pensamento terminou, o próximo começa". Ausência total de linhas em branco funde conceitos distintos em um bloco visual impenetrável.
+
+**Distância vertical:** conceitos relacionados devem ficar próximos no arquivo. Funções que se chamam devem estar perto uma da outra — idealmente, a função chamadora logo acima da função chamada. Quando um leitor precisa rolar centenas de linhas para encontrar o que uma função chama, o custo cognitivo dispara.
+
+**Declaração perto do uso:** declare variáveis perto de onde são usadas, não no topo da função. Em Python e linguagens modernas, não há razão para declarar todas as variáveis no início — isso é herança do C dos anos 1970.
+
+| Princípio | Descrição |
+|---|---|
+| **Conceitos relacionados ficam juntos** | Variáveis declaradas perto de onde são usadas |
+| **Conceitos não relacionados ficam separados** | Linha em branco entre grupos lógicos distintos |
+| **Dependências ficam próximas** | Funções que chamam outras ficam logo acima ou abaixo |
+| **Ordem de leitura natural** | Funções públicas no topo; funções privadas abaixo |
+
+---
+
+## 5. Formatação Horizontal
+
+**Limite de linha:** 88 caracteres para Python (padrão do `black`), 120 para PHP e TypeScript em muitos times — verifique com sua equipe. O limite não é arbitrário: linhas longas exigem scroll horizontal, quebram o modelo mental de leitura linha a linha e dificultam diffs em code review.
+
+| Princípio | Descrição |
+|---|---|
+| **Espaço ao redor de operadores** | `x = a + b`, não `x=a+b` |
+| **Sem espaço entre função e parêntese** | `calcular(x)`, não `calcular (x)` |
+| **Comprimento máximo de linha** | 88 chars (Python/black), 80 chars (PSR-12 PHP) |
+| **Sem alinhamento em colunas** | Espaços extras para alinhar valores em coluna atraem o olho para os dados em vez dos nomes; formatadores modernos como `black` nunca fazem isso |
+
+---
+
+## 6. Na Prática
 
 ```python
 # ❌ Formatação ruim: sem espaços, linhas longas, imports desorganizados
@@ -186,8 +173,6 @@ class GerenciadorDeEstoque:
 > Arquivo completo: [`exemplos/formatacao_ruim.py`](exemplos/formatacao_ruim.py)
 
 ---
-
-## 4. A Solução
 
 ```python
 # ✅ Formatação correta: imports ordenados, constantes no topo, espaços, linhas quebradas
@@ -251,7 +236,7 @@ class GerenciadorDeEstoque:
 
 ---
 
-## 5. Equivalentes em Outras Linguagens
+## 7. Equivalentes em Outras Linguagens
 
 ### PHP (PSR-12)
 
@@ -359,18 +344,19 @@ Return Round( nTotal, 2 )
 
 ---
 
-## 6. Regras de Ouro
+## 8. Regras de Ouro
 
-- **Limite de linha** — 88 chars para Python (black), 80 chars para PHP (PSR-12); editores modernos mostram a régua
+- **Delegue ao formatador** — [`black`](https://black.readthedocs.io/), [`prettier`](https://prettier.io/) / [`Biome`](https://biomejs.dev/pt-br/), [`php-cs-fixer`](https://github.com/PHP-CS-Fixer/PHP-CS-Fixer): configure uma vez e nunca mais discuta espaçamento em code review
+- **Convenções de nome são contrato** — misturar `snake_case` com `camelCase` no mesmo escopo engana o leitor; cada linguagem tem sua convenção, siga-a
 - **Imports ordenados** — stdlib → terceiros → locais; dentro de cada grupo, em ordem alfabética
 - **Constantes no topo** — nunca intercaladas com lógica; nomeadas em `SCREAMING_SNAKE_CASE`
 - **Métodos públicos antes dos privados** — o leitor lê a interface pública primeiro, os detalhes depois
 - **Uma linha em branco entre métodos, duas entre classes** — a formatação vertical comunica agrupamento
-- **Delegue ao formatador** — [`black`](https://black.readthedocs.io/), [`prettier`](https://prettier.io/) / [`Biome`](https://biomejs.dev/pt-br/), [`php-cs-fixer`](https://github.com/PHP-CS-Fixer/PHP-CS-Fixer): configure uma vez e nunca mais discuta espaçamento em code review
+- **Limite de linha** — 88 chars para Python (black), 80 chars para PHP (PSR-12); editores modernos mostram a régua
 
 ---
 
-## 7. Exercício
+## 9. Exercício
 
 **Tarefa:** Formate a classe `ProcessadorDePagamentos` do arquivo de exercício. Não altere nenhuma linha de lógica — apenas reorganize imports, adicione espaços, quebre linhas longas e separe métodos.
 
@@ -391,7 +377,7 @@ flake8 exercicios/gabarito.py --max-line-length 88
 
 ---
 
-## 8. Para se Aprofundar
+## 10. Para se Aprofundar
 
 - **Clean Code**, Robert C. Martin — Capítulo 5: *Formatting* (p. 75–92)
 - **PEP 8** — Guia oficial de estilo Python: [peps.python.org/pep-0008](https://peps.python.org/pep-0008/)
