@@ -28,45 +28,276 @@ Esses dois princípios — testes como pré-requisito para mudança, e melhoria 
 | **Funções que fazem muitas coisas** | Não dá para testar o cálculo de imposto sem acionar também a gravação no banco e o envio de e-mail. A única opção é testar tudo junto. |
 | **Ausência de testes** | Sem testes, você não tem como verificar que uma mudança não quebrou nada. O medo bloqueia a refatoração, que poderia criar os testes. Ciclo vicioso. |
 
-### O modelo de Seams (Costuras) — Michael Feathers
+---
 
-Um **seam** é um ponto no código onde você pode substituir um comportamento sem editar aquele código. É o que torna código testável.
+### O modelo de Seams (Costuras)
 
-Exemplo concreto: se uma classe instancia seu colaborador com `new Mailer()`, não há seam — você não consegue substituir o Mailer por um fake sem editar a classe. Se a classe recebe o Mailer como parâmetro no construtor (injeção de dependência), há um seam — você pode passar qualquer objeto que honre a interface.
+Um **seam** é um ponto no código onde você pode substituir um comportamento sem precisar editar aquele código. É o conceito central de Feathers: antes de refatorar, você precisa criar ao menos uma abertura pela qual os testes possam entrar.
 
-Tipos de seams:
+O problema concreto: o código abaixo não tem seams. Para testar `processar_pedido`, você precisa de um banco de dados real e de um servidor SMTP real — porque a função os instancia diretamente.
 
-- **Injeção de dependência**: receber colaboradores como parâmetro em vez de instanciá-los internamente
-- **Herança para override**: criar subclasse que sobrescreve o método problemático nos testes
-- **Parâmetros de função**: passar dados como argumento em vez de ler de estado global
+```python
+# ❌ Sem seams — impossível testar sem infraestrutura real
+class ProcessadorDePedidos:
+    def processar_pedido(self, pedido_id: str) -> None:
+        db = ConexaoBanco("host=prod user=app")   # instanciado aqui dentro
+        mailer = ServicoDeEmail("smtp.empresa.com") # instanciado aqui dentro
+        pedido = db.buscar(pedido_id)
+        total = pedido["valor"] * 1.12
+        db.salvar({"id": pedido_id, "total": total, "status": "processado"})
+        mailer.enviar(pedido["email"], f"Pedido {pedido_id} confirmado: R$ {total}")
+```
+
+Para testar a regra `valor * 1.12`, você é obrigado a subir banco e SMTP. Se a conexão falhar no CI, o teste falha — por um motivo que nada tem a ver com a lógica de negócio.
+
+#### Seam 1 — Injeção de Dependência
+
+A solução mais direta: em vez de instanciar colaboradores internamente, recebê-los como parâmetro. Agora o chamador decide o que passar — em produção, as implementações reais; nos testes, objetos falsos.
+
+```python
+# ✅ Seam via injeção de dependência
+class ProcessadorDePedidos:
+    def __init__(self, banco: BancoInterface, mailer: MailerInterface) -> None:
+        self._banco = banco
+        self._mailer = mailer
+
+    def processar_pedido(self, pedido_id: str) -> None:
+        pedido = self._banco.buscar(pedido_id)
+        total = pedido["valor"] * 1.12
+        self._banco.salvar({"id": pedido_id, "total": total, "status": "processado"})
+        self._mailer.enviar(pedido["email"], f"Pedido {pedido_id} confirmado: R$ {total}")
+
+# No teste — sem banco, sem SMTP
+class BancoFake:
+    def buscar(self, id): return {"valor": 1000.0, "email": "x@y.com"}
+    def salvar(self, dados): self.ultimo_salvo = dados
+
+class MailerFake:
+    def enviar(self, dest, msg): self.ultima_mensagem = msg
+
+banco = BancoFake()
+processador = ProcessadorDePedidos(banco, MailerFake())
+processador.processar_pedido("P001")
+assert banco.ultimo_salvo["total"] == 1120.0
+```
+
+O seam está no construtor: é ali que o comportamento pode ser substituído sem tocar na lógica de `processar_pedido`.
+
+#### Seam 2 — Herança para Override
+
+Quando você não consegue injetar dependências porque o código legado instancia tudo internamente e não tem como mudar o construtor agora, uma alternativa é criar uma subclasse que sobrescreve apenas o método problemático.
+
+```python
+# Classe legada — não dá para mudar o construtor agora
+class RelatorioLegado:
+    def gerar(self, periodo: str) -> float:
+        dados = self._buscar_dados(periodo)   # acessa banco diretamente
+        return sum(d["valor"] for d in dados) * 0.9
+
+    def _buscar_dados(self, periodo: str) -> list:
+        return ConexaoBanco().query(f"SELECT * FROM vendas WHERE periodo='{periodo}'")
+
+# ✅ Subclasse de teste — sobrescreve apenas o que acessa infraestrutura
+class RelatorioLegadoTestavel(RelatorioLegado):
+    def _buscar_dados(self, periodo: str) -> list:
+        return [{"valor": 500.0}, {"valor": 300.0}]  # dados fixos, sem banco
+
+relatorio = RelatorioLegadoTestavel()
+assert relatorio.gerar("2024-01") == 720.0  # (500 + 300) * 0.9
+```
+
+A lógica de negócio em `gerar` foi testada sem alterar uma linha do código legado. O seam é o método `_buscar_dados`, que a subclasse pode sobrescrever.
+
+#### Seam 3 — Parâmetros em vez de estado global
+
+Estado global é o inimigo dos testes: o valor de uma variável global depende de tudo que aconteceu antes na execução. A solução é transformar o estado global em parâmetro explícito.
+
+```python
+# ❌ Lê estado global — resultado depende de quem chamou antes
+_taxa_cambio = 5.20
+
+def converter_valor(valor_usd: float) -> float:
+    return valor_usd * _taxa_cambio  # acoplado ao estado global
+
+# ✅ Recebe o valor como parâmetro — sem dependência de estado externo
+def converter_valor(valor_usd: float, taxa_cambio: float) -> float:
+    return valor_usd * taxa_cambio
+
+assert converter_valor(100.0, 5.20) == 520.0
+assert converter_valor(100.0, 4.80) == 480.0
+```
+
+O seam é o parâmetro `taxa_cambio`: o chamador controla o valor, sem precisar manipular variáveis globais.
+
+---
 
 ### Testes de Caracterização
 
-Antes de refatorar código legado, escreva testes que documentam o comportamento **atual** — mesmo que esse comportamento seja questionável. O objetivo não é testar se o comportamento está correto. É garantir que você não vai mudá-lo acidentalmente.
+O paradoxo do código legado: para refatorar com segurança, você precisa de testes. Mas para escrever testes, você precisa entender o que o código faz — e o código é difícil de entender justamente porque não tem testes.
 
+Os **testes de caracterização** resolvem esse paradoxo. Em vez de perguntar "o que o código *deveria* fazer?", você pergunta "o que o código *faz* agora?". O teste documenta o comportamento atual, mesmo que esse comportamento seja questionável.
+
+**O fluxo em quatro passos:**
+
+**Passo 1 — Chame o código e imprima o resultado sem assert.**
 ```python
-# Teste de caracterização: o que o código FAZ, não o que deveria fazer
 resultado = calc.calc_comm("V001", 10000, "STD", 8000)
-assert resultado == 812.0  # documentando o comportamento existente
+print(resultado)   # → 812.0
 ```
 
-São testes de "rede de segurança". Eles falham quando você introduz uma regressão — e só então você decide se a mudança foi intencional ou um bug.
+**Passo 2 — Use o valor que saiu como expected no assert.**
+```python
+resultado = calc.calc_comm("V001", 10000, "STD", 8000)
+assert resultado == 812.0  # você não sabe por que é 812, mas é o que sai
+```
+
+**Passo 3 — Rode o teste. Ele deve passar.**
+Se falhar, você cometeu um erro ao copiar o valor. Corrija e rode de novo até ficar verde.
+
+**Passo 4 — Repita para mais entradas e casos de borda.**
+```python
+# Cobre as ramificações do código
+assert calc.calc_comm("V001", 10000, "STD", 8000) == 812.0   # caso base
+assert calc.calc_comm("V001", 500,   "STD", 8000) == 37.5    # valor baixo
+assert calc.calc_comm("V002", 10000, "PREM", 8000) == 950.0  # tipo diferente
+assert calc.calc_comm("V001", 10000, "STD", 0)    == 650.0   # meta zerada
+```
+
+Agora você tem uma rede de segurança. Qualquer refatoração que altere um desses valores vai fazer um teste falhar — e você decide: foi intencional ou foi uma regressão?
+
+> **Nota importante:** o valor `812.0` pode estar errado do ponto de vista do negócio. Isso não importa agora. Primeiro você protege o comportamento atual; depois, em um commit separado, você corrige o bug — e o teste vai falhar de propósito, aí você atualiza o expected para o valor correto.
+
+---
 
 ### Técnicas de Refatoração Segura
 
-**Extrair função (Extract Method)**
-Isolar lógica em uma função com nome descritivo, sem alterar o comportamento externo. A função original continua existindo e chamando a nova. É a técnica mais segura porque o diff é pequeno e reversível.
+#### Extrair Função (Extract Method)
+
+É a técnica mais usada e mais segura. Você identifica um bloco de código dentro de uma função longa, move esse bloco para uma função nova com nome descritivo, e faz a função original chamar a nova. O comportamento externo não muda — você só reorganizou onde o código vive.
 
 ```python
-# Antes: lógica de imposto embutida em um método de 60 linhas
-# Depois: método original chama _calcular_imposto_pj(valor, qtd_itens)
+# ❌ Antes: método de 40 linhas com lógica fiscal embutida
+def processar_fatura(self, dados: dict) -> dict:
+    cliente = self._db.buscar_cliente(dados["cli_id"])
+    valor = dados["valor"]
+
+    # bloco de cálculo fiscal — 15 linhas misturadas com o resto
+    if cliente["tipo"] == "PJ":
+        if valor > 5000:
+            imposto = valor * 0.12
+        else:
+            imposto = valor * 0.065
+        if len(dados["itens"]) > 10:
+            imposto *= 1.15
+    else:
+        imposto = valor * 0.075 if valor > 2000 else valor * 0.03
+        imposto += 150
+
+    fatura = {"valor": valor, "imposto": imposto, "total": valor + imposto}
+    self._db.salvar_fatura(fatura)
+    self._mailer.notificar(cliente["email"], fatura)
+    return fatura
 ```
 
-**Substituição gradual (Strangler Fig Pattern)**
-Criar uma nova implementação que coexiste com a antiga via interface compartilhada. Um roteador decide qual usar — por feature flag, por percentual do tráfego, por tipo de pedido. Quando a nova implementação estiver estável e cobrir todos os casos, a antiga é removida. Não há big bang, não há dia de corte arriscado.
+```python
+# ✅ Depois: Extract Method isola o cálculo fiscal
+def processar_fatura(self, dados: dict) -> dict:
+    cliente = self._db.buscar_cliente(dados["cli_id"])
+    imposto = self._calcular_imposto(dados["valor"], cliente["tipo"], len(dados["itens"]))
+    fatura = {"valor": dados["valor"], "imposto": imposto, "total": dados["valor"] + imposto}
+    self._db.salvar_fatura(fatura)
+    self._mailer.notificar(cliente["email"], fatura)
+    return fatura
 
-**Wrapper**
-Envolver o código legado em uma nova classe com interface limpa. A classe legada permanece intocada; o wrapper traduz entre a interface velha e a nova.
+def _calcular_imposto(self, valor: float, tipo_cliente: str, qtd_itens: int) -> float:
+    if tipo_cliente == "PJ":
+        aliquota = 0.12 if valor > 5000 else 0.065
+        imposto = valor * aliquota
+        return imposto * 1.15 if qtd_itens > 10 else imposto
+    imposto = valor * 0.075 if valor > 2000 else valor * 0.03
+    return imposto + 150
+```
+
+Agora `_calcular_imposto` pode ser testada diretamente, sem banco e sem e-mail:
+```python
+assert processador._calcular_imposto(8000, "PJ", 2) == 960.0
+assert processador._calcular_imposto(3000, "PJ", 2) == 195.0
+assert processador._calcular_imposto(1000, "PF", 2) == 180.0
+```
+
+**Regra de ouro do Extract Method:** faça um passo de cada vez. Extraia uma função, rode os testes de caracterização, veja que estão verdes, commit. Extraia outra, rode, commit. Nunca extraia três funções de uma vez antes de verificar que nada quebrou.
+
+#### Substituição Gradual (Strangler Fig Pattern)
+
+O nome vem da figueira-estranguladora, uma planta que cresce em volta de uma árvore hospedeira. A nova planta usa a árvore como suporte enquanto ainda é fraca. Com o tempo, a nova planta cobre totalmente a árvore. A árvore original apodrece dentro, mas o sistema nunca parou.
+
+É exatamente assim que funciona a migração de um módulo legado: a nova implementação cresce ao redor da antiga, coexistindo via uma interface compartilhada. Um roteador decide qual usar. Quando a nova cobre todos os casos, a antiga é removida — sem nenhum "dia de corte" de risco alto.
+
+```python
+# Interface compartilhada — ambas as implementações a honram
+class ProcessadorDePedidosInterface:
+    def processar(self, pedido_id: str) -> dict: ...
+
+# Implementação legada — continua funcionando, não é tocada
+class ProcessadorLegado(ProcessadorDePedidosInterface):
+    def processar(self, pedido_id: str) -> dict:
+        # 200 linhas de código legado, intocadas
+        ...
+
+# Nova implementação — limpa, testável, construída em paralelo
+class ProcessadorNovo(ProcessadorDePedidosInterface):
+    def __init__(self, banco, mailer, calculador):
+        ...
+    def processar(self, pedido_id: str) -> dict:
+        # implementação nova, com testes
+        ...
+
+# Roteador — decide qual usar sem que o chamador saiba
+class RoteadorDePedidos(ProcessadorDePedidosInterface):
+    def __init__(self, legado, novo, percentual_novo: float = 0.0):
+        self._legado = legado
+        self._novo = novo
+        self._percentual_novo = percentual_novo  # começa em 0%, sobe gradualmente
+
+    def processar(self, pedido_id: str) -> dict:
+        import random
+        if random.random() < self._percentual_novo:
+            return self._novo.processar(pedido_id)
+        return self._legado.processar(pedido_id)
+```
+
+A migração acontece em semanas: 0% → 5% → 20% → 50% → 100% → remove legado. Se algo der errado a qualquer momento, você volta o percentual para 0% — sem rollback de deploy.
+
+#### Wrapper
+
+Quando o código legado tem uma interface caótica (parâmetros posicionais obscuros, retornos inconsistentes, side effects misturados), o Wrapper cria uma camada com interface limpa ao redor dele. O código legado permanece **completamente intocado** — o wrapper apenas traduz.
+
+```python
+# Função legada — parâmetros posicionais sem nome, retorno misterioso
+def calc_comm(vid, val, tp, meta, fl=0):
+    # 80 linhas de código legado — não vamos tocar aqui
+    ...
+    # retorna uma tupla (comissao, bonus, flag_atingiu_meta) em alguns casos
+    # e um float em outros, dependendo de fl
+    ...
+
+# ✅ Wrapper com interface clara
+class CalculadorDeComissao:
+    def calcular(
+        self,
+        vendedor_id: str,
+        valor_venda: float,
+        tipo_plano: str,
+        meta_mensal: float,
+    ) -> float:
+        resultado = calc_comm(vendedor_id, valor_venda, tipo_plano, meta_mensal, 0)
+        # normaliza o retorno inconsistente da função legada
+        return resultado if isinstance(resultado, float) else resultado[0]
+```
+
+Agora o resto do sistema usa `CalculadorDeComissao.calcular()` — com parâmetros nomeados, retorno previsível — e os testes de caracterização ficam sobre o wrapper. A função `calc_comm` fica congelada; ninguém a chama diretamente mais.
+
+---
 
 ### A Regra do Escoteiro na prática
 
