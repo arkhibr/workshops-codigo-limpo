@@ -148,4 +148,18 @@ No próximo PR, encontre um magic number ou string literal espalhado pelo códig
 
 ## Tutorial 07 — Código Legado
 
-<!-- placeholder — preenchido na Task 9 -->
+### Recomendação forte
+
+1. **Testes de caracterização antes de qualquer mudança** — antes de alterar código legado sem testes, escreva testes que documentem o comportamento atual. Eles são sua rede de segurança.
+2. **Encontre as costuras antes de refatorar** — uma costura (seam) é um ponto onde você pode isolar e substituir comportamento sem mudar o código de produção. Procure-as antes de sair mudando.
+3. **Mudanças incrementais são mais seguras que reescritas** — o Strangler Fig Pattern (substituir partes do sistema gradualmente) tem muito mais chances de sucesso do que uma reescrita completa.
+
+### Sinais do seu contexto
+
+- Vai alterar uma função que não tem testes? → Escreva testes de caracterização primeiro. Não é opcional.
+- O módulo tem mais de 500 linhas e foi escrito há mais de 2 anos sem testes? → Considere o Strangler Fig: construa a nova versão ao lado e redirecione gradualmente.
+- Você não sabe ao certo o que o código faz, mas não pode quebrá-lo? → Escreva testes que provem o comportamento atual antes de entender o código em profundidade.
+
+### Primeiro passo esta semana
+
+Escolha uma função legada que você precisará alterar em breve e escreva 3 testes de caracterização que documentem o comportamento atual — incluindo comportamentos que pareçam estranhos. Eles são o contrato do código hoje.
