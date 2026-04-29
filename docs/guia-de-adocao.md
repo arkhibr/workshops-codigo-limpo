@@ -64,7 +64,21 @@ Encontre uma função que faz mais de uma coisa e extraia a segunda responsabili
 
 ## Tutorial 03 — Comentários
 
-<!-- placeholder — preenchido na Task 5 -->
+### Recomendação forte
+
+1. **Comentários explicam o *porquê*, não o *o quê*** — o código já diz o que faz. Se precisar explicar o que faz, melhore o código.
+2. **Código comentado é lixo** — delete-o. O histórico do Git guarda o passado; o arquivo não precisa guardar.
+3. **TODOs têm dono e rastreabilidade** — `# TODO: refatorar isso` sem contexto nunca será resolvido. Use `# TODO [#123]: refatorar após migração de schema`.
+
+### Sinais do seu contexto
+
+- O arquivo tem blocos de código comentado que ninguém toca? → Delete-os no próximo PR.
+- Os comentários descrevem o que o código faz em vez de por que ele faz? → Substitua pelo nome correto da função ou variável.
+- Há TODOs sem número de issue no projeto? → Eles nunca serão feitos ou nunca deveriam ser feitos — decida qual.
+
+### Primeiro passo esta semana
+
+No próximo arquivo que você abrir, delete todo o código comentado. Se sentir insegurança, lembre: o Git tem tudo.
 
 ---
 
