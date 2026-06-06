@@ -1,0 +1,56 @@
+/*
+ * EXERCÍCIO 16 — SOLID na Prática (ADVPL/TLPP)
+ * Referência: Clean Code + SOLID papers
+ *
+ * INSTRUÇÕES:
+ *   A função ProcessarFatura abaixo viola SRP (valida, calcula, persiste e
+ *   envia email em um único lugar) e DIP (sem abstração de notificação).
+ *
+ *   1. Separe em funções com responsabilidade única: ValidarFatura,
+ *      CalcularTotalFatura, SalvarFatura, NotificarClienteFatura.
+ *   2. Simule inversão de dependência usando codeblock para o notificador.
+ *   3. Compile no Totvs IDE e execute DemoFatura() como ponto de entrada.
+ */
+
+// ❌ Ruim — SRP+DIP: validação, cálculo, persistência e email juntos
+Static Function ProcessarFatura(cFaturaId, aItens, cClienteId)
+    Local nTotal := 0
+    Local nI     := 0
+    // Valida
+    If Len(aItens) == 0 .Or. Empty(cClienteId)
+        ConOut("Erro: fatura invalida")
+        Return 0
+    EndIf
+    // Calcula
+    For nI := 1 To Len(aItens)
+        nTotal += aItens[nI][2]   // valor do item
+    Next nI
+    // Persiste
+    ConOut("BD: fatura " + cFaturaId + " salva")
+    // Notifica
+    ConOut("Email para " + cClienteId + ": Fatura " + cFaturaId + " R$ " + cValToChar(nTotal))
+Return nTotal
+
+/*
+ * TODO — Refatore separando em:
+ *   Static Function ValidarFatura(aItens, cClienteId)    -> lLogico
+ *   Static Function CalcularTotalFatura(aItens)          -> nNumerico
+ *   Static Function SalvarFatura(cFaturaId)              -> lLogico
+ *   Static Function NotificarClienteFatura(cClienteId, cMensagem) -> lLogico
+ *
+ * Para simular DIP com codeblock:
+ *   bNotificador := {|cId, cMsg| NotificarClienteFatura(cId, cMsg)}
+ *   Eval(bNotificador, cClienteId, "Fatura processada")
+ * Vantagem: bNotificador pode ser substituído por outro codeblock
+ * sem alterar o chamador.
+ */
+
+// Demo — ponto de entrada
+Static Function DemoFatura()
+    Local aItens := {}
+    Local nTotal := 0
+    aAdd(aItens, {"Consultoria", 1500.00})
+    aAdd(aItens, {"Suporte",      300.00})
+    nTotal := ProcessarFatura("FAT-001", aItens, "CLI-200")
+    ConOut("Total: " + cValToChar(nTotal))
+Return

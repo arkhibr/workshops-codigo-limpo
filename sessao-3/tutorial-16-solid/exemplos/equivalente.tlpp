@@ -1,0 +1,62 @@
+/*
+ * EQUIVALENTE ADVPL/TLPP — SOLID na Prática
+ * Referência: Clean Code + SOLID papers
+ */
+
+// ❌ Ruim — SRP+DIP: tudo em uma função
+Static Function ProcessarPedido(cPedidoId, aItens, cClienteId)
+    Local nTotal  := 0
+    Local nI      := 0
+    Local cEmail  := ""
+    // valida, calcula, envia email e salva — tudo aqui
+    For nI := 1 To Len(aItens)
+        nTotal += aItens[nI][3] * aItens[nI][4]
+    Next nI
+    ConOut("Email para " + cClienteId + ": pedido " + cPedidoId)
+    ConOut("BD: salvo pedido " + cPedidoId)
+Return nTotal
+
+// ✅ Bom — SRP: funções separadas por responsabilidade
+Static Function ValidarPedido(aItens, cClienteId)
+    Return Len(aItens) > 0 .And. !Empty(cClienteId)
+
+Static Function CalcularTotalPedido(aItens)
+    Local nTotal := 0
+    Local nI     := 0
+    For nI := 1 To Len(aItens)
+        nTotal += aItens[nI][3] * aItens[nI][4]   // preco * quantidade
+    Next nI
+Return Round(nTotal, 2)
+
+Static Function NotificarCliente(cClienteId, cMensagem)
+    ConOut("Email para " + cClienteId + ": " + cMensagem)
+Return .T.
+
+Static Function SalvarPedido(cPedidoId, cStatus)
+    ConOut("BD: salvo " + cPedidoId + " (" + cStatus + ")")
+Return .T.
+
+/*
+ * Limitação ADVPL: sem injeção de dependência nativa.
+ * Simulação com codeblock:
+ *   bNotificador := {|cId, cMsg| NotificarCliente(cId, cMsg)}
+ *   Eval(bNotificador, "CLI-100", "pedido confirmado")
+ * Vantagem: bNotificador pode ser trocado sem alterar o chamador.
+ *
+ * Nota ISP: interfaces não existem em AdvPL clássico.
+ * TLPP 4.0+ tem classes e herança, mas sem interfaces formais —
+ * use protocolos implícitos por convenção de nomenclatura.
+ */
+
+// Demo
+Static Function DemoSOLID()
+    Local aItens := {}
+    Local nTotal := 0
+    aAdd(aItens, {"P001", "Webcam HD", 299.90, 1})
+    If ValidarPedido(aItens, "CLI-100")
+        nTotal := CalcularTotalPedido(aItens)
+        SalvarPedido("PED-001", "confirmado")
+        NotificarCliente("CLI-100", "Pedido PED-001 salvo. Total: " + cValToChar(nTotal))
+        ConOut("Total: " + cValToChar(nTotal))
+    EndIf
+Return
