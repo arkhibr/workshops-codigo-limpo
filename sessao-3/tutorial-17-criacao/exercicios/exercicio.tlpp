@@ -1,0 +1,53 @@
+/*
+ * EXERCÍCIO 17 ADVPL/TLPP — Padrões de Criação
+ * Tempo estimado: 15 minutos
+ * Referência: Design Patterns (GoF), Cap. 3
+ *
+ * INSTRUÇÕES:
+ *   O código abaixo tem dois problemas:
+ *   1. Função CriarContrato() recebe 9 parâmetros — maioria pode ficar vazia.
+ *   2. If/ElseIf de instanciação — adicionar novo tipo exige alterar a função.
+ *
+ *   Aplique:
+ *   1. Factory: crie aTiposContrato e FabricarContrato() por tabela de dispatch.
+ *   2. Builder simulado: crie MontarContratoServicoCompleto() com validações.
+ *
+ *   Compile e execute no Totvs IDE / SmartClient.
+ */
+
+// ❌ Ruim — muitos parâmetros + If/ElseIf de instanciação
+Static Function CriarContrato(cTipo, nValorMensal, nVigenciaMeses, cContratante, ;
+                               cObjeto, cEndereco, cFornecedorId, nPrazoEntrega, ;
+                               cObservacoes)
+    Local aContrato := {}
+    If cTipo == "servico"
+        aAdd(aContrato, "servico")
+        aAdd(aContrato, nValorMensal)
+        aAdd(aContrato, nVigenciaMeses)
+        aAdd(aContrato, cContratante)
+        aAdd(aContrato, If(!Empty(cObjeto), cObjeto, "Servicos gerais"))
+    ElseIf cTipo == "locacao"
+        aAdd(aContrato, "locacao")
+        aAdd(aContrato, nValorMensal)
+        aAdd(aContrato, nVigenciaMeses)
+        aAdd(aContrato, cContratante)
+        aAdd(aContrato, cObjeto)
+        aAdd(aContrato, cEndereco)
+    ElseIf cTipo == "fornecimento"
+        aAdd(aContrato, "fornecimento")
+        aAdd(aContrato, nValorMensal)
+        aAdd(aContrato, nVigenciaMeses)
+        aAdd(aContrato, cContratante)
+        aAdd(aContrato, cFornecedorId)
+        aAdd(aContrato, nPrazoEntrega)
+    Else
+        UserException("Tipo desconhecido: " + cTipo)
+    EndIf
+Return aContrato
+
+// Demo
+Static Function DemoExercicio()
+    Local aContrato := CriarContrato("servico", 5000.00, 12, "EMP-001", "", "", "", 0, "")
+    ConOut("Contrato: " + aContrato[1] + " R$ " + cValToChar(aContrato[2]) + "/mes")
+    // Observe: parametros cFornecedorId e nPrazoEntrega passados vazios/0 sem uso
+Return
