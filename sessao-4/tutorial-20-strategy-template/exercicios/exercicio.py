@@ -10,8 +10,9 @@ INSTRUÇÕES:
   1. Refatore calcular_frete() para Strategy: crie uma interface/protocolo
      EstrategiaFrete com calcular(peso, distancia) e classes concretas.
   2. Refatore os relatórios para Template Method: extraia a classe base
-     RelatorioLogistica com _filtrar(), _calcular_total(), _formatar_linhas()
-     e _montar_saida() abstratos.
+     RelatorioLogistica. Deixe _filtrar() e _calcular_total() com implementação
+     padrão na base. Torne apenas _formatar_linhas() e _montar_saida() abstratos
+     — são as etapas que diferem entre relatórios.
   3. Execute: python3 exercicio.py (deve rodar antes e depois)
 """
 from typing import List
