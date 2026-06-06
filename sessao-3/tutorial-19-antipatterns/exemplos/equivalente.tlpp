@@ -1,0 +1,70 @@
+/*
+ * EQUIVALENTE ADVPL/TLPP — Anti-patterns Clássicos
+ * Referência: Clean Code Cap. 17 + Fowler Refactoring Cap. 3
+ */
+
+// ─── Anti-pattern 1: God Object em ADVPL ─────────────────────────────────────
+// Padrão mais comum em Protheus: user function de 300+ linhas
+// ❌ Ruim
+Static Function ProcPedido(cPedidoId, cClienteId, aItens, nValor, cStatus)
+    Local nTotal    := 0
+    Local nI        := 0
+    Local lValido   := .F.
+    // valida CPF inline
+    lValido := Len(cClienteId) == 11
+    // calcula total inline
+    For nI := 1 To Len(aItens)
+        nTotal += aItens[nI][2] * aItens[nI][3]
+    Next nI
+    // envia email inline
+    ConOut("Email para " + cClienteId + ": pedido " + cPedidoId)
+    // salva no banco inline
+    ConOut("BD: salvo pedido " + cPedidoId)
+    // gera relatório inline
+    ConOut("Relatorio: " + cPedidoId + " R$ " + cValToChar(nTotal))
+Return nTotal
+
+// ✅ Bom — funções separadas por responsabilidade
+Static Function ValidarCliente(cClienteId)
+    Return Len(cClienteId) == 11
+
+Static Function CalcularTotalPedido(aItens)
+    Local nTotal := 0, nI := 0
+    For nI := 1 To Len(aItens)
+        nTotal += aItens[nI][2] * aItens[nI][3]
+    Next nI
+Return Round(nTotal, 2)
+
+Static Function NotificarCliente(cClienteId, cMensagem)
+    ConOut("Email para " + cClienteId + ": " + cMensagem)
+Return .T.
+
+Static Function SalvarPedido(cPedidoId, cStatus)
+    ConOut("BD: salvo " + cPedidoId + " (" + cStatus + ")")
+Return .T.
+
+// ─── Anti-pattern 2: Magic Strings/Numbers em ADVPL ─────────────────────────
+// ❌ Ruim
+If cStatus == "A"         // "A" de quê?
+    If nValor > 1500      // por que 1500?
+        nPrazo := 30      // 30 dias? horas?
+    EndIf
+EndIf
+
+// ✅ Bom — #define para constantes (ADVPL não tem enum nativo)
+#define STATUS_ATIVO     "A"
+#define STATUS_INATIVO   "I"
+#define LIMITE_FRETE     1500.00
+#define PRAZO_PADRAO     30
+
+If cStatus == STATUS_ATIVO
+    If nValor > LIMITE_FRETE
+        nPrazo := PRAZO_PADRAO
+    EndIf
+EndIf
+
+/*
+ * // Limitação ADVPL: sem enum nativo — use #define ou tabela de constantes.
+ * // TLPP 4.0+ suporta classes, mas ainda sem enum como tipo de primeira classe.
+ * // Convenção recomendada: prefixo STATUS_*, TIPO_*, LIMITE_* para constantes.
+ */
