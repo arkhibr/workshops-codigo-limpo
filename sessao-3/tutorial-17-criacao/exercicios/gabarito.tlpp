@@ -116,8 +116,8 @@ Static Function DemoGabarito()
     ConOut("OK: Factory — " + aLocacao[1] + " " + aLocacao[5] + " " + aLocacao[6])
 
     // Builder simulado
-    Local aBoleto := MontarContratoServicoCompleto(5000.00, 12, "EMP-001", "Desenvolvimento de software")
-    ConOut("OK: Builder — " + aBoleto[1] + " objeto=" + aBoleto[5])
+    Local aContrato := MontarContratoServicoCompleto(5000.00, 12, "EMP-001", "Desenvolvimento de software")
+    ConOut("OK: Builder — " + aContrato[1] + " objeto=" + aContrato[5])
 
     // Validacao: contratante vazio deve gerar excecao
     Begin Sequence
