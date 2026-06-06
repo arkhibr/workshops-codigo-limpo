@@ -1,0 +1,111 @@
+/*
+ * GABARITO 18 ADVPL/TLPP — Padroes Estruturais: Adapter + Facade
+ * Referencia: Design Patterns (GoF), Cap. 4
+ */
+
+// ─── API legada (User Functions — nao podem ser alteradas) ───────────────────
+
+User Function GerarBoletoLegado(nValor, cVencimento, cPagador)
+    ConOut("  [Legado] gerarBoleto(" + cPagador + ", R$" + cValToChar(nValor) + ")")
+    Local aRet := {}
+    aAdd(aRet, 12345)                       // [1] nIdBoleto
+    aAdd(aRet, "9999.99999 99999.999999")   // [2] cCodigoBarras
+    aAdd(aRet, "ATIVO")                     // [3] cStatusBoleto
+    aAdd(aRet, nValor)                      // [4] nValorBoleto
+Return aRet
+
+User Function ConsultarStatusLegado(nIdBoleto)
+    ConOut("  [Legado] consultarStatus(" + cValToChar(nIdBoleto) + ")")
+Return "ATIVO"
+
+User Function CancelarBoletoLegado(nIdBoleto, cMotivo)
+    ConOut("  [Legado] cancelarBoleto(" + cValToChar(nIdBoleto) + ", " + cMotivo + ")")
+Return .T.
+
+
+// ─── Adapter: isola User Functions do codigo de negocio ──────────────────────
+
+Static Function AdaptarEmitir(nValor, cVencimento, cClienteId)
+    // Chama a User Function legada e normaliza para struct local
+    // struct retornada: [1]=nId, [2]=cCodigo, [3]=cStatus, [4]=nValor
+    Local aRaw := U_GerarBoletoLegado(nValor, cVencimento, cClienteId)
+    Local aRet := {}
+    aAdd(aRet, aRaw[1])             // [1] nId
+    aAdd(aRet, aRaw[2])             // [2] cCodigo
+    aAdd(aRet, Lower(aRaw[3]))      // [3] cStatus normalizado
+    aAdd(aRet, aRaw[4])             // [4] nValor
+Return aRet
+
+Static Function AdaptarConsultar(nBoletoId)
+    Local cStatusRaw := U_ConsultarStatusLegado(nBoletoId)
+Return Lower(cStatusRaw)
+
+Static Function AdaptarCancelar(nBoletoId)
+Return U_CancelarBoletoLegado(nBoletoId, "SOLICITACAO_CLIENTE")
+
+
+// ─── Facade: orquestra adapters em uma funcao de alto nivel ──────────────────
+
+Static Function ProcessarCobrancaCompleta(nValor, cVencimento, cClienteId)
+    Local aBoleto    := AdaptarEmitir(nValor, cVencimento, cClienteId)
+    Local cStatus    := AdaptarConsultar(aBoleto[1])
+    Local lCancelado := AdaptarCancelar(aBoleto[1])
+    Local aResultado := {}
+    aAdd(aResultado, aBoleto[1])    // [1] nBoletoId
+    aAdd(aResultado, aBoleto[2])    // [2] cCodigo
+    aAdd(aResultado, cStatus)       // [3] cStatusFinal
+    aAdd(aResultado, lCancelado)    // [4] lCancelado
+Return aResultado
+
+/*
+ * // Limitacao ADVPL: sem interfaces formais para IServicoCobranca.
+ * // Convencao implicita: prefixo "Adaptar*" marca funcoes adapter.
+ * // TLPP 4.0+ suporta classes e heranca para implementar o padrao formalmente.
+ */
+
+
+// ─── Verificacao ──────────────────────────────────────────────────────────────
+
+Static Function VerificarAdapter()
+    Local aBoleto := AdaptarEmitir(500.0, "2026-08-15", "CLI-200")
+    If aBoleto[1] == 12345
+        ConOut("OK: Adapter — AdaptarEmitir retorna struct normalizada")
+    Else
+        ConOut("FALHOU: Adapter — esperado id=12345, obtido " + cValToChar(aBoleto[1]))
+    EndIf
+
+    Local cStatus := AdaptarConsultar(12345)
+    If cStatus == "ativo"
+        ConOut("OK: Adapter — AdaptarConsultar normaliza status para minusculas")
+    Else
+        ConOut("FALHOU: Adapter — esperado 'ativo', obtido '" + cStatus + "'")
+    EndIf
+
+    Local lCancelado := AdaptarCancelar(12345)
+    If lCancelado
+        ConOut("OK: Adapter — AdaptarCancelar passa motivo fixo ao sistema legado")
+    Else
+        ConOut("FALHOU: Adapter — esperado .T., obtido .F.")
+    EndIf
+Return
+
+Static Function VerificarFacade()
+    Local aResultado := ProcessarCobrancaCompleta(300.0, "2026-09-01", "CLI-300")
+    If aResultado[1] == 12345 .And. aResultado[3] == "ativo" .And. aResultado[4]
+        ConOut("OK: Facade — ProcessarCobrancaCompleta executa emitir + consultar + cancelar")
+        ConOut("OK: Facade — chamador nao conhece API legada nem sequencia de passos")
+    Else
+        ConOut("FALHOU: Facade — resultado inesperado: id=" + cValToChar(aResultado[1]) + ;
+               ", status=" + aResultado[3])
+    EndIf
+Return
+
+
+// Demo (executar como User Function U_DemoGabarito18)
+User Function DemoGabarito18()
+    ConOut("=== Gabarito 18 ADVPL — Adapter + Facade (boletos) ===")
+    ConOut("")
+    VerificarAdapter()
+    ConOut("")
+    VerificarFacade()
+Return
