@@ -170,20 +170,17 @@ O Strangler Fig substitui partes do sistema gradualmente construindo a nova vers
 
 ---
 
-## Tutorial 08 — Clean Code no Contexto Real com IA
+## Tutorial 08 — O novo fluxo: dirigir e revisar
 
-> Material de referência: [sessao-5/tutorial-08-clean-code-com-ia/README.md](sessao-5/tutorial-08-clean-code-com-ia/README.md)
+> Material de referência: [`sessao-5/tutorial-08-novo-fluxo-ia/README.md`](sessao-5/tutorial-08-novo-fluxo-ia/README.md)
 
-Um prompt fraco produz código genérico: nomes abreviados, números mágicos, idioma misturado. Especificar domínio, padrão de nomenclatura e restrições no prompt eleva o ponto de partida antes da revisão. O que você vai incluir sempre num prompt para código — domínio, idioma, restrições?
+O modelo não conhece seu projeto por padrão — sem contexto explícito, ele produz código genérico que não segue os padrões do repo. **Quais convenções do seu repo você sempre vai dar ao modelo (via CLAUDE.md, AGENTS.md ou GEMINI.md)?**
 > _:_
 
-A IA não conhece o contexto do seu sistema — ela produz o que parece razoável dado o prompt. O que você vai revisar sempre antes de aceitar uma saída de IA no seu projeto?
+A revisão em altitude significa olhar para além da função isolada — o nome, o estilo, a integração com o restante do módulo. **Como você vai revisar a saída do modelo contra o padrão do projeto, não só contra "funciona"?**
 > _:_
 
-Há trechos onde a IA prejudica mais do que ajuda: lógica de negócio complexa com invariantes implícitas, código de segurança crítico, partes que exigem conhecimento do histórico do sistema. Quando você vai optar por escrever sem assistência de IA?
-> _:_
-
-A política de uso de IA define expectativas para o time inteiro: quando usar, o que sempre revisar, o que nunca aceitar sem verificação. **Qual será a política de uso de IA da sua equipe?**
+A política de uso de IA define expectativas para o time inteiro: quando usar, o que sempre dar de contexto, o que sempre revisar. **Qual será a política de uso de IA da sua equipe?**
 > _:_
 
 **Minha decisão para este tutorial:**
@@ -191,35 +188,17 @@ A política de uso de IA define expectativas para o time inteiro: quando usar, o
 
 ---
 
-## Tutorial 09 — Engenharia de Prompt para Código Limpo
+## Tutorial 09 — Engenharia de contexto e prompt para gerar código
 
-> Material de referência: [sessao-5/tutorial-09-engenharia-de-prompt/README.md](sessao-5/tutorial-09-engenharia-de-prompt/README.md)
+> Material de referência: [`sessao-5/tutorial-09-engenharia-de-prompt/README.md`](sessao-5/tutorial-09-engenharia-de-prompt/README.md)
 
-Um template de prompt inclui os elementos que você sempre precisa: contexto do domínio, idioma dos identificadores, restrições de dependências, formato de retorno esperado. Qual será o template de prompt padrão da sua equipe para gerar código?
+Um bom prompt inclui mais do que o pedido — contexto, domínio, exemplos, assinatura-alvo e restrições determinam a qualidade do ponto de partida. **Quais elementos do toolkit (contexto, domínio, few-shot, assinatura-alvo, restrições, plano) você vai incluir no template de prompt da sua equipe?**
 > _:_
 
-A IA não sabe que o seu módulo usa snake_case em português ou que certas libs são proibidas — a menos que você diga. Como você vai fornecer à IA o contexto dos padrões já existentes no projeto?
+Iterar o prompt é mais eficiente do que corrigir o código — uma mudança no prompt pode resolver vários problemas de uma vez, enquanto corrigir a saída acumula patches. **Quando vale refinar o prompt em vez de aceitar e ajustar a saída?**
 > _:_
 
-Às vezes a saída está próxima do esperado e uma iteração no prompt resolve; outras vezes é mais rápido ajustar na mão. Quando vale a pena iterar o prompt em vez de corrigir a saída diretamente?
-> _:_
-
-**Minha decisão para este tutorial:**
-> _:_
-
----
-
-## Tutorial 10 — Refatoração Assistida: Coesão e Legibilidade
-
-> Material de referência: [sessao-5/tutorial-10-refatoracao-assistida/README.md](sessao-5/tutorial-10-refatoracao-assistida/README.md)
-
-Pedir "melhore esse código" de uma vez entrega uma reescrita difícil de auditar; pedir um passo por vez — extraia essa função, renomeie essa variável — mantém cada mudança rastreável. Qual será sua regra ao usar IA para refatoração: passos pequenos ou de uma vez?
-> _:_
-
-Uma refatoração assistida pode alterar o comportamento sem aviso — a saída parece igual, mas um edge case mudou. Como você vai verificar que o comportamento foi preservado após uma refatoração assistida?
-> _:_
-
-Diffs grandes aumentam a chance de uma regressão passar despercebida na revisão. Qual é o tamanho máximo de mudança que você aceita revisar de uma vez antes de pedir que a IA divida em passos?
+Mesmo um prompt excelente não elimina a revisão — o modelo pode gerar algo funcionalmente plausível mas semanticamente errado para o seu domínio. **O que você sempre vai verificar antes de aceitar um resultado de geração de código?**
 > _:_
 
 **Minha decisão para este tutorial:**
@@ -227,35 +206,17 @@ Diffs grandes aumentam a chance de uma regressão passar despercebida na revisã
 
 ---
 
-## Tutorial 11 — Tratamento de Erros com IA
+## Tutorial 10 — Spec-first: do requisito ao código verificável
 
-> Material de referência: [sessao-5/tutorial-11-tratamento-de-erros/README.md](sessao-5/tutorial-11-tratamento-de-erros/README.md)
+> Material de referência: [`sessao-5/tutorial-10-spec-first/README.md`](sessao-5/tutorial-10-spec-first/README.md)
 
-`except Exception: pass` e `catch {}` vazio fazem o caminho feliz funcionar enquanto escondem falhas reais. O dado corrompido só aparece na ponta, longe da origem. O que você vai fazer ao encontrar esse padrão numa saída de IA?
+Exigências implícitas não entram no código sozinhas — o modelo gera o que o prompt descreve, não o que a equipe pressupõe. **Qual o seu processo para transformar um requisito em spec antes de pedir o código ao modelo?**
 > _:_
 
-Serviços externos — banco de dados, APIs, filas — falham. Se essas falhas não são propagadas ou logadas, o sistema segue como se nada tivesse acontecido. Como você vai garantir que falhas externas não sejam silenciadas no código que aceitar?
+A spec é mais barata de corrigir do que o código — ajustar uma linha de especificação custa segundos; reescrever a função gerada custa minutos e revisão. **Como você vai fixar e comunicar as exigências implícitas antes de gerar?**
 > _:_
 
-`ValueError`, `ConexaoRecusadaError`, `LimiteExcedidoError` — exceções com nome revelam o que falhou e onde. Que exceções específicas do seu domínio de negócio precisam existir como tipos próprios?
-> _:_
-
-**Minha decisão para este tutorial:**
-> _:_
-
----
-
-## Tutorial 12 — Revisão Crítica de Código Gerado por IA
-
-> Material de referência: [sessao-6/tutorial-12-revisao-critica-ia/README.md](sessao-6/tutorial-12-revisao-critica-ia/README.md)
-
-Código de IA é confiante e plausível — compila, o nome parece razoável, o caminho feliz funciona. Exatamente por isso a revisão exige critérios explícitos. Qual será o seu checklist mínimo de revisão de código gerado por IA?
-> _:_
-
-A IA inventa métodos coerentes com o padrão da biblioteca que simplesmente não existem. O código compila mas quebra em runtime na primeira chamada. Como você vai confirmar que uma API ou método sugerido pela IA realmente existe?
-> _:_
-
-Comentários que descrevem o que o código faz mas contradizem o que o código realmente faz criam uma falsa sensação de clareza — o leitor confia no comentário e erra a lógica. Como você vai tratar essa "confiança enganosa" numa revisão?
+Testes como contrato no pedido ajudam o modelo a gerar o comportamento certo — exemplos concretos de entrada/saída eliminam ambiguidade que palavras deixam em aberto. **Como você vai usar exemplos de entrada/saída como contrato no prompt?**
 > _:_
 
 **Minha decisão para este tutorial:**
@@ -263,35 +224,17 @@ Comentários que descrevem o que o código faz mas contradizem o que o código r
 
 ---
 
-## Tutorial 13 — Segurança em Código Gerado por IA
+## Tutorial 11 — Geração multi-arquivo com agentes
 
-> Material de referência: [sessao-6/tutorial-13-seguranca-codigo-ia/README.md](sessao-6/tutorial-13-seguranca-codigo-ia/README.md)
+> Material de referência: [`sessao-5/tutorial-11-multiarquivo-agentes/README.md`](sessao-5/tutorial-11-multiarquivo-agentes/README.md)
 
-A IA hardcoda credenciais porque o prompt não disse como obtê-las — e o código funcional com segredo exposto é pior do que código que não funciona. Como você vai tratar segredos em código sugerido por IA antes de aceitar?
+Um agente que edita vários arquivos de uma vez é poderoso e perigoso — o risco não está só no arquivo editado, mas no efeito sobre os arquivos que ele toca indiretamente. **Como você vai revisar um diff multi-arquivo — o que procura além do arquivo editado?**
 > _:_
 
-Concatenação de parâmetros na query é a forma mais simples e mais perigosa de construir consultas. A IA escolhe o caminho de menor resistência se o prompt não restringe. Como você vai garantir consultas parametrizadas e validação de entrada no código que revisar?
+Inconsistências cross-file só aparecem na revisão em altitude — nomes duplicados, importações fantasma, estilos divergentes no mesmo módulo escapam quando você olha arquivo por arquivo. **Qual será o seu checklist de revisão de diff multi-arquivo?**
 > _:_
 
-A IA pode sugerir uma dependência nova sem saber que a stdlib resolve o mesmo problema ou que a lib tem histórico de vulnerabilidades. Qual será o seu critério para aceitar ou rejeitar uma dependência nova sugerida pela IA?
-> _:_
-
-**Minha decisão para este tutorial:**
-> _:_
-
----
-
-## Tutorial 14 — Testes como Guard-Rails para Mudanças Assistidas
-
-> Material de referência: [sessao-6/tutorial-14-testes-guard-rails/README.md](sessao-6/tutorial-14-testes-guard-rails/README.md)
-
-Mexer em código sem testes com auxílio de IA é acelerar sem freios — a regressão silenciosa só aparece quando o cliente reclama. Antes de deixar a IA modificar código sem cobertura de testes, o que você vai fazer primeiro?
-> _:_
-
-A IA pode escrever um teste que apenas confirma o comportamento que ela mesma implementou — inclusive comportamentos com bug. Como você vai evitar que os testes gerados só confirmem a implementação em vez de especificar o comportamento esperado?
-> _:_
-
-Rodar antes e depois garante que uma mudança assistida não quebrou nenhum caso existente. Qual será o seu ritual de verificação antes e depois de cada mudança assistida por IA?
+Às vezes é melhor parar e re-dirigir do que aceitar — um agente que derivou do objetivo original custa mais para corrigir do que reiniciar com um prompt melhor. **Quando você vai interromper o agente e reformular o pedido?**
 > _:_
 
 **Minha decisão para este tutorial:**
@@ -299,17 +242,71 @@ Rodar antes e depois garante que uma mudança assistida não quebrou nenhum caso
 
 ---
 
-## Tutorial 15 — Manutenibilidade e Trabalho com Agentes
+## Tutorial 12 — Revisão crítica de código gerado por IA
 
-> Material de referência: [sessao-6/tutorial-15-manutenibilidade-agentes/README.md](sessao-6/tutorial-15-manutenibilidade-agentes/README.md)
+> Material de referência: [`sessao-6/tutorial-12-revisao-critica-ia/README.md`](sessao-6/tutorial-12-revisao-critica-ia/README.md)
 
-Sem contexto dos padrões existentes, a IA introduz deriva: dois estilos de nomenclatura no mesmo arquivo, uma função quase idêntica a outra já existente, uma lib nova onde a stdlib bastava. Como você vai garantir que a IA siga os padrões já estabelecidos no seu código?
+O perigo não é o código feio, é o código confiante com um defeito sutil — compila, o caminho feliz passa, mas um edge case silencioso está errado. **Qual será o seu checklist mínimo de revisão de código de IA (os 6 modos de falha)?**
 > _:_
 
-Quando a IA edita vários arquivos de uma vez, olhar apenas para a saída nova é insuficiente — o diff inteiro revela duplicações, importações removidas, estilos divergentes introduzidos. Você vai revisar o diff completo ou só a saída isolada? Qual é o seu compromisso?
+Uma API alucinada parece real — o nome é coerente com o padrão da biblioteca, a assinatura faz sentido, mas o método simplesmente não existe na versão que você usa. **Como você vai confirmar que um método ou endpoint sugerido pelo modelo realmente existe na versão da lib que você usa?**
 > _:_
 
-A IA puxa dependências quando não sabe que o problema já está resolvido na stdlib ou em código existente. Ao longo do tempo, isso infla o projeto. Como você vai evitar que dependências desnecessárias se acumulem com o uso de IA?
+Um comentário que mente é pior do que nenhum — o leitor confia na docstring e raciocina sobre um comportamento que o código não implementa. **Como você vai tratar a "confiança enganosa" (docstring que afirma algo que o código não faz)?**
+> _:_
+
+**Minha decisão para este tutorial:**
+> _:_
+
+---
+
+## Tutorial 13 — Refatoração assistida avançada
+
+> Material de referência: [`sessao-6/tutorial-13-refatoracao-avancada/README.md`](sessao-6/tutorial-13-refatoracao-avancada/README.md)
+
+Uma refatoração que parece equivalente pode deslocar um limite de faixa — a lógica principal funciona, mas um edge case de fronteira mudou silenciosamente. **Como você vai verificar que a refatoração assistida preservou o comportamento, inclusive nas bordas?**
+> _:_
+
+Verificação de equivalência é mais eficaz que revisão visual — pedir à IA para construir um harness de teste antes da refatoração detecta diferenças que o olho não pega. **Como você vai construir (ou pedir à IA) uma verificação de equivalência antes de aceitar a refatoração?**
+> _:_
+
+Refatorações em passos são mais seguras — cada passo é pequeno o suficiente para ser entendido e revertido se necessário. **Qual o tamanho máximo de mudança assistida que você aceita revisar de uma vez?**
+> _:_
+
+**Minha decisão para este tutorial:**
+> _:_
+
+---
+
+## Tutorial 14 — Segurança em código gerado (2026)
+
+> Material de referência: [`sessao-6/tutorial-14-seguranca-ia/README.md`](sessao-6/tutorial-14-seguranca-ia/README.md)
+
+O WHERE pode estar parametrizado e o ORDER BY interpolado na mesma função — a vulnerabilidade fica exatamente onde você não olhou porque o resto parecia correto. **Qual será o seu checklist de segurança para código de IA (além do óbvio)?**
+> _:_
+
+Uma regex de validação pode aceitar exatamente o que deveria barrar — a expressão parece restritiva, mas um caso de borda específico passa. **Como você vai testar que a validação realmente bloqueia o input malicioso?**
+> _:_
+
+"Parece seguro" é o estado mais perigoso — a confiança gerada pela aparência de correção reduz o escrutínio exatamente onde ele é mais necessário. **O que você sempre vai questionar antes de aceitar uma função de validação ou acesso a dados gerada por IA?**
+> _:_
+
+**Minha decisão para este tutorial:**
+> _:_
+
+---
+
+## Tutorial 15 — Testes como guard-rails e manutenibilidade
+
+> Material de referência: [`sessao-6/tutorial-15-testes-manutenibilidade/README.md`](sessao-6/tutorial-15-testes-manutenibilidade/README.md)
+
+Caracterizar antes é mais barato que regredir depois — uma rede de testes de caracterização custa horas; uma regressão descoberta em produção custa dias. **O que você vai fazer antes de deixar o agente mexer em código sem testes?**
+> _:_
+
+A IA pode escrever testes que confirmam o bug em vez de detectá-lo — se o modelo gera a implementação e os testes, os testes tendem a espelhar o que o código faz, não o que deveria fazer. **Como você vai garantir que os testes da IA cobrem as bordas e não só o caminho feliz?**
+> _:_
+
+O diff é a fonte da verdade, não a saída isolada — revisar só o arquivo novo deixa escapar o que foi removido, deslocado ou quebrado nos outros arquivos. **Qual será o seu ritual de revisão de diff após uma mudança assistida?**
 > _:_
 
 **Minha decisão para este tutorial:**
@@ -328,11 +325,11 @@ A IA puxa dependências quando não sabe que o problema já está resolvido na s
 | 05 — Code Review | |
 | 06 — Dívida Técnica | |
 | 07 — Código Legado | |
-| 08 — Clean Code com IA | |
-| 09 — Engenharia de Prompt | |
-| 10 — Refatoração Assistida | |
-| 11 — Tratamento de Erros com IA | |
-| 12 — Revisão Crítica de IA | |
-| 13 — Segurança com IA | |
-| 14 — Testes Guard-Rails | |
-| 15 — Manutenibilidade com IA | |
+| 08 — O novo fluxo: dirigir e revisar | |
+| 09 — Engenharia de prompt | |
+| 10 — Spec-first | |
+| 11 — Geração multi-arquivo com agentes | |
+| 12 — Revisão crítica de código de IA | |
+| 13 — Refatoração assistida avançada | |
+| 14 — Segurança em código gerado | |
+| 15 — Testes guard-rails e manutenibilidade | |
