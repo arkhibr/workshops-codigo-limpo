@@ -2,7 +2,7 @@
 solid_bons.py — Os 5 princípios SOLID aplicados ao mesmo módulo de pedidos.
 Execute: python3 solid_bons.py
 """
-from typing import Optional, List, Protocol, runtime_checkable
+from typing import List, Protocol, runtime_checkable
 from dataclasses import dataclass
 
 
@@ -32,6 +32,7 @@ class IRepositorioPedido(Protocol):
 class INotificador(Protocol):
     def notificar(self, destinatario: str, mensagem: str) -> None: ...
 
+@runtime_checkable
 class IFormatador(Protocol):
     def formatar(self, pedido: "Pedido", total: float) -> str: ...
 
@@ -72,7 +73,7 @@ class GeradorRelatorio:
         repo:        IRepositorioPedido,
         notificador: INotificador,
         formatador:  IFormatador,
-        calculador:  CalculadorTotal,
+        calculador:  CalculadorTotal,   # sem efeitos externos — concreta aceitável aqui
     ) -> None:
         self._repo        = repo
         self._notificador = notificador
@@ -112,7 +113,7 @@ def verificar_solid() -> None:
         gerador   = GeradorRelatorio(repo, notif, fmt_cls(), calc)
         resultado = gerador.processar(pedido)
         assert resultado
-        print(f"OK: SRP+DIP — relatório '{tipo}' gerado")
+        print(f"OK: SRP+DIP — relatório '{tipo}' gerado sem alterar GeradorRelatorio")
 
     print("OK: OCP — FormatadorEstoque adicionado sem alterar GeradorRelatorio")
 
@@ -120,7 +121,8 @@ def verificar_solid() -> None:
     processar_pedido(amostra)
     print("OK: LSP — PedidoAmostra confirmado sem exceção inesperada")
 
-    assert isinstance(INotificador, type(Protocol))
+    metodos_publicos = [m for m in dir(INotificador) if not m.startswith("_")]
+    assert len(metodos_publicos) <= 2
     print("OK: ISP — INotificador segregado (1 método)")
 
     print("OK: DIP — GeradorRelatorio recebe abstrações no construtor")

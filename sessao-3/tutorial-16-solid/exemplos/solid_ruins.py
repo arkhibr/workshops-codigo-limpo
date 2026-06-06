@@ -2,7 +2,7 @@
 solid_ruins.py — Violações dos 5 princípios SOLID em um módulo de pedidos.
 Execute: python3 solid_ruins.py
 """
-from typing import Optional, List
+from typing import List
 from dataclasses import dataclass
 
 
