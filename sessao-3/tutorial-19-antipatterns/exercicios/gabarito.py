@@ -5,18 +5,19 @@ Execute: python3 gabarito.py
 """
 from typing import List, Optional
 from dataclasses import dataclass
+from abc import ABC, abstractmethod
 from enum import Enum
 
 
 # ─── Correção 2: Magic Strings → enum + constantes nomeadas ──────────────────
 
-class CategoriaCargo(str, Enum):
+class CategoriaFuncionario(str, Enum):
     CLT        = "clt"
     PJ         = "pj"
     ESTAGIARIO = "estagiario"
 
 SALARIO_MINIMO_2026:     float = 1412.0
-LIMITE_FAIXA_INSS_1:     float = 2666.68
+LIMITE_FAIXA_INSS_2:     float = 2666.68
 ALIQUOTA_INSS_FAIXA_1:   float = 0.075
 ALIQUOTA_INSS_FAIXA_2:   float = 0.09
 ALIQUOTA_INSS_FAIXA_3:   float = 0.12
@@ -31,8 +32,21 @@ class Funcionario:
     id:        str
     nome:      str
     email:     str
-    categoria: CategoriaCargo
+    categoria: CategoriaFuncionario
     salario:   float
+
+    def calcular_inss(self) -> float:
+        """Correção 3 (Feature Envy): método movido para o dono dos dados."""
+        if self.categoria == CategoriaFuncionario.CLT:
+            if self.salario <= SALARIO_MINIMO_2026:
+                return round(self.salario * ALIQUOTA_INSS_FAIXA_1, 2)
+            elif self.salario <= LIMITE_FAIXA_INSS_2:
+                return round(self.salario * ALIQUOTA_INSS_FAIXA_2, 2)
+            else:
+                return round(self.salario * ALIQUOTA_INSS_FAIXA_3, 2)
+        if self.categoria == CategoriaFuncionario.PJ:
+            return 0.0
+        return round(self.salario * ALIQUOTA_INSS_ESTAGIARIO, 2)
 
 
 # ─── Correção 1: God Object → classes com responsabilidade única ──────────────
@@ -41,30 +55,16 @@ class RepositorioFuncionario:
     def buscar(self, func_id: str) -> Optional[Funcionario]:
         print(f"  [BD] buscar funcionário {func_id}")
         return Funcionario(func_id, "João Silva", "joao@empresa.com",
-                           CategoriaCargo.CLT, 3500.0)
+                           CategoriaFuncionario.CLT, 3500.0)
 
     def salvar(self, func: Funcionario) -> None:
         print(f"  [BD] salvar {func.id}")
 
 
-class CalculadorInss:
-    def calcular(self, salario: float, categoria: CategoriaCargo) -> float:
-        if categoria == CategoriaCargo.CLT:
-            if salario <= SALARIO_MINIMO_2026:
-                return round(salario * ALIQUOTA_INSS_FAIXA_1, 2)
-            elif salario <= LIMITE_FAIXA_INSS_1:
-                return round(salario * ALIQUOTA_INSS_FAIXA_2, 2)
-            else:
-                return round(salario * ALIQUOTA_INSS_FAIXA_3, 2)
-        if categoria == CategoriaCargo.PJ:
-            return 0.0
-        return round(salario * ALIQUOTA_INSS_ESTAGIARIO, 2)
-
-
 class CalculadorFgts:
-    def calcular(self, salario: float, categoria: CategoriaCargo) -> float:
-        if categoria == CategoriaCargo.CLT:
-            return round(salario * ALIQUOTA_FGTS, 2)
+    def calcular(self, func: Funcionario) -> float:
+        if func.categoria == CategoriaFuncionario.CLT:
+            return round(func.salario * ALIQUOTA_FGTS, 2)
         return 0.0
 
 
@@ -87,53 +87,80 @@ class GeradorRelatorioRH:
         print(f"  [BD] arquivando folha {mes}/{ano}")
 
 
+# ─── Correção 4: Copy-Paste → CalculoBase com Template Method ────────────────
+
+class CalculoBase(ABC):
+    def calcular_base(self, func: Funcionario) -> float:
+        if func.categoria == CategoriaFuncionario.CLT:
+            return max(func.salario, SALARIO_MINIMO_2026)
+        return func.salario
+
+    def calcular_liquido(self, func: Funcionario) -> float:
+        return round(self.calcular_base(func) * self._fator_desconto(), 2)
+
+    @abstractmethod
+    def _fator_desconto(self) -> float: ...
+
+
+class CalculoCLT(CalculoBase):
+    def _fator_desconto(self) -> float:
+        return 0.85
+
+
+class CalculoTerceirizado(CalculoBase):
+    def _fator_desconto(self) -> float:
+        return 0.80
+
+
 # ─── Verificação ──────────────────────────────────────────────────────────────
 
-def verificar_antipatterns() -> None:
+def verificar_gabarito() -> None:
     # God Object corrigido
-    for cls in [RepositorioFuncionario, CalculadorInss, CalculadorFgts,
-                ServicoNotificacao, GeradorRelatorioRH]:
+    for cls in [RepositorioFuncionario, CalculadorFgts, ServicoNotificacao, GeradorRelatorioRH]:
         metodos = [m for m in dir(cls()) if not m.startswith("_")]
         assert len(metodos) <= 5, f"{cls.__name__} ainda tem responsabilidades demais"
-    print("OK: God Object — responsabilidades separadas em 5 classes especializadas")
+    print("OK: God Object — responsabilidades separadas em 4 classes especializadas")
 
     # Enums no lugar de strings mágicas
-    assert CategoriaCargo.CLT.value        == "clt"
-    assert CategoriaCargo.PJ.value         == "pj"
-    assert CategoriaCargo.ESTAGIARIO.value == "estagiario"
-    print("OK: Magic Strings — CategoriaCargo como enum (CLT, PJ, ESTAGIARIO)")
+    assert CategoriaFuncionario.CLT.value        == "clt"
+    assert CategoriaFuncionario.PJ.value         == "pj"
+    assert CategoriaFuncionario.ESTAGIARIO.value == "estagiario"
+    print("OK: Magic Strings — CategoriaFuncionario como enum (CLT, PJ, ESTAGIARIO)")
 
     # Constantes no lugar de números mágicos
     assert SALARIO_MINIMO_2026 == 1412.0
     print("OK: Magic Numbers — SALARIO_MINIMO_2026 e alíquotas como constantes nomeadas")
 
-    # CalculadorInss com enum
-    calc_inss = CalculadorInss()
-    assert calc_inss.calcular(1000.0, CategoriaCargo.CLT)   == round(1000.0 * 0.075, 2)
-    assert calc_inss.calcular(3500.0, CategoriaCargo.CLT)   == round(3500.0 * 0.12, 2)
-    assert calc_inss.calcular(5000.0, CategoriaCargo.PJ)    == 0.0
-    assert calc_inss.calcular(1500.0, CategoriaCargo.ESTAGIARIO) == round(1500.0 * 0.03, 2)
-    print("OK: CalculadorInss — faixas corretas para CLT, PJ e Estagiário")
+    # Feature Envy corrigido: calcular_inss() pertence ao Funcionario
+    func_clt   = Funcionario("F1", "João", "j@e.com", CategoriaFuncionario.CLT, 3500.0)
+    func_pj    = Funcionario("F2", "Ana",  "a@e.com", CategoriaFuncionario.PJ,  8000.0)
+    func_estagio = Funcionario("F3", "Leo", "l@e.com", CategoriaFuncionario.ESTAGIARIO, 900.0)
+    assert func_clt.calcular_inss()     == round(3500.0 * 0.12, 2)
+    assert func_pj.calcular_inss()      == 0.0
+    assert func_estagio.calcular_inss() == round(900.0 * 0.03, 2)
+    print(f"OK: Feature Envy — calcular_inss() movido para Funcionario "
+          f"(CLT=R${func_clt.calcular_inss():.2f}, PJ=R${func_pj.calcular_inss():.2f})")
 
-    # CalculadorFgts com enum
-    calc_fgts = CalculadorFgts()
-    assert calc_fgts.calcular(3500.0, CategoriaCargo.CLT) == round(3500.0 * 0.08, 2)
-    assert calc_fgts.calcular(5000.0, CategoriaCargo.PJ)  == 0.0
-    print("OK: CalculadorFgts — 8% para CLT, zero para PJ")
+    # Copy-Paste corrigido: CalculoBase elimina calcular_base() duplicado
+    clt_calc  = CalculoCLT()
+    terc_calc = CalculoTerceirizado()
+    assert clt_calc.calcular_liquido(func_clt)  == round(3500.0 * 0.85, 2)
+    assert terc_calc.calcular_liquido(func_clt) == round(3500.0 * 0.80, 2)
+    print(f"OK: Copy-Paste — CalculoBase._fator_desconto() elimina calcular_base() duplicado "
+          f"(CLT=R${clt_calc.calcular_liquido(func_clt):.2f}, Terc=R${terc_calc.calcular_liquido(func_clt):.2f})")
 
 
 if __name__ == "__main__":
     print("=== Gabarito 19 — Anti-patterns RH ===\n")
-    verificar_antipatterns()
+    verificar_gabarito()
 
     print("\n--- Demo completo ---")
     repo        = RepositorioFuncionario()
-    calc_inss   = CalculadorInss()
     calc_fgts   = CalculadorFgts()
     notificacao = ServicoNotificacao()
 
     func = repo.buscar("FUNC-001")
-    inss = calc_inss.calcular(func.salario, func.categoria)
-    fgts = calc_fgts.calcular(func.salario, func.categoria)
+    inss = func.calcular_inss()
+    fgts = calc_fgts.calcular(func)
     print(f"INSS: R${inss:.2f}, FGTS: R${fgts:.2f}")
     notificacao.enviar_contracheque(func.email, func.salario - inss)
