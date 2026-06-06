@@ -48,7 +48,7 @@ function calcularFrete(pesoKg: number, distanciaKm: number,
   let tarifaBase: number;
   if (pesoKg <= 2.0) {
     tarifaBase = TARIFA_LEVE;
-  } else if (pesoKg < 10.0) {      // ← fronteira deslocada: era <= 10, passou a < 10
+  } else if (pesoKg < 10.0) {
     tarifaBase = TARIFA_PADRAO;
   } else if (pesoKg <= 20.0) {
     tarifaBase = TARIFA_MEDIA;

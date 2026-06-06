@@ -57,7 +57,7 @@ def calcular_frete(peso_kg: float, distancia_km: float,
 
     if peso_kg <= 2.0:
         tarifa_base = TARIFA_LEVE
-    elif peso_kg < 10.0:          # ← fronteira deslocada: era <= 10, passou a < 10
+    elif peso_kg < 10.0:
         tarifa_base = TARIFA_PADRAO
     elif peso_kg <= 20.0:
         tarifa_base = TARIFA_MEDIA
