@@ -170,6 +170,153 @@ O Strangler Fig substitui partes do sistema gradualmente construindo a nova vers
 
 ---
 
+## Tutorial 08 — Clean Code no Contexto Real com IA
+
+> Material de referência: [sessao-5/tutorial-08-clean-code-com-ia/README.md](sessao-5/tutorial-08-clean-code-com-ia/README.md)
+
+Um prompt fraco produz código genérico: nomes abreviados, números mágicos, idioma misturado. Especificar domínio, padrão de nomenclatura e restrições no prompt eleva o ponto de partida antes da revisão. O que você vai incluir sempre num prompt para código — domínio, idioma, restrições?
+> _:_
+
+A IA não conhece o contexto do seu sistema — ela produz o que parece razoável dado o prompt. O que você vai revisar sempre antes de aceitar uma saída de IA no seu projeto?
+> _:_
+
+Há trechos onde a IA prejudica mais do que ajuda: lógica de negócio complexa com invariantes implícitas, código de segurança crítico, partes que exigem conhecimento do histórico do sistema. Quando você vai optar por escrever sem assistência de IA?
+> _:_
+
+A política de uso de IA define expectativas para o time inteiro: quando usar, o que sempre revisar, o que nunca aceitar sem verificação. **Qual será a política de uso de IA da sua equipe?**
+> _:_
+
+**Minha decisão para este tutorial:**
+> _:_
+
+---
+
+## Tutorial 09 — Engenharia de Prompt para Código Limpo
+
+> Material de referência: [sessao-5/tutorial-09-engenharia-de-prompt/README.md](sessao-5/tutorial-09-engenharia-de-prompt/README.md)
+
+Um template de prompt inclui os elementos que você sempre precisa: contexto do domínio, idioma dos identificadores, restrições de dependências, formato de retorno esperado. Qual será o template de prompt padrão da sua equipe para gerar código?
+> _:_
+
+A IA não sabe que o seu módulo usa snake_case em português ou que certas libs são proibidas — a menos que você diga. Como você vai fornecer à IA o contexto dos padrões já existentes no projeto?
+> _:_
+
+Às vezes a saída está próxima do esperado e uma iteração no prompt resolve; outras vezes é mais rápido ajustar na mão. Quando vale a pena iterar o prompt em vez de corrigir a saída diretamente?
+> _:_
+
+**Minha decisão para este tutorial:**
+> _:_
+
+---
+
+## Tutorial 10 — Refatoração Assistida: Coesão e Legibilidade
+
+> Material de referência: [sessao-5/tutorial-10-refatoracao-assistida/README.md](sessao-5/tutorial-10-refatoracao-assistida/README.md)
+
+Pedir "melhore esse código" de uma vez entrega uma reescrita difícil de auditar; pedir um passo por vez — extraia essa função, renomeie essa variável — mantém cada mudança rastreável. Qual será sua regra ao usar IA para refatoração: passos pequenos ou de uma vez?
+> _:_
+
+Uma refatoração assistida pode alterar o comportamento sem aviso — a saída parece igual, mas um edge case mudou. Como você vai verificar que o comportamento foi preservado após uma refatoração assistida?
+> _:_
+
+Diffs grandes aumentam a chance de uma regressão passar despercebida na revisão. Qual é o tamanho máximo de mudança que você aceita revisar de uma vez antes de pedir que a IA divida em passos?
+> _:_
+
+**Minha decisão para este tutorial:**
+> _:_
+
+---
+
+## Tutorial 11 — Tratamento de Erros com IA
+
+> Material de referência: [sessao-5/tutorial-11-tratamento-de-erros/README.md](sessao-5/tutorial-11-tratamento-de-erros/README.md)
+
+`except Exception: pass` e `catch {}` vazio fazem o caminho feliz funcionar enquanto escondem falhas reais. O dado corrompido só aparece na ponta, longe da origem. O que você vai fazer ao encontrar esse padrão numa saída de IA?
+> _:_
+
+Serviços externos — banco de dados, APIs, filas — falham. Se essas falhas não são propagadas ou logadas, o sistema segue como se nada tivesse acontecido. Como você vai garantir que falhas externas não sejam silenciadas no código que aceitar?
+> _:_
+
+`ValueError`, `ConexaoRecusadaError`, `LimiteExcedidoError` — exceções com nome revelam o que falhou e onde. Que exceções específicas do seu domínio de negócio precisam existir como tipos próprios?
+> _:_
+
+**Minha decisão para este tutorial:**
+> _:_
+
+---
+
+## Tutorial 12 — Revisão Crítica de Código Gerado por IA
+
+> Material de referência: [sessao-6/tutorial-12-revisao-critica-ia/README.md](sessao-6/tutorial-12-revisao-critica-ia/README.md)
+
+Código de IA é confiante e plausível — compila, o nome parece razoável, o caminho feliz funciona. Exatamente por isso a revisão exige critérios explícitos. Qual será o seu checklist mínimo de revisão de código gerado por IA?
+> _:_
+
+A IA inventa métodos coerentes com o padrão da biblioteca que simplesmente não existem. O código compila mas quebra em runtime na primeira chamada. Como você vai confirmar que uma API ou método sugerido pela IA realmente existe?
+> _:_
+
+Comentários que descrevem o que o código faz mas contradizem o que o código realmente faz criam uma falsa sensação de clareza — o leitor confia no comentário e erra a lógica. Como você vai tratar essa "confiança enganosa" numa revisão?
+> _:_
+
+**Minha decisão para este tutorial:**
+> _:_
+
+---
+
+## Tutorial 13 — Segurança em Código Gerado por IA
+
+> Material de referência: [sessao-6/tutorial-13-seguranca-codigo-ia/README.md](sessao-6/tutorial-13-seguranca-codigo-ia/README.md)
+
+A IA hardcoda credenciais porque o prompt não disse como obtê-las — e o código funcional com segredo exposto é pior do que código que não funciona. Como você vai tratar segredos em código sugerido por IA antes de aceitar?
+> _:_
+
+Concatenação de parâmetros na query é a forma mais simples e mais perigosa de construir consultas. A IA escolhe o caminho de menor resistência se o prompt não restringe. Como você vai garantir consultas parametrizadas e validação de entrada no código que revisar?
+> _:_
+
+A IA pode sugerir uma dependência nova sem saber que a stdlib resolve o mesmo problema ou que a lib tem histórico de vulnerabilidades. Qual será o seu critério para aceitar ou rejeitar uma dependência nova sugerida pela IA?
+> _:_
+
+**Minha decisão para este tutorial:**
+> _:_
+
+---
+
+## Tutorial 14 — Testes como Guard-Rails para Mudanças Assistidas
+
+> Material de referência: [sessao-6/tutorial-14-testes-guard-rails/README.md](sessao-6/tutorial-14-testes-guard-rails/README.md)
+
+Mexer em código sem testes com auxílio de IA é acelerar sem freios — a regressão silenciosa só aparece quando o cliente reclama. Antes de deixar a IA modificar código sem cobertura de testes, o que você vai fazer primeiro?
+> _:_
+
+A IA pode escrever um teste que apenas confirma o comportamento que ela mesma implementou — inclusive comportamentos com bug. Como você vai evitar que os testes gerados só confirmem a implementação em vez de especificar o comportamento esperado?
+> _:_
+
+Rodar antes e depois garante que uma mudança assistida não quebrou nenhum caso existente. Qual será o seu ritual de verificação antes e depois de cada mudança assistida por IA?
+> _:_
+
+**Minha decisão para este tutorial:**
+> _:_
+
+---
+
+## Tutorial 15 — Manutenibilidade e Trabalho com Agentes
+
+> Material de referência: [sessao-6/tutorial-15-manutenibilidade-agentes/README.md](sessao-6/tutorial-15-manutenibilidade-agentes/README.md)
+
+Sem contexto dos padrões existentes, a IA introduz deriva: dois estilos de nomenclatura no mesmo arquivo, uma função quase idêntica a outra já existente, uma lib nova onde a stdlib bastava. Como você vai garantir que a IA siga os padrões já estabelecidos no seu código?
+> _:_
+
+Quando a IA edita vários arquivos de uma vez, olhar apenas para a saída nova é insuficiente — o diff inteiro revela duplicações, importações removidas, estilos divergentes introduzidos. Você vai revisar o diff completo ou só a saída isolada? Qual é o seu compromisso?
+> _:_
+
+A IA puxa dependências quando não sabe que o problema já está resolvido na stdlib ou em código existente. Ao longo do tempo, isso infla o projeto. Como você vai evitar que dependências desnecessárias se acumulem com o uso de IA?
+> _:_
+
+**Minha decisão para este tutorial:**
+> _:_
+
+---
+
 ## Meu Plano de Adoção
 
 | Tutorial | Minha decisão principal |
@@ -181,3 +328,11 @@ O Strangler Fig substitui partes do sistema gradualmente construindo a nova vers
 | 05 — Code Review | |
 | 06 — Dívida Técnica | |
 | 07 — Código Legado | |
+| 08 — Clean Code com IA | |
+| 09 — Engenharia de Prompt | |
+| 10 — Refatoração Assistida | |
+| 11 — Tratamento de Erros com IA | |
+| 12 — Revisão Crítica de IA | |
+| 13 — Segurança com IA | |
+| 14 — Testes Guard-Rails | |
+| 15 — Manutenibilidade com IA | |
