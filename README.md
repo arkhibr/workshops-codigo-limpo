@@ -36,14 +36,14 @@ Workshop organizado em temas, baseado em **Clean Code** de Robert C. Martin e **
 
 ### Sessões 3 e 4 — *reservadas para tema futuro*
 
-### Sessão 5 — Gerando e Refatorando Código com IA · 2 horas
+### Sessão 5 — Gerando Código com IA: Dirigir e Revisar · 2 horas
 
 | # | Tutorial | Teoria | Prática | Total |
 |---|---|---|---|---|
-| 08 | Clean Code no Contexto Real com IA | 15 min | 15 min | 30 min |
-| 09 | Engenharia de Prompt para Código Limpo | 15 min | 15 min | 30 min |
-| 10 | Refatoração Assistida: Coesão e Legibilidade | 15 min | 15 min | 30 min |
-| 11 | Tratamento de Erros com IA ⭐ | 10 min | 10 min | 20 min |
+| 08 | O novo fluxo: dirigir e revisar | 15 min | 15 min | 30 min |
+| 09 | Engenharia de contexto e prompt para gerar código | 15 min | 15 min | 30 min |
+| 10 | Spec-first: do requisito ao código verificável | 15 min | 15 min | 30 min |
+| 11 | Geração multi-arquivo com agentes ⭐ | 10 min | 10 min | 20 min |
 | — | **Pulmão** | | | **10 min** |
 | | **Total** | | | **120 min** |
 
@@ -51,10 +51,10 @@ Workshop organizado em temas, baseado em **Clean Code** de Robert C. Martin e **
 
 | # | Tutorial | Teoria | Prática | Total |
 |---|---|---|---|---|
-| 12 | Revisão Crítica de Código Gerado por IA ⭐ | 20 min | 20 min | 40 min |
-| 13 | Segurança em Código Gerado por IA | 12 min | 13 min | 25 min |
-| 14 | Testes como Guard-Rails para Mudanças Assistidas | 15 min | 15 min | 30 min |
-| 15 | Manutenibilidade e Trabalho com Agentes | 12 min | 13 min | 25 min |
+| 12 | Revisão crítica de código gerado por IA ⭐ | 20 min | 20 min | 40 min |
+| 13 | Refatoração assistida avançada | 12 min | 13 min | 25 min |
+| 14 | Segurança em código gerado (2026) | 15 min | 15 min | 30 min |
+| 15 | Testes como guard-rails e manutenibilidade | 12 min | 13 min | 25 min |
 | | **Total** | | | **120 min** |
 
 ---
@@ -76,23 +76,23 @@ Workshop organizado em temas, baseado em **Clean Code** de Robert C. Martin e **
 | 06 | [Dívida Técnica](sessao-2/tutorial-06-divida-tecnica/) | Quadrante de Fowler, Teoria da Janela Quebrada, Regra do Escoteiro, code smells | *Clean Code*, Cap. 17 |
 | 07 | [Gestão de Código Legado](sessao-2/tutorial-07-codigo-legado/) | Testes de caracterização, Seam Model, Strangler Fig Pattern | Feathers + *Clean Code*, Cap. 1 |
 
-## Sessão 5 — Gerando e Refatorando Código com IA (2 horas)
+## Sessão 5 — Gerando Código com IA: Dirigir e Revisar (2 horas)
 
 | # | Tutorial | Conceito central | Referência |
 |---|---|---|---|
-| 08 | [Clean Code no Contexto Real com IA](sessao-5/tutorial-08-clean-code-com-ia/) | Prompt como especificação; revisar a saída da IA com os critérios das Sessões 1–2 | *Clean Code*, Cap. 2–3 |
-| 09 | [Engenharia de Prompt para Código Limpo](sessao-5/tutorial-09-engenharia-de-prompt/) | Prompt patterns: contexto, domínio, restrições, exemplos, formato de saída | *Clean Code*, Cap. 2–3 |
-| 10 | [Refatoração Assistida: Coesão e Legibilidade](sessao-5/tutorial-10-refatoracao-assistida/) | Refatorar com IA em passos verificáveis; coesão preservando comportamento | *Clean Code*, Cap. 3 |
-| 11 | [Tratamento de Erros com IA ⭐](sessao-5/tutorial-11-tratamento-de-erros/) | O vício de engolir exceções; tratamento explícito | *Clean Code*, Cap. 7 |
+| 08 | [O novo fluxo: dirigir e revisar](sessao-5/tutorial-08-novo-fluxo-ia/) | O dev dirige o modelo e revisa em altitude; CLAUDE.md/AGENTS.md/GEMINI.md como contexto | *Clean Code*, Cap. 1–2 |
+| 09 | [Engenharia de contexto e prompt para gerar código](sessao-5/tutorial-09-engenharia-de-prompt/) | Toolkit robusto: contexto, few-shot, assinatura-alvo, restrições, plano-antes-do-código | Engenharia de contexto |
+| 10 | [Spec-first: do requisito ao código verificável](sessao-5/tutorial-10-spec-first/) | Requisito → spec → código; testes como contrato no pedido | Spec-first / plan-first |
+| 11 | [Geração multi-arquivo com agentes ⭐](sessao-5/tutorial-11-multiarquivo-agentes/) | Dirigir mudança multi-arquivo; revisar o diff em altitude | Diffs multi-arquivo com agentes |
 
 ## Sessão 6 — Revisando e Sustentando Código de IA (2 horas)
 
 | # | Tutorial | Conceito central | Referência |
 |---|---|---|---|
-| 12 | [Revisão Crítica de Código Gerado por IA ⭐](sessao-6/tutorial-12-revisao-critica-ia/) | Modos de falha de código de IA; checklist de revisão reutilizável | — |
-| 13 | [Segurança em Código Gerado por IA](sessao-6/tutorial-13-seguranca-codigo-ia/) | Segredos, injeção, validação de entrada externa | — |
-| 14 | [Testes como Guard-Rails para Mudanças Assistidas](sessao-6/tutorial-14-testes-guard-rails/) | Testes de caracterização e TDD assistido como rede de segurança | Feathers + *Clean Code*, Cap. 9 |
-| 15 | [Manutenibilidade e Trabalho com Agentes](sessao-6/tutorial-15-manutenibilidade-agentes/) | Evitar entropia; revisar o diff; dependências; Regra do Escoteiro | *Clean Code*, Cap. 1, 17 |
+| 12 | [Revisão crítica de código gerado por IA ⭐](sessao-6/tutorial-12-revisao-critica-ia/) | Modos de falha sutis em código polido de fronteira; checklist de revisão reutilizável | Âncora do tema |
+| 13 | [Refatoração assistida avançada](sessao-6/tutorial-13-refatoracao-avancada/) | Migração de API/padrão preservando comportamento; verificação de equivalência | Feathers + *Clean Code*, Cap. 9 |
+| 14 | [Segurança em código gerado (2026)](sessao-6/tutorial-14-seguranca-ia/) | Brechas sutis (ORDER BY interpolado, regex bypass) em código que parece seguro | Complementa T12 |
+| 15 | [Testes como guard-rails e manutenibilidade](sessao-6/tutorial-15-testes-manutenibilidade/) | Caracterização antes de deixar o agente mudar; testes que confirmam o bug; revisar o diff | Feathers + *Clean Code*, Cap. 9; Regra do Escoteiro |
 
 ---
 
@@ -133,16 +133,16 @@ tutorial-05-code-review/
 └── gabarito_review_tlpp.md
 ```
 
-**Tutoriais das Sessões 5–6** cobrem apenas **Python** e **TypeScript** (sem PHP e ADVPL/TLPP) e seguem a tripla `prompt.md` → `*_gerado.*` → `*_revisado.*`:
+**Tutoriais das Sessões 5–6** cobrem apenas **Python** e **TypeScript** (sem PHP e ADVPL/TLPP). Os prompts cobrem a tríade de provedores Claude/OpenAI/Gemini (`prompt.md`/`roteiro-ia.md`). Os arquivos `*_gerado.*` são código polido com defeito sutil intencional; os `*_revisado.*` aplicam os critérios das Sessões 1–2.
 
 ```
-tutorial-0N-<tema>/           # Sessões 5–6
+tutorial-0N-<tema>/           # Sessões 5–6 (padrão)
 ├── README.md
 ├── exemplos/
-│   ├── prompt.md              # prompt usado para gerar o código
-│   ├── <tema>_gerado.py       # saída bruta da IA — Python
-│   ├── <tema>_gerado.ts       # saída bruta da IA — TypeScript
-│   ├── <tema>_revisado.py     # versão revisada conforme critérios de Clean Code — Python
+│   ├── prompt.md              # prompt usado para gerar o código (tríade Claude/OpenAI/Gemini)
+│   ├── <tema>_gerado.py       # saída da IA — Python (código polido com defeito sutil)
+│   ├── <tema>_gerado.ts       # saída da IA — TypeScript
+│   ├── <tema>_revisado.py     # versão revisada com critérios de Clean Code — Python
 │   └── <tema>_revisado.ts     # versão revisada — TypeScript
 └── exercicios/
     ├── roteiro-ia.md          # roteiro hands-on com a IA
@@ -153,7 +153,30 @@ tutorial-0N-<tema>/           # Sessões 5–6
     └── gabarito_revisao.md    # notas de revisão do gabarito
 ```
 
-O Tutorial 12 tem estrutura análoga ao Tutorial 05 (o código gerado por IA *é* o exercício):
+O Tutorial 11 tem estrutura estendida com subpastas separando gerado e revisado, mais diff comentado:
+
+```
+tutorial-11-multiarquivo-agentes/
+├── README.md
+├── exemplos/
+│   ├── prompt.md              # prompt de mudança multi-arquivo
+│   ├── diff-comentado.md      # diff anotado com critérios de revisão em altitude
+│   ├── gerado/                # saída bruta do agente
+│   │   ├── carrinho.py / .ts
+│   │   └── precificacao.py / .ts
+│   └── revisado/              # versão revisada
+│       ├── carrinho.py / .ts
+│       └── precificacao.py / .ts
+└── exercicios/
+    ├── roteiro-ia.md
+    ├── exercicio_carrinho.py / .ts
+    ├── exercicio_precificacao.py / .ts
+    ├── gabarito_carrinho.py / .ts
+    ├── gabarito_precificacao.py / .ts
+    └── gabarito_revisao.md
+```
+
+O Tutorial 12 tem estrutura análoga ao Tutorial 05 (o código gerado por IA *é* o exercício) e é o exercício âncora do tema:
 
 ```
 tutorial-12-revisao-critica-ia/
@@ -207,7 +230,7 @@ Ponto de entrada: a User Function ou Procedure indicada no topo de cada arquivo.
 
 ```bash
 # Python — Sessões 5–6
-python3 sessao-5/tutorial-08-clean-code-com-ia/exemplos/agendamento_revisado.py
+python3 sessao-5/tutorial-08-novo-fluxo-ia/exemplos/catalogo_revisado.py
 
 # TypeScript — Sessões 5–6
 npx ts-node sessao-6/tutorial-12-revisao-critica-ia/codigo_gerado_por_ia.ts
@@ -302,15 +325,15 @@ npx ts-node sessao-6/tutorial-12-revisao-critica-ia/codigo_gerado_por_ia.ts
 | `exercicios/exercicio.*` | Módulo de comissões em produção desde 2020 para caracterizar e refatorar (4 linguagens) |
 | `exercicios/gabarito.*` | Testes de caracterização + refatoração completa com classes de responsabilidade única (4 linguagens) |
 
-### Sessão 5 — Tutorial 08: Clean Code no Contexto Real com IA
+### Sessão 5 — Tutorial 08: O novo fluxo: dirigir e revisar
 
 | Arquivo | Descrição |
 |---|---|
-| `exemplos/prompt.md` | Prompt usado para gerar o código de agendamento |
-| `exemplos/agendamento_gerado.py` | Saída bruta da IA — Python |
-| `exemplos/agendamento_gerado.ts` | Saída bruta da IA — TypeScript |
-| `exemplos/agendamento_revisado.py` | Versão revisada com critérios de Clean Code — Python |
-| `exemplos/agendamento_revisado.ts` | Versão revisada — TypeScript |
+| `exemplos/prompt.md` | Prompt que demonstra o dev no papel de dirigente: contexto + instrução + restrições |
+| `exemplos/catalogo_gerado.py` | Saída da IA com defeito sutil — Python |
+| `exemplos/catalogo_gerado.ts` | Saída da IA — TypeScript |
+| `exemplos/catalogo_revisado.py` | Versão revisada em altitude com critérios de Clean Code — Python |
+| `exemplos/catalogo_revisado.ts` | Versão revisada — TypeScript |
 | `exercicios/roteiro-ia.md` | Roteiro hands-on com a IA |
 | `exercicios/exercicio.py` | Desafio — Python |
 | `exercicios/exercicio.ts` | Desafio — TypeScript |
@@ -318,13 +341,13 @@ npx ts-node sessao-6/tutorial-12-revisao-critica-ia/codigo_gerado_por_ia.ts
 | `exercicios/gabarito.ts` | Solução — TypeScript |
 | `exercicios/gabarito_revisao.md` | Notas de revisão do gabarito |
 
-### Sessão 5 — Tutorial 09: Engenharia de Prompt para Código Limpo
+### Sessão 5 — Tutorial 09: Engenharia de contexto e prompt para gerar código
 
 | Arquivo | Descrição |
 |---|---|
-| `exemplos/prompt.md` | Prompt com aplicação dos patterns de engenharia de prompt |
-| `exemplos/preco_gerado.py` | Saída bruta da IA — Python |
-| `exemplos/preco_gerado.ts` | Saída bruta da IA — TypeScript |
+| `exemplos/prompt.md` | Prompt com toolkit completo: contexto, few-shot, assinatura-alvo, restrições, plano-antes-do-código |
+| `exemplos/preco_gerado.py` | Saída da IA — Python |
+| `exemplos/preco_gerado.ts` | Saída da IA — TypeScript |
 | `exemplos/preco_revisado.py` | Versão revisada — Python |
 | `exemplos/preco_revisado.ts` | Versão revisada — TypeScript |
 | `exercicios/roteiro-ia.md` | Roteiro hands-on com a IA |
@@ -334,15 +357,16 @@ npx ts-node sessao-6/tutorial-12-revisao-critica-ia/codigo_gerado_por_ia.ts
 | `exercicios/gabarito.ts` | Solução — TypeScript |
 | `exercicios/gabarito_revisao.md` | Notas de revisão do gabarito |
 
-### Sessão 5 — Tutorial 10: Refatoração Assistida: Coesão e Legibilidade
+### Sessão 5 — Tutorial 10: Spec-first: do requisito ao código verificável
 
 | Arquivo | Descrição |
 |---|---|
-| `exemplos/prompt.md` | Prompt de refatoração passo a passo |
-| `exemplos/importacao_gerado.py` | Código antes da refatoração assistida — Python |
-| `exemplos/importacao_gerado.ts` | Código antes da refatoração assistida — TypeScript |
-| `exemplos/importacao_revisado.py` | Versão refatorada com coesão preservando comportamento — Python |
-| `exemplos/importacao_revisado.ts` | Versão refatorada — TypeScript |
+| `exemplos/spec.md` | Spec estruturada: requisitos → contratos → casos de teste como critério de aceitação |
+| `exemplos/prompt.md` | Prompt spec-first com testes como parte do pedido |
+| `exemplos/reserva_gerado.py` | Saída da IA gerada a partir da spec — Python |
+| `exemplos/reserva_gerado.ts` | Saída da IA — TypeScript |
+| `exemplos/reserva_revisado.py` | Versão verificada contra a spec — Python |
+| `exemplos/reserva_revisado.ts` | Versão revisada — TypeScript |
 | `exercicios/roteiro-ia.md` | Roteiro hands-on com a IA |
 | `exercicios/exercicio.py` | Desafio — Python |
 | `exercicios/exercicio.ts` | Desafio — TypeScript |
@@ -350,43 +374,52 @@ npx ts-node sessao-6/tutorial-12-revisao-critica-ia/codigo_gerado_por_ia.ts
 | `exercicios/gabarito.ts` | Solução — TypeScript |
 | `exercicios/gabarito_revisao.md` | Notas de revisão do gabarito |
 
-### Sessão 5 — Tutorial 11: Tratamento de Erros com IA ⭐
+### Sessão 5 — Tutorial 11: Geração multi-arquivo com agentes ⭐
 
 | Arquivo | Descrição |
 |---|---|
-| `exemplos/prompt.md` | Prompt focado em tratamento explícito de erros |
-| `exemplos/estorno_gerado.py` | Saída da IA com tratamento de erros problemático — Python |
-| `exemplos/estorno_gerado.ts` | Saída da IA — TypeScript |
-| `exemplos/estorno_revisado.py` | Versão com tratamento explícito de exceções — Python |
-| `exemplos/estorno_revisado.ts` | Versão revisada — TypeScript |
+| `exemplos/prompt.md` | Prompt de mudança multi-arquivo dirigida ao agente |
+| `exemplos/diff-comentado.md` | Diff anotado com critérios de revisão em altitude |
+| `exemplos/gerado/carrinho.py` | Saída do agente — módulo carrinho, Python |
+| `exemplos/gerado/carrinho.ts` | Saída do agente — módulo carrinho, TypeScript |
+| `exemplos/gerado/precificacao.py` | Saída do agente — módulo precificação, Python |
+| `exemplos/gerado/precificacao.ts` | Saída do agente — módulo precificação, TypeScript |
+| `exemplos/revisado/carrinho.py` | Versão revisada — módulo carrinho, Python |
+| `exemplos/revisado/carrinho.ts` | Versão revisada — módulo carrinho, TypeScript |
+| `exemplos/revisado/precificacao.py` | Versão revisada — módulo precificação, Python |
+| `exemplos/revisado/precificacao.ts` | Versão revisada — módulo precificação, TypeScript |
 | `exercicios/roteiro-ia.md` | Roteiro hands-on com a IA |
-| `exercicios/exercicio.py` | Desafio — Python |
-| `exercicios/exercicio.ts` | Desafio — TypeScript |
-| `exercicios/gabarito.py` | Solução — Python |
-| `exercicios/gabarito.ts` | Solução — TypeScript |
+| `exercicios/exercicio_carrinho.py` | Desafio carrinho — Python |
+| `exercicios/exercicio_carrinho.ts` | Desafio carrinho — TypeScript |
+| `exercicios/exercicio_precificacao.py` | Desafio precificação — Python |
+| `exercicios/exercicio_precificacao.ts` | Desafio precificação — TypeScript |
+| `exercicios/gabarito_carrinho.py` | Solução carrinho — Python |
+| `exercicios/gabarito_carrinho.ts` | Solução carrinho — TypeScript |
+| `exercicios/gabarito_precificacao.py` | Solução precificação — Python |
+| `exercicios/gabarito_precificacao.ts` | Solução precificação — TypeScript |
 | `exercicios/gabarito_revisao.md` | Notas de revisão do gabarito |
 
-### Sessão 6 — Tutorial 12: Revisão Crítica de Código Gerado por IA ⭐
+### Sessão 6 — Tutorial 12: Revisão crítica de código gerado por IA ⭐
 
 | Arquivo | Descrição |
 |---|---|
 | `prompt_original.md` | Prompt que originou o código gerado |
-| `codigo_gerado_por_ia.py` | Código gerado por IA com múltiplos problemas a revisar — Python |
-| `codigo_gerado_por_ia.ts` | Código gerado por IA a revisar — TypeScript |
-| `checklist_revisao_ia.md` | Checklist de revisão reutilizável para código de IA |
+| `codigo_gerado_por_ia.py` | Código polido com modos de falha sutis a revisar — Python |
+| `codigo_gerado_por_ia.ts` | Código polido a revisar — TypeScript |
+| `checklist_revisao_ia.md` | Checklist de revisão reutilizável para código de fronteira |
 | `exercicios/roteiro-ia.md` | Roteiro hands-on de revisão crítica |
 | `gabarito_review.md` | Lista comentada de problemas encontrados — Python |
 | `gabarito_review_ts.md` | Lista comentada de problemas encontrados — TypeScript |
 
-### Sessão 6 — Tutorial 13: Segurança em Código Gerado por IA
+### Sessão 6 — Tutorial 13: Refatoração assistida avançada
 
 | Arquivo | Descrição |
 |---|---|
-| `exemplos/prompt.md` | Prompt de consulta a dados externos sem restrições de segurança |
-| `exemplos/consulta_gerado.py` | Saída da IA com vulnerabilidades de segurança — Python |
-| `exemplos/consulta_gerado.ts` | Saída da IA — TypeScript |
-| `exemplos/consulta_revisado.py` | Versão com validação de entrada, segredos e proteção contra injeção — Python |
-| `exemplos/consulta_revisado.ts` | Versão revisada — TypeScript |
+| `exemplos/prompt.md` | Prompt de migração de API/padrão com instruções de equivalência comportamental |
+| `exemplos/comissao_gerado.py` | Código antes da migração assistida — Python |
+| `exemplos/comissao_gerado.ts` | Código antes da migração — TypeScript |
+| `exemplos/comissao_revisado.py` | Versão migrada com equivalência verificada — Python |
+| `exemplos/comissao_revisado.ts` | Versão migrada — TypeScript |
 | `exercicios/roteiro-ia.md` | Roteiro hands-on com a IA |
 | `exercicios/exercicio.py` | Desafio — Python |
 | `exercicios/exercicio.ts` | Desafio — TypeScript |
@@ -394,31 +427,31 @@ npx ts-node sessao-6/tutorial-12-revisao-critica-ia/codigo_gerado_por_ia.ts
 | `exercicios/gabarito.ts` | Solução — TypeScript |
 | `exercicios/gabarito_revisao.md` | Notas de revisão do gabarito |
 
-### Sessão 6 — Tutorial 14: Testes como Guard-Rails para Mudanças Assistidas
+### Sessão 6 — Tutorial 14: Segurança em código gerado (2026)
 
 | Arquivo | Descrição |
 |---|---|
-| `exemplos/prompt.md` | Prompt para geração de código de cálculo de frete |
-| `exemplos/frete_gerado.py` | Saída da IA sem cobertura de testes — Python |
+| `exemplos/prompt.md` | Prompt de consulta a dados externos — parece seguro, tem brecha sutil |
+| `exemplos/busca_gerado.py` | Saída da IA com ORDER BY interpolado e regex bypass — Python |
+| `exemplos/busca_gerado.ts` | Saída da IA — TypeScript |
+| `exemplos/busca_revisado.py` | Versão com proteções explícitas e validação de entrada — Python |
+| `exemplos/busca_revisado.ts` | Versão revisada — TypeScript |
+| `exercicios/roteiro-ia.md` | Roteiro hands-on com a IA |
+| `exercicios/exercicio.py` | Desafio — Python |
+| `exercicios/exercicio.ts` | Desafio — TypeScript |
+| `exercicios/gabarito.py` | Solução — Python |
+| `exercicios/gabarito.ts` | Solução — TypeScript |
+| `exercicios/gabarito_revisao.md` | Notas de revisão do gabarito |
+
+### Sessão 6 — Tutorial 15: Testes como guard-rails e manutenibilidade
+
+| Arquivo | Descrição |
+|---|---|
+| `exemplos/prompt.md` | Prompt de cálculo de frete com instrução de caracterização antes de modificar |
+| `exemplos/frete_gerado.py` | Saída da IA sem testes — Python |
 | `exemplos/frete_gerado.ts` | Saída da IA — TypeScript |
-| `exemplos/frete_revisado.py` | Versão com testes de caracterização e TDD assistido — Python |
+| `exemplos/frete_revisado.py` | Versão com testes de caracterização, testes que confirmam o bug e Regra do Escoteiro — Python |
 | `exemplos/frete_revisado.ts` | Versão revisada — TypeScript |
-| `exercicios/roteiro-ia.md` | Roteiro hands-on com a IA |
-| `exercicios/exercicio.py` | Desafio — Python |
-| `exercicios/exercicio.ts` | Desafio — TypeScript |
-| `exercicios/gabarito.py` | Solução — Python |
-| `exercicios/gabarito.ts` | Solução — TypeScript |
-| `exercicios/gabarito_revisao.md` | Notas de revisão do gabarito |
-
-### Sessão 6 — Tutorial 15: Manutenibilidade e Trabalho com Agentes
-
-| Arquivo | Descrição |
-|---|---|
-| `exemplos/prompt.md` | Prompt de geração de relatório com múltiplos ciclos de agente |
-| `exemplos/relatorio_gerado.py` | Saída da IA com problemas de manutenibilidade — Python |
-| `exemplos/relatorio_gerado.ts` | Saída da IA — TypeScript |
-| `exemplos/relatorio_revisado.py` | Versão com entropia controlada e Regra do Escoteiro aplicada — Python |
-| `exemplos/relatorio_revisado.ts` | Versão revisada — TypeScript |
 | `exercicios/roteiro-ia.md` | Roteiro hands-on com a IA |
 | `exercicios/exercicio.py` | Desafio — Python |
 | `exercicios/exercicio.ts` | Desafio — TypeScript |
