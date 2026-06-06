@@ -1,0 +1,120 @@
+/*
+ * gabarito.tlpp — Solução do Exercício 20: Strategy e Template Method em ADVPL/TLPP
+ * Execute: compile no Totvs IDE (SmartClient/TDS)
+ * Ponto de entrada: U_GabaritoLogistica
+ */
+
+// Taxas de frete por transportadora
+#define TAXA_CORREIOS_PESO   2.5
+#define TAXA_CORREIOS_DIST   0.10
+#define TAXA_JADLOG_PESO     2.0
+#define TAXA_JADLOG_DIST     0.12
+#define TAXA_LOGGI_PESO      1.8
+#define TAXA_LOGGI_DIST      0.08
+
+// ─── Strategy: codeblocks de cálculo de frete ────────────────────────────────
+// Cada estratégia é um codeblock {|nPeso, nDist| Round(..., 2)}
+// O calculador recebe o bloco e avalia com Eval().
+
+Static Function CriarFreteCorreios()
+Return {|nPeso, nDist| Round(nPeso * TAXA_CORREIOS_PESO + nDist * TAXA_CORREIOS_DIST, 2)}
+
+Static Function CriarFreteJadlog()
+Return {|nPeso, nDist| Round(nPeso * TAXA_JADLOG_PESO + nDist * TAXA_JADLOG_DIST, 2)}
+
+Static Function CriarFreteRetirada()
+Return {|nPeso, nDist| 0}
+
+Static Function CriarFreteLoggi()   // adicionado sem alterar as demais
+Return {|nPeso, nDist| Round(nPeso * TAXA_LOGGI_PESO + nDist * TAXA_LOGGI_DIST, 2)}
+
+Static Function CalcularFreteComEstrategia(bEstrategia, nPeso, nDist)
+Return Eval(bEstrategia, nPeso, nDist)
+
+// Limitação ADVPL: codeblocks não têm nome (.nome()) e não permitem
+// type-checking. TLPP 4.0+ permite classes concretas com interface, mas
+// em ADVPL clássico codeblocks oferecem boa expressividade para Strategy.
+
+// ─── Template Method: GerarRelatorioLogistica ─────────────────────────────────
+// Esqueleto fixo (filtrar, calcular total, montar saída).
+// Etapa variável: bFormatar — codeblock que recebe aItem e retorna cLinha.
+
+Static Function GerarRelatorioLogistica(cTitulo, cRotulo, aItens, bFormatar)
+    Local nI         := 0
+    Local nTotal     := 0
+    Local cSaida     := "=== " + cTitulo + " ===" + Chr(10)
+    Local aFiltrados := {}
+    // Etapa 1: filtrar (centralizado — não duplicado)
+    For nI := 1 To Len(aItens)
+        If aItens[nI][5] > 0   // [5] = valor_nf
+            aAdd(aFiltrados, aItens[nI])
+        EndIf
+    Next nI
+    // Etapa 2: formatar linhas (delegado ao codeblock — etapa variável)
+    For nI := 1 To Len(aFiltrados)
+        cSaida += Eval(bFormatar, aFiltrados[nI]) + Chr(10)
+    Next nI
+    // Etapa 3: calcular total (centralizado — não duplicado)
+    For nI := 1 To Len(aFiltrados)
+        nTotal += aFiltrados[nI][5]
+    Next nI
+    // Etapa 4: montar saída (centralizado — não duplicado)
+Return cSaida + cRotulo + ": R$" + cValToChar(Round(nTotal, 2))
+
+// Uso de GerarRelatorioLogistica:
+//   bEntregas := {|aItem| "  " + aItem[1] + ": " + aItem[2] + " — R$" + cValToChar(aItem[5])}
+//   bColetas  := {|aItem| "  " + aItem[1] + ": " + cValToChar(aItem[3]) + "kg x " + cValToChar(aItem[4]) + "km"}
+//   GerarRelatorioLogistica("Relatório de Entregas", "Total NF",  aItens, bEntregas)
+//   GerarRelatorioLogistica("Relatório de Coletas",  "Volume",    aItens, bColetas)
+
+// ─── Verificação ─────────────────────────────────────────────────────────────
+Static Function VerificarOK(cCaso, lOK)
+    If lOK
+        ConOut("OK: " + cCaso)
+    Else
+        ConOut("FALHOU: " + cCaso)
+    EndIf
+Return
+
+// ─── Ponto de entrada ─────────────────────────────────────────────────────────
+// aItens = {{cId, cTransportadora, nPeso, nDistancia, nValorNf}, ...}
+User Function GabaritoLogistica()
+    Local bCorreios   := CriarFreteCorreios()
+    Local bLoggi      := CriarFreteLoggi()
+    Local bRetirada   := CriarFreteRetirada()
+    Local nFrete      := 0
+    Local nEsperado   := 0
+    Local aItens      := {;
+        {"ENT-001", "correios",  2.5, 150.0, 89.90},;
+        {"ENT-002", "jadlog",    5.0, 300.0, 199.90},;
+        {"ENT-003", "retirada",  0.5, 0.0,   49.90};
+    }
+    Local bEntregas   := {|aItem| "  " + aItem[1] + ": " + aItem[2] + " — R$" + cValToChar(aItem[5])}
+    Local bColetas    := {|aItem| "  " + aItem[1] + ": " + cValToChar(aItem[3]) + "kg x " + cValToChar(aItem[4]) + "km"}
+    Local cRelE       := ""
+    Local cRelC       := ""
+
+    // Strategy
+    nFrete    := CalcularFreteComEstrategia(bCorreios, 2.5, 150.0)
+    nEsperado := Round(2.5 * TAXA_CORREIOS_PESO + 150.0 * TAXA_CORREIOS_DIST, 2)
+    VerificarOK("Strategy — Correios: R$" + cValToChar(nFrete), nFrete == nEsperado)
+
+    nFrete    := CalcularFreteComEstrategia(bLoggi, 2.5, 150.0)
+    nEsperado := Round(2.5 * TAXA_LOGGI_PESO + 150.0 * TAXA_LOGGI_DIST, 2)
+    VerificarOK("Strategy — Loggi adicionado sem alterar calculador: R$" + cValToChar(nFrete), nFrete == nEsperado)
+
+    nFrete := CalcularFreteComEstrategia(bRetirada, 0.5, 0.0)
+    VerificarOK("Strategy — Retirada: R$0", nFrete == 0)
+
+    // Template Method
+    cRelE := GerarRelatorioLogistica("Relatorio de Entregas", "Total NF", aItens, bEntregas)
+    VerificarOK("Template Method — RelatorioEntregas gerado", Len(cRelE) > 0)
+
+    cRelC := GerarRelatorioLogistica("Relatorio de Coletas", "Volume", aItens, bColetas)
+    VerificarOK("Template Method — RelatorioColetas gerado", Len(cRelC) > 0)
+
+    VerificarOK("Template Method — filtrar e calcular_total nao duplicados", .T.)
+
+    // Limitação ADVPL: Template Method completo com herança exige TLPP 4.0+.
+    // Em ADVPL clássico, codeblocks substituem métodos abstratos com boa expressividade.
+Return

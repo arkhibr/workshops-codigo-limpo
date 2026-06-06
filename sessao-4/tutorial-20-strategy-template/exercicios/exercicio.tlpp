@@ -1,0 +1,83 @@
+/*
+ * EXERCÍCIO 20 — Strategy e Template Method em ADVPL/TLPP
+ * Tempo estimado: 20 minutos
+ * Execute: compile no Totvs IDE (SmartClient/TDS)
+ * Ponto de entrada: U_ExercicioLogistica
+ *
+ * INSTRUÇÕES:
+ *   O código abaixo tem dois problemas:
+ *   1. CalcularFreteRuim() usa Do Case — adicionar transportadora exige alterar a função.
+ *   2. GerarRelatorioEntregasRuim() e GerarRelatorioColetasRuim() duplicam
+ *      o esqueleto de 4 etapas (filtrar, formatar, calcular, montar).
+ *
+ *   1. Refatore para Strategy com codeblocks: crie funções CriarFreteCorreios(),
+ *      CriarFreteJadlog(), etc. retornando {|nPeso, nDist| ...} e uma função
+ *      CalcularFreteComEstrategia(bEstrategia, nPeso, nDist).
+ *   2. Refatore os relatórios para Template Method: extraia GerarRelatorioLogistica()
+ *      com cTitulo, cRotulo, aItens e bFormatar (codeblock de etapa variável).
+ *   3. Compile e execute U_ExercicioLogistica (deve rodar antes e depois)
+ */
+
+// ─── Sem Strategy: Do Case de transportadora ──────────────────────────────────
+Static Function CalcularFreteRuim(cTransportadora, nPeso, nDistancia)
+    Local nFrete := 0
+    // Adicionar 'loggi' exige alterar este Do Case
+    Do Case
+        Case cTransportadora == "correios"
+            nFrete := Round(nPeso * 2.5 + nDistancia * 0.10, 2)
+        Case cTransportadora == "jadlog"
+            nFrete := Round(nPeso * 2.0 + nDistancia * 0.12, 2)
+        Case cTransportadora == "retirada"
+            nFrete := 0
+        OtherWise
+            UserException("Transportadora desconhecida: " + cTransportadora)
+    EndCase
+Return nFrete
+
+// ─── Sem Template Method: esqueleto duplicado em duas funções ─────────────────
+Static Function GerarRelatorioEntregasRuim(aItens)
+    Local nI    := 0
+    Local nTotal:= 0
+    Local cSaida:= "=== Relatório de Entregas ===" + Chr(10)
+    // Etapa 1: filtrar — DUPLICADO em GerarRelatorioColetasRuim
+    For nI := 1 To Len(aItens)
+        If aItens[nI][5] > 0   // [5] = valor_nf
+            // Etapa 2: formatar linhas — única diferença real
+            cSaida += "  " + aItens[nI][1] + ": " + aItens[nI][2] + " — R$" + cValToChar(aItens[nI][5]) + Chr(10)
+            // Etapa 3: calcular total — DUPLICADO
+            nTotal += aItens[nI][5]
+        EndIf
+    Next nI
+    // Etapa 4: montar saída — DUPLICADO
+Return cSaida + "Total NF: R$" + cValToChar(Round(nTotal, 2))
+
+Static Function GerarRelatorioColetasRuim(aItens)   // esqueleto copiado
+    Local nI    := 0
+    Local nTotal:= 0
+    Local cSaida:= "=== Relatório de Coletas ===" + Chr(10)
+    For nI := 1 To Len(aItens)
+        If aItens[nI][5] > 0
+            // Etapa 2: formatar linhas — diferença real está aqui
+            cSaida += "  " + aItens[nI][1] + ": " + cValToChar(aItens[nI][3]) + "kg x " + cValToChar(aItens[nI][4]) + "km" + Chr(10)
+            nTotal += aItens[nI][5]
+        EndIf
+    Next nI
+Return cSaida + "Volume: R$" + cValToChar(Round(nTotal, 2))
+
+// ─── Ponto de entrada: demo com código ruim ───────────────────────────────────
+// aItens = {{cId, cTransportadora, nPeso, nDistancia, nValorNf}, ...}
+User Function ExercicioLogistica()
+    Local aItens := {;
+        {"ENT-001", "correios",  2.5, 150.0, 89.90},;
+        {"ENT-002", "jadlog",    5.0, 300.0, 199.90},;
+        {"ENT-003", "retirada",  0.5, 0.0,   49.90};
+    }
+    Local nI := 0
+
+    For nI := 1 To Len(aItens)
+        ConOut(aItens[nI][1] + ": frete R$" + cValToChar(CalcularFreteRuim(aItens[nI][2], aItens[nI][3], aItens[nI][4])))
+    Next nI
+
+    ConOut(GerarRelatorioEntregasRuim(aItens))
+    ConOut(GerarRelatorioColetasRuim(aItens))
+Return
