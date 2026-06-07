@@ -38,10 +38,10 @@ Workshop organizado em temas, baseado em **Clean Code** de Robert C. Martin e **
 
 | # | Tutorial | Teoria | Prática | Total |
 |---|---|---|---|---|
-| 16 | SOLID na Prática | 15 min | 15 min | 30 min |
-| 17 | Padrões de Criação | 15 min | 15 min | 30 min |
-| 18 | Padrões Estruturais | 15 min | 15 min | 30 min |
-| 19 | Anti-patterns Clássicos | 10 min | 10 min | 20 min |
+| 08 | SOLID na Prática | 15 min | 15 min | 30 min |
+| 09 | Padrões de Criação | 15 min | 15 min | 30 min |
+| 10 | Padrões Estruturais | 15 min | 15 min | 30 min |
+| 11 | Anti-patterns Clássicos | 10 min | 10 min | 20 min |
 | — | **Pulmão** | | | **10 min** |
 | | **Total** | **55 min** | **55 min** | **120 min** |
 
@@ -49,10 +49,10 @@ Workshop organizado em temas, baseado em **Clean Code** de Robert C. Martin e **
 
 | # | Tutorial | Teoria | Prática | Total |
 |---|---|---|---|---|
-| 20 | Strategy e Template Method | 15 min | 15 min | 30 min |
-| 21 | Observer e Command ⭐ | 15 min | 15 min | 30 min |
-| 22 | Idiom Patterns por Linguagem | 15 min | 15 min | 30 min |
-| 23 | Code Review Orientado a Padrões ⭐ | 10 min | 10 min | 20 min |
+| 12 | Strategy e Template Method | 15 min | 15 min | 30 min |
+| 13 | Observer e Command ⭐ | 15 min | 15 min | 30 min |
+| 14 | Idiom Patterns por Linguagem | 15 min | 15 min | 30 min |
+| 15 | Code Review Orientado a Padrões ⭐ | 10 min | 10 min | 20 min |
 | — | **Pulmão** | | | **10 min** |
 | | **Total** | **55 min** | **55 min** | **120 min** |
 
@@ -60,10 +60,10 @@ Workshop organizado em temas, baseado em **Clean Code** de Robert C. Martin e **
 
 | # | Tutorial | Teoria | Prática | Total |
 |---|---|---|---|---|
-| 08 | O novo fluxo: dirigir e revisar | 15 min | 15 min | 30 min |
-| 09 | Engenharia de contexto e prompt para gerar código | 15 min | 15 min | 30 min |
-| 10 | Spec-first: do requisito ao código verificável | 15 min | 15 min | 30 min |
-| 11 | Geração multi-arquivo com agentes ⭐ | 10 min | 10 min | 20 min |
+| 16 | O novo fluxo: dirigir e revisar | 15 min | 15 min | 30 min |
+| 17 | Engenharia de contexto e prompt para gerar código | 15 min | 15 min | 30 min |
+| 18 | Spec-first: do requisito ao código verificável | 15 min | 15 min | 30 min |
+| 19 | Geração multi-arquivo com agentes ⭐ | 10 min | 10 min | 20 min |
 | — | **Pulmão** | | | **10 min** |
 | | **Total** | | | **120 min** |
 
@@ -71,10 +71,10 @@ Workshop organizado em temas, baseado em **Clean Code** de Robert C. Martin e **
 
 | # | Tutorial | Teoria | Prática | Total |
 |---|---|---|---|---|
-| 12 | Revisão crítica de código gerado por IA ⭐ | 20 min | 20 min | 40 min |
-| 13 | Refatoração assistida avançada | 12 min | 13 min | 25 min |
-| 14 | Segurança em código gerado (2026) | 15 min | 15 min | 30 min |
-| 15 | Testes como guard-rails e manutenibilidade | 12 min | 13 min | 25 min |
+| 20 | Revisão crítica de código gerado por IA ⭐ | 20 min | 20 min | 40 min |
+| 21 | Refatoração assistida avançada | 12 min | 13 min | 25 min |
+| 22 | Segurança em código gerado (2026) | 15 min | 15 min | 30 min |
+| 23 | Testes como guard-rails e manutenibilidade | 12 min | 13 min | 25 min |
 | | **Total** | | | **120 min** |
 
 ---
@@ -100,37 +100,37 @@ Workshop organizado em temas, baseado em **Clean Code** de Robert C. Martin e **
 
 | # | Tutorial | Conceito central | Referência |
 |---|---|---|---|
-| 16 | [SOLID na Prática](sessao-3/tutorial-08-solid/) | SRP, OCP, LSP, ISP, DIP com código real | SOLID papers — Robert C. Martin |
-| 17 | [Padrões de Criação](sessao-3/tutorial-09-criacao/) | Factory Method e Builder | *Design Patterns* (GoF), Cap. 3 |
-| 18 | [Padrões Estruturais](sessao-3/tutorial-10-estrutural/) | Adapter para código legado + Facade | *Design Patterns* (GoF), Cap. 4 |
-| 19 | [Anti-patterns Clássicos](sessao-3/tutorial-11-antipatterns/) | God Object, Magic Strings, Feature Envy, Copy-Paste | *Clean Code*, Cap. 17 |
+| 08 | [SOLID na Prática](sessao-3/tutorial-08-solid/) | SRP, OCP, LSP, ISP, DIP com código real | SOLID papers — Robert C. Martin |
+| 09 | [Padrões de Criação](sessao-3/tutorial-09-criacao/) | Factory Method e Builder | *Design Patterns* (GoF), Cap. 3 |
+| 10 | [Padrões Estruturais](sessao-3/tutorial-10-estrutural/) | Adapter para código legado + Facade | *Design Patterns* (GoF), Cap. 4 |
+| 11 | [Anti-patterns Clássicos](sessao-3/tutorial-11-antipatterns/) | God Object, Magic Strings, Feature Envy, Copy-Paste | *Clean Code*, Cap. 17 |
 
 ## Sessão 4 — Padrões Comportamentais e Idioms (2 horas)
 
 | # | Tutorial | Conceito central | Referência |
 |---|---|---|---|
-| 20 | [Strategy e Template Method](sessao-4/tutorial-12-strategy-template/) | Substituir if/elif por polimorfismo; esqueleto fixo com variação | *Design Patterns* (GoF), Cap. 5 |
-| 21 | [Observer e Command ⭐](sessao-4/tutorial-13-observer-command/) | Desacoplamento de eventos; operações reversíveis | *Design Patterns* (GoF), Cap. 5 |
-| 22 | [Idiom Patterns por Linguagem](sessao-4/tutorial-14-idioms/) | Python, TypeScript, PHP 8.1+, ADVPL/TLPP | PEP 557, TS Handbook, PHP 8.1 |
-| 23 | [Code Review Orientado a Padrões ⭐](sessao-4/tutorial-15-code-review-padroes/) | Âncora: revisão integrando T16–T22; catálogo da equipe | — |
+| 12 | [Strategy e Template Method](sessao-4/tutorial-12-strategy-template/) | Substituir if/elif por polimorfismo; esqueleto fixo com variação | *Design Patterns* (GoF), Cap. 5 |
+| 13 | [Observer e Command ⭐](sessao-4/tutorial-13-observer-command/) | Desacoplamento de eventos; operações reversíveis | *Design Patterns* (GoF), Cap. 5 |
+| 14 | [Idiom Patterns por Linguagem](sessao-4/tutorial-14-idioms/) | Python, TypeScript, PHP 8.1+, ADVPL/TLPP | PEP 557, TS Handbook, PHP 8.1 |
+| 15 | [Code Review Orientado a Padrões ⭐](sessao-4/tutorial-15-code-review-padroes/) | Âncora: revisão integrando T08–T14; catálogo da equipe | — |
 
 ## Sessão 5 — Gerando Código com IA: Dirigir e Revisar (2 horas)
 
 | # | Tutorial | Conceito central | Referência |
 |---|---|---|---|
-| 08 | [O novo fluxo: dirigir e revisar](sessao-5/tutorial-16-novo-fluxo-ia/) | O dev dirige o modelo e revisa em altitude; CLAUDE.md/AGENTS.md/GEMINI.md como contexto | *Clean Code*, Cap. 1–2 |
-| 09 | [Engenharia de contexto e prompt para gerar código](sessao-5/tutorial-17-engenharia-de-prompt/) | Toolkit robusto: contexto, few-shot, assinatura-alvo, restrições, plano-antes-do-código | Engenharia de contexto |
-| 10 | [Spec-first: do requisito ao código verificável](sessao-5/tutorial-18-spec-first/) | Requisito → spec → código; testes como contrato no pedido | Spec-first / plan-first |
-| 11 | [Geração multi-arquivo com agentes ⭐](sessao-5/tutorial-19-multiarquivo-agentes/) | Dirigir mudança multi-arquivo; revisar o diff em altitude | Diffs multi-arquivo com agentes |
+| 16 | [O novo fluxo: dirigir e revisar](sessao-5/tutorial-16-novo-fluxo-ia/) | O dev dirige o modelo e revisa em altitude; CLAUDE.md/AGENTS.md/GEMINI.md como contexto | *Clean Code*, Cap. 1–2 |
+| 17 | [Engenharia de contexto e prompt para gerar código](sessao-5/tutorial-17-engenharia-de-prompt/) | Toolkit robusto: contexto, few-shot, assinatura-alvo, restrições, plano-antes-do-código | Engenharia de contexto |
+| 18 | [Spec-first: do requisito ao código verificável](sessao-5/tutorial-18-spec-first/) | Requisito → spec → código; testes como contrato no pedido | Spec-first / plan-first |
+| 19 | [Geração multi-arquivo com agentes ⭐](sessao-5/tutorial-19-multiarquivo-agentes/) | Dirigir mudança multi-arquivo; revisar o diff em altitude | Diffs multi-arquivo com agentes |
 
 ## Sessão 6 — Revisando e Sustentando Código de IA (2 horas)
 
 | # | Tutorial | Conceito central | Referência |
 |---|---|---|---|
-| 12 | [Revisão crítica de código gerado por IA ⭐](sessao-6/tutorial-20-revisao-critica-ia/) | Modos de falha sutis em código polido de fronteira; checklist de revisão reutilizável | Âncora do tema |
-| 13 | [Refatoração assistida avançada](sessao-6/tutorial-21-refatoracao-avancada/) | Migração de API/padrão preservando comportamento; verificação de equivalência | Feathers + *Clean Code*, Cap. 9 |
-| 14 | [Segurança em código gerado (2026)](sessao-6/tutorial-22-seguranca-ia/) | Brechas sutis (ORDER BY interpolado, regex bypass) em código que parece seguro | Complementa T12 |
-| 15 | [Testes como guard-rails e manutenibilidade](sessao-6/tutorial-23-testes-manutenibilidade/) | Caracterização antes de deixar o agente mudar; testes que confirmam o bug; revisar o diff | Feathers + *Clean Code*, Cap. 9; Regra do Escoteiro |
+| 20 | [Revisão crítica de código gerado por IA ⭐](sessao-6/tutorial-20-revisao-critica-ia/) | Modos de falha sutis em código polido de fronteira; checklist de revisão reutilizável | Âncora do tema |
+| 21 | [Refatoração assistida avançada](sessao-6/tutorial-21-refatoracao-avancada/) | Migração de API/padrão preservando comportamento; verificação de equivalência | Feathers + *Clean Code*, Cap. 9 |
+| 22 | [Segurança em código gerado (2026)](sessao-6/tutorial-22-seguranca-ia/) | Brechas sutis (ORDER BY interpolado, regex bypass) em código que parece seguro | Complementa T20 |
+| 23 | [Testes como guard-rails e manutenibilidade](sessao-6/tutorial-23-testes-manutenibilidade/) | Caracterização antes de deixar o agente mudar; testes que confirmam o bug; revisar o diff | Feathers + *Clean Code*, Cap. 9; Regra do Escoteiro |
 
 ---
 
