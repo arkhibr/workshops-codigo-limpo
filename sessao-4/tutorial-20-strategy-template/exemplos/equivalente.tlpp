@@ -1,0 +1,115 @@
+/*
+ * EQUIVALENTE ADVPL/TLPP — Strategy e Template Method
+ * Execute: compile no Totvs IDE (SmartClient/TDS)
+ * Ponto de entrada: U_StrategyDemo
+ */
+
+// ─── Ruim: Do Case de imposto ─────────────────────────────────────────────────
+Static Function CalcularImpostoRuim(cRegime, nValor)
+    Local nImposto := 0
+    Do Case
+        Case cRegime == "simples"
+            nImposto := Round(nValor * 0.06, 2)
+        Case cRegime == "presumido"
+            nImposto := Round(nValor * 0.132, 2)
+        Case cRegime == "real"
+            nImposto := Round(nValor * 0.34, 2)
+        OtherWise
+            UserException("Regime desconhecido: " + cRegime)
+    EndCase
+Return nImposto
+
+// ─── Bom: Strategy com codeblock ─────────────────────────────────────────────
+// Em ADVPL clássico, Strategy é implementado via codeblock:
+// cada estratégia é {|nValor| Round(nValor * taxa, 2)}
+// O "calculador" recebe o bloco e o avalia com Eval().
+
+Static Function CriarEstrategiaSimples()
+Return {|nValor| Round(nValor * 0.06, 2)}
+
+Static Function CriarEstrategiaPresumido()
+Return {|nValor| Round(nValor * 0.132, 2)}
+
+Static Function CriarEstrategiaReal()
+Return {|nValor| Round(nValor * 0.34, 2)}
+
+Static Function CriarEstrategiaMEI()   // adicionado sem alterar as demais
+Return {|nValor| Round(nValor * 0.05, 2)}
+
+Static Function CalcularImpostoComEstrategia(bEstrategia, nValor)
+Return Eval(bEstrategia, nValor)
+
+// Limitação ADVPL: codeblocks não têm nome (sem .nome()) e não permitem
+// type-checking. TLPP 4.0+ permite classes concretas implementando um
+// protocolo, mas sem interfaces formais para validação em tempo de compilação.
+
+// ─── Ruim: esqueleto duplicado em funções ─────────────────────────────────────
+Static Function GerarRelatorioVendasRuim(aItens)
+    Local nI    := 0
+    Local nTotal:= 0
+    Local cSaida:= "=== Relatório de Vendas ===" + Chr(10)
+    // Filtrar, formatar, calcular — tudo duplicado em GerarRelatorioFinanceiroRuim
+    For nI := 1 To Len(aItens)
+        If aItens[nI][2] > 0
+            cSaida += "  " + aItens[nI][1] + ": " + cValToChar(aItens[nI][3]) + " x R$" + cValToChar(aItens[nI][2]) + Chr(10)
+            nTotal += aItens[nI][2] * aItens[nI][3]
+        EndIf
+    Next nI
+Return cSaida + "Total: R$" + cValToChar(Round(nTotal, 2))
+
+Static Function GerarRelatorioFinanceiroRuim(aItens)   // esqueleto copiado
+    Local nI    := 0
+    Local nTotal:= 0
+    Local cSaida:= "=== Relatório Financeiro ===" + Chr(10)
+    For nI := 1 To Len(aItens)
+        If aItens[nI][2] > 0
+            cSaida += "  R$" + cValToChar(Round(aItens[nI][2] * aItens[nI][3], 2)) + " (" + aItens[nI][1] + ")" + Chr(10)
+            nTotal += aItens[nI][2] * aItens[nI][3]
+        EndIf
+    Next nI
+Return cSaida + "Receita: R$" + cValToChar(Round(nTotal, 2))
+
+// ─── Bom: Template Method com codeblock de formatação ────────────────────────
+// Esqueleto fixo em GerarRelatorio; variação em bFormatar (codeblock).
+
+Static Function GerarRelatorio(cTitulo, cRotulo, aItens, bFormatar)
+    Local nI    := 0
+    Local nTotal:= 0
+    Local cSaida:= "=== " + cTitulo + " ===" + Chr(10)
+    Local aFiltrados := {}
+    For nI := 1 To Len(aItens)
+        If aItens[nI][2] > 0
+            aAdd(aFiltrados, aItens[nI])
+            nTotal += aItens[nI][2] * aItens[nI][3]
+        EndIf
+    Next nI
+    For nI := 1 To Len(aFiltrados)
+        cSaida += Eval(bFormatar, aFiltrados[nI]) + Chr(10)
+    Next nI
+Return cSaida + cRotulo + ": R$" + cValToChar(Round(nTotal, 2))
+
+// Uso:
+//   bVendas    := {|aItem| "  " + aItem[1] + ": " + cValToChar(aItem[3]) + " x R$" + cValToChar(aItem[2])}
+//   bFinanceiro := {|aItem| "  R$" + cValToChar(Round(aItem[2]*aItem[3],2)) + " (" + aItem[1] + ")"}
+//   GerarRelatorio("Relatório de Vendas",    "Total",   aItens, bVendas)
+//   GerarRelatorio("Relatório Financeiro",   "Receita", aItens, bFinanceiro)
+
+// Limitação ADVPL: Template Method completo com herança exige TLPP 4.0+.
+// Em ADVPL clássico, codeblocks substituem métodos abstratos com boa expressividade.
+
+User Function StrategyDemo()
+    Local nImp    := 0
+    Local bSimples:= CriarEstrategiaSimples()
+    Local bMEI    := CriarEstrategiaMEI()
+    Local aItens  := {{"Webcam HD", 299.90, 2}, {"Teclado", 189.90, 1}}
+    Local bVendas := {|aItem| "  " + aItem[1] + ": R$" + cValToChar(aItem[2])}
+
+    nImp := CalcularImpostoComEstrategia(bSimples, 10000.0)
+    ConOut("OK: Strategy — Simples: R$" + cValToChar(nImp))
+
+    nImp := CalcularImpostoComEstrategia(bMEI, 10000.0)
+    ConOut("OK: Strategy — MEI: R$" + cValToChar(nImp))
+
+    ConOut(GerarRelatorio("Relatório de Vendas", "Total", aItens, bVendas))
+    ConOut("OK: Template Method — GerarRelatorio com codeblock de formatação")
+Return

@@ -1,0 +1,63 @@
+/*
+ * EXERCÍCIO 19 — Anti-patterns Clássicos (ADVPL/TLPP)
+ * Tempo estimado: 15 minutos
+ * Referência: Clean Code Cap. 17 + Fowler Refactoring Cap. 3
+ *
+ * INSTRUÇÕES:
+ *   O código abaixo demonstra dois anti-patterns em ADVPL:
+ *   1. God Object: ProcFolha faz tudo — validação, cálculo, email, relatório.
+ *   2. Magic Strings/Numbers: If cCategoria == "C", If nSalario <= 1412.
+ *
+ *   1. Quebre ProcFolha em Static Functions separadas por responsabilidade.
+ *   2. Substitua as strings/números mágicos por #define com nomes claros.
+ */
+
+// ─── Anti-pattern 1: God Object + Magic Strings/Numbers ──────────────────────
+
+// ❌ Ruim — tudo em uma função: validação, cálculo, email, BD, relatório
+Static Function ProcFolha(cFuncId, cCategoria, nSalario, nMes, nAno)
+    Local nInss   := 0
+    Local nFgts   := 0
+    Local lValido := .F.
+
+    // validação inline
+    lValido := Len(cFuncId) >= 5
+
+    // cálculo INSS inline com magic strings e magic numbers
+    If cCategoria == "C"          // "C" de quê?
+        If nSalario <= 1412       // salário mínimo hardcoded
+            nInss := nSalario * 0.075
+        ElseIf nSalario <= 2666.68
+            nInss := nSalario * 0.09
+        Else
+            nInss := nSalario * 0.12
+        EndIf
+    ElseIf cCategoria == "P"      // "P" de quê?
+        nInss := 0
+    Else
+        nInss := nSalario * 0.03  // estagiário — número mágico
+    EndIf
+
+    // FGTS inline
+    If cCategoria == "C"
+        nFgts := Round(nSalario * 0.08, 2)
+    Else
+        nFgts := 0
+    EndIf
+
+    // email inline
+    ConOut("Email para " + cFuncId + ": contracheque R$ " + cValToChar(nSalario - nInss))
+
+    // BD inline
+    ConOut("BD: salvo folha " + cValToChar(nMes) + "/" + cValToChar(nAno))
+
+    // relatório inline
+    ConOut("Relatorio " + cValToChar(nAno) + ": " + cFuncId + " INSS=" + cValToChar(nInss))
+
+Return nInss + nFgts
+
+// ─── EXERCÍCIO: refatore o código acima ──────────────────────────────────────
+// Dica 1: crie ValidarFuncionario(), CalcularInss(), CalcularFgts(),
+//         NotificarFuncionario(), SalvarFolha() como Static Functions separadas.
+// Dica 2: use #define CATEGORIA_CLT "C" etc. no lugar das strings literais.
+// Dica 3: use #define SALARIO_MINIMO_2026 1412.00 no lugar do número hardcoded.

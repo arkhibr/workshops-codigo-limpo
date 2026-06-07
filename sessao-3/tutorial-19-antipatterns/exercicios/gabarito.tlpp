@@ -1,0 +1,87 @@
+/*
+ * GABARITO 19 — Anti-patterns Clássicos (ADVPL/TLPP)
+ * Referência: Clean Code Cap. 17 + Fowler Refactoring Cap. 3
+ */
+
+// ─── Correção: Magic Strings/Numbers → #define com nomes claros ───────────────
+
+#define CATEGORIA_CLT          "C"
+#define CATEGORIA_PJ           "P"
+#define CATEGORIA_ESTAGIARIO   "E"
+
+#define SALARIO_MINIMO_2026    1412.00
+#define LIMITE_FAIXA_INSS_1   2666.68
+#define ALIQUOTA_INSS_FAIXA_1  0.075
+#define ALIQUOTA_INSS_FAIXA_2  0.09
+#define ALIQUOTA_INSS_FAIXA_3  0.12
+#define ALIQUOTA_INSS_ESTAG    0.03
+#define ALIQUOTA_FGTS          0.08
+
+// ─── Correção: God Object → funções separadas por responsabilidade ─────────────
+
+// ✅ Cada função tem uma responsabilidade
+Static Function ValidarFuncionario(cFuncId)
+    Return Len(cFuncId) >= 5
+
+Static Function CalcularInss(nSalario, cCategoria)
+    Local nInss := 0
+    If cCategoria == CATEGORIA_CLT
+        If nSalario <= SALARIO_MINIMO_2026
+            nInss := Round(nSalario * ALIQUOTA_INSS_FAIXA_1, 2)
+        ElseIf nSalario <= LIMITE_FAIXA_INSS_1
+            nInss := Round(nSalario * ALIQUOTA_INSS_FAIXA_2, 2)
+        Else
+            nInss := Round(nSalario * ALIQUOTA_INSS_FAIXA_3, 2)
+        EndIf
+    ElseIf cCategoria == CATEGORIA_ESTAGIARIO
+        nInss := Round(nSalario * ALIQUOTA_INSS_ESTAG, 2)
+    // PJ: nInss permanece 0
+    EndIf
+Return nInss
+
+Static Function CalcularFgts(nSalario, cCategoria)
+    If cCategoria == CATEGORIA_CLT
+        Return Round(nSalario * ALIQUOTA_FGTS, 2)
+    EndIf
+Return 0
+
+Static Function NotificarFuncionario(cFuncId, nValorLiquido)
+    ConOut("Email para " + cFuncId + ": contracheque R$ " + cValToChar(nValorLiquido))
+Return .T.
+
+Static Function SalvarFolha(cFuncId, nMes, nAno)
+    ConOut("BD: salvo folha " + cValToChar(nMes) + "/" + cValToChar(nAno) + " - " + cFuncId)
+Return .T.
+
+Static Function GerarRelatorio(cFuncId, nAno, nInss)
+    ConOut("Relatorio " + cValToChar(nAno) + ": " + cFuncId + " INSS=" + cValToChar(nInss))
+Return .T.
+
+// ─── Função orquestradora (mínima) ────────────────────────────────────────────
+
+Static Function ProcessarFolha(cFuncId, cCategoria, nSalario, nMes, nAno)
+    Local nInss       := 0
+    Local nFgts       := 0
+    Local nLiquido    := 0
+
+    If !ValidarFuncionario(cFuncId)
+        ConOut("Erro: funcionario invalido - " + cFuncId)
+        Return 0
+    EndIf
+
+    nInss    := CalcularInss(nSalario, cCategoria)
+    nFgts    := CalcularFgts(nSalario, cCategoria)
+    nLiquido := nSalario - nInss
+
+    NotificarFuncionario(cFuncId, nLiquido)
+    SalvarFolha(cFuncId, nMes, nAno)
+    GerarRelatorio(cFuncId, nAno, nInss)
+
+Return nInss + nFgts
+
+/*
+ * // Limitação ADVPL: sem enum nativo — #define é a alternativa mais legível.
+ * // TLPP 4.0+ permite classes e métodos, mas a convenção #define ainda é
+ * // amplamente usada para constantes de domínio em código Protheus legado.
+ * // Convenção recomendada: prefixo CATEGORIA_*, LIMITE_*, ALIQUOTA_*
+ */

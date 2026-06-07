@@ -1,0 +1,104 @@
+/*
+ * EQUIVALENTE ADVPL/TLPP — Padrões Estruturais: Adapter + Facade
+ * Referência: Design Patterns (GoF), Cap. 4
+ */
+
+// ─── ERP legado (User Functions imutáveis) ────────────────────────────────────
+
+User Function ErpBuscarCliente(cClienteId)
+    Local aCliente := {}
+    Local nCod     := Val(SubStr(cClienteId, At("-", cClienteId) + 1))
+    ConOut("  [ERP] buscarCliente(" + cClienteId + ")")
+    aAdd(aCliente, nCod)                    // [1] nCodCliente
+    aAdd(aCliente, "Empresa Exemplo Ltda")  // [2] cNomeCliente
+    aAdd(aCliente, "contato@exemplo.com")   // [3] cEmailCliente
+Return aCliente
+
+User Function ErpSalvarPedido(cClienteId, cProdutoId, nQtd)
+    ConOut("  [ERP] salvarPedido(PED-TEMP)")
+Return "PED-ERP-001"
+
+User Function ErpAtualizarEstoque(cProdutoId, nQtd)
+    ConOut("  [ERP] atualizarEstoque(" + cProdutoId + ", " + cValToChar(nQtd) + ")")
+Return .T.
+
+User Function ErpGerarNF(cNroPedido)
+    ConOut("  [ERP] gerarNF(" + cNroPedido + ")")
+Return "NF-000042"
+
+
+// ════════════════════════════════════════════════════════════════════════
+// Ruim — codigo de negocio chama User Functions do ERP diretamente
+// ════════════════════════════════════════════════════════════════════════
+
+Static Function ProcessarPedidoSemAdapter(cClienteId, cProdutoId, nQtd)
+    Local aRawCliente := {}
+    Local cNroPedido  := ""
+    Local cNF         := ""
+    // Acoplamento direto: nomenclatura ADVPL exposta no codigo de negocio
+    aRawCliente := U_ErpBuscarCliente(cClienteId)
+    cNroPedido  := U_ErpSalvarPedido(cClienteId, cProdutoId, nQtd)
+    U_ErpAtualizarEstoque(cProdutoId, -nQtd)
+    cNF := U_ErpGerarNF(cNroPedido)
+    ConOut("Email para " + aRawCliente[3] + ": pedido " + cNroPedido)
+Return {cNroPedido, cNF}
+
+
+// ════════════════════════════════════════════════════════════════════════
+// Bom — Adapter isola User Functions; Facade orquestra
+// ════════════════════════════════════════════════════════════════════════
+
+// ─── Adapter: isola User Functions do ERP ────────────────────────────────────
+
+Static Function AdaptarBuscarCliente(cClienteId)
+    // Chama a User Function do Protheus e normaliza para struct local
+    Local aRaw     := U_ErpBuscarCliente(cClienteId)
+    Local aCliente := {}
+    aAdd(aCliente, cValToChar(aRaw[1]))  // nCodCliente  → [1] cId
+    aAdd(aCliente, aRaw[2])              // cNomeCliente → [2] cNome
+    aAdd(aCliente, aRaw[3])              // cEmailCliente→ [3] cEmail
+Return aCliente   // struct: [1]=cId, [2]=cNome, [3]=cEmail
+
+Static Function AdaptarSalvarPedido(cClienteId, cProdutoId, nQtd)
+Return U_ErpSalvarPedido(cClienteId, cProdutoId, nQtd)
+
+Static Function AdaptarAtualizarEstoque(cProdutoId, nQtd)
+Return U_ErpAtualizarEstoque(cProdutoId, -nQtd)
+
+Static Function AdaptarGerarNF(cNroPedido)
+Return U_ErpGerarNF(cNroPedido)
+
+// ─── Facade: orquestra adapters em uma funcao de alto nivel ──────────────────
+
+Static Function ProcessarPedido(cClienteId, cProdutoId, nQtd)
+    Local aCliente   := AdaptarBuscarCliente(cClienteId)
+    Local cNroPedido := AdaptarSalvarPedido(cClienteId, cProdutoId, nQtd)
+    AdaptarAtualizarEstoque(cProdutoId, nQtd)
+    Local cNF        := AdaptarGerarNF(cNroPedido)
+    ConOut("Email para " + aCliente[3] + ": pedido " + cNroPedido)
+Return {cNroPedido, cNF, aCliente[2]}
+
+/*
+ * Nota especial ADVPL: Adapter em integracoes Protheus e especialmente valioso.
+ * Isolando User Functions (U_*) do restante da logica, upgrades de versao
+ * (ex: P12 -> P12.1.33) impactam apenas os adapters — nao o codigo de negocio.
+ *
+ * // Limitacao ADVPL: sem interfaces formais para IRepositorioCliente.
+ * // Convencao implicita: prefixo "Adaptar*" marca funcoes adapter.
+ * // TLPP 4.0+ suporta classes e heranca para implementar o padrao formalmente.
+ */
+
+// Demo (executar como User Function U_DemoEstrutura)
+User Function DemoEstrutura()
+    Local aResultRuim := {}
+    Local aResultBom  := {}
+
+    ConOut("=== ADVPL — Ruim (sem Adapter, sem Facade) ===")
+    aResultRuim := ProcessarPedidoSemAdapter("CLI-100", "PROD-001", 5)
+    ConOut("Pedido: " + aResultRuim[1] + " | NF: " + aResultRuim[2])
+
+    ConOut("")
+    ConOut("=== ADVPL — Bom (Adapter + Facade) ===")
+    aResultBom := ProcessarPedido("CLI-100", "PROD-001", 5)
+    ConOut("Pedido: " + aResultBom[1] + " | NF: " + aResultBom[2] + " | Cliente: " + aResultBom[3])
+Return

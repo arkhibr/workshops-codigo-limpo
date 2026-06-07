@@ -1,0 +1,85 @@
+/*
+ * EXERCICIO 18 ADVPL/TLPP — Padroes Estruturais: Adapter + Facade
+ *
+ * INSTRUCOES:
+ *   O sistema de boletos bancarios abaixo tem uma API legada com nomes e
+ *   estruturas inconsistentes. O codigo de negocio chama essas User Functions
+ *   diretamente em 3 lugares diferentes.
+ *
+ *   1. Crie funcoes Adaptar* que isolem as User Functions legadas.
+ *   2. Crie uma funcao ProcessarCobrancaCompleta (Facade) que orquestre
+ *      emissao + consulta + cancelamento em uma unica chamada.
+ */
+
+// ─── API legada (User Functions — nao podem ser alteradas) ───────────────────
+
+User Function GerarBoletoLegado(nValor, cVencimento, cPagador)
+    ConOut("  [Legado] gerarBoleto(" + cPagador + ", R$" + cValToChar(nValor) + ")")
+    Local aRet := {}
+    aAdd(aRet, 12345)                       // [1] nIdBoleto
+    aAdd(aRet, "9999.99999 99999.999999")   // [2] cCodigoBarras
+    aAdd(aRet, "ATIVO")                     // [3] cStatusBoleto
+    aAdd(aRet, nValor)                      // [4] nValorBoleto
+Return aRet
+
+User Function ConsultarStatusLegado(nIdBoleto)
+    ConOut("  [Legado] consultarStatus(" + cValToChar(nIdBoleto) + ")")
+Return "ATIVO"
+
+User Function CancelarBoletoLegado(nIdBoleto, cMotivo)
+    ConOut("  [Legado] cancelarBoleto(" + cValToChar(nIdBoleto) + ", " + cMotivo + ")")
+Return .T.
+
+
+// ─── Codigo de negocio — chama legado diretamente (problema) ─────────────────
+
+Static Function EmitirCobranca(nValor, cVencimento, cClienteId)
+    Local aRaw := U_GerarBoletoLegado(nValor, cVencimento, cClienteId)  // acoplamento direto
+    Local aRet := {}
+    aAdd(aRet, aRaw[1])                // [1] nId
+    aAdd(aRet, aRaw[2])                // [2] cCodigo
+    aAdd(aRet, Lower(aRaw[3]))         // [3] cStatus
+    aAdd(aRet, aRaw[4])                // [4] nValor
+Return aRet
+
+Static Function VerificarCobranca(nBoletoId)
+    Local cStatus := U_ConsultarStatusLegado(nBoletoId)  // acoplamento direto
+Return Lower(cStatus)
+
+Static Function EstornarCobranca(nBoletoId)
+Return U_CancelarBoletoLegado(nBoletoId, "SOLICITACAO_CLIENTE")  // acoplamento direto
+
+
+/*
+ * TODO: Implemente aqui
+ *
+ * 1. Crie funcoes Adaptar* que encapsulem as User Functions legadas:
+ *    - AdaptarEmitir(nValor, cVencimento, cClienteId) -> aRet com campos normalizados
+ *    - AdaptarConsultar(nBoletoId) -> cStatus normalizado
+ *    - AdaptarCancelar(nBoletoId) -> lCancelado
+ *
+ * 2. Crie a funcao ProcessarCobrancaCompleta (Facade) que:
+ *    - Usa os adaptadores acima
+ *    - Executa emissao + consulta + cancelamento
+ *    - Retorna array com resumo da operacao
+ *
+ * Convencao ADVPL: prefixo "Adaptar*" marca funcoes adapter.
+ * // Limitacao ADVPL: sem interfaces formais para IServicoCobranca.
+ * // TLPP 4.0+ suporta classes e heranca para implementar o padrao formalmente.
+ */
+
+
+// Demo (executar como User Function U_DemoExercicio18)
+User Function DemoExercicio18()
+    Local aBoleto   := {}
+    Local cStatus   := ""
+    Local lCancelado := .F.
+
+    ConOut("=== Exercicio 18 — Sem Adapter ===")
+    aBoleto := EmitirCobranca(500.0, "2026-08-15", "CLI-200")
+    ConOut("Boleto: id=" + cValToChar(aBoleto[1]) + ", status=" + aBoleto[3])
+    cStatus := VerificarCobranca(aBoleto[1])
+    ConOut("Status: " + cStatus)
+    lCancelado := EstornarCobranca(aBoleto[1])
+    ConOut("Cancelado: " + IIf(lCancelado, "sim", "nao"))
+Return

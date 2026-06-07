@@ -1,0 +1,74 @@
+/*
+ * codigo_para_revisar.tlpp — Módulo de cobrança em ADVPL.
+ * Compile no Totvs IDE. Ponto de entrada: U_RevisarCobranca
+ *
+ * Revise em busca de oportunidades de melhoria.
+ */
+
+// Strings usadas como tipo
+#define TIPO_BOLETO "B"
+#define TIPO_PIX    "P"
+#define TIPO_CARTAO "C"
+
+Static Function ValidarVencimentoBoletoSimples(cVencimento)
+    Local aPartes := StrTokArr(cVencimento, "-")
+    If Len(aPartes) <> 3
+        Return .F.
+    EndIf
+    Local dVenc := CToD(aPartes[3] + "/" + aPartes[2] + "/" + aPartes[1])
+Return dVenc >= Date()
+
+Static Function ValidarVencimentoBoletoParcelado(cVencimento)  // idêntico ao anterior
+    Local aPartes := StrTokArr(cVencimento, "-")
+    If Len(aPartes) <> 3
+        Return .F.
+    EndIf
+    Local dVenc := CToD(aPartes[3] + "/" + aPartes[2] + "/" + aPartes[1])
+Return dVenc >= Date()
+
+// Função que gerencia o ciclo completo de cobranças
+Static Function GerenciarCobranca(cClienteId, nValor, cTipo)
+    Local cCobId        := ""
+    Local nDesconto     := 0
+    Local cResultado    := ""
+    Local cNivelFidelidade  := "O"
+    Local nHistoricoCompras := 8000.0
+    Local nPontos           := 500
+
+    // busca cliente
+    ConOut("  buscando cliente " + cClienteId)
+    cCobId := "COB-" + cClienteId + "-001"
+
+    // calcula desconto
+    If cNivelFidelidade == "O"
+        nDesconto := Min(nHistoricoCompras * 0.03 + nPontos * 0.002, 150.0)
+    ElseIf cNivelFidelidade == "P"
+        nDesconto := Min(nPontos * 0.001, 50.0)
+    EndIf
+
+    // processa pagamento
+    If cTipo == TIPO_BOLETO
+        If ! ValidarVencimentoBoletoSimples("2026-07-31")
+            ConOut("  ERRO: Boleto vencido")
+            Return ""
+        EndIf
+        cResultado := "boleto:BOL-" + cClienteId
+    ElseIf cTipo == TIPO_PIX
+        cResultado := "pix:chave-" + cClienteId
+    ElseIf cTipo == TIPO_CARTAO
+        cResultado := "cartao:parcela-1"
+    EndIf
+
+    // instancia notificador direto
+    ConOut("  [SMTP] email para empresa@exemplo.com: Cobranca " + cCobId)
+    ConOut("  [PG] INSERT INTO cobrancas VALUES ...")
+    ConOut("  desconto fidelidade: " + cValToChar(nDesconto))
+    ConOut("  resultado: " + cResultado)
+Return cResultado
+
+User Function RevisarCobranca()
+    Local cResultado := ""
+    ConOut("=== Modulo de Cobranca ADVPL — revise em busca de padroes a melhorar ===")
+    cResultado := GerenciarCobranca("CLI-100", 500.0, TIPO_BOLETO)
+    ConOut("Resultado: " + cResultado)
+Return

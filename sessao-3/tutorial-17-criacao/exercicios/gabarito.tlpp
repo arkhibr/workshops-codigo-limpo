@@ -1,0 +1,129 @@
+/*
+ * GABARITO 17 ADVPL/TLPP — Padrões de Criação
+ * Referência: Design Patterns (GoF), Cap. 3
+ *
+ * SOLUÇÃO:
+ *   1. Factory: aTiposContrato como tabela de dispatch + FabricarContrato().
+ *   2. Builder simulado: MontarContratoServicoCompleto() com validações explícitas.
+ *
+ * Compile e execute no Totvs IDE / SmartClient.
+ */
+
+// ─── Factory — tabela de dispatch ────────────────────────────────────────────
+
+Static aTiposContrato := {}  // { {cTipo, cFuncaoMontadora}, ... }
+
+Static Function RegistrarTipoContrato(cTipo, cFuncao)
+    aAdd(aTiposContrato, {cTipo, cFuncao})
+Return .T.
+
+Static Function FabricarContrato(cTipo, nValorMensal, nVigenciaMeses, cContratante, aExtra)
+    Local nI    := 0
+    Local bFunc := Nil
+    For nI := 1 To Len(aTiposContrato)
+        If aTiposContrato[nI][1] == cTipo
+            bFunc := &(aTiposContrato[nI][2])
+            Return Eval(bFunc, nValorMensal, nVigenciaMeses, cContratante, aExtra)
+        EndIf
+    Next nI
+    UserException("Tipo nao registrado: " + cTipo)
+Return Nil
+
+// Montadores especializados (um por tipo)
+Static Function MontarServico(nValorMensal, nVigenciaMeses, cContratante, aExtra)
+    Local aContrato := {}
+    If nValorMensal <= 0
+        UserException("Valor mensal deve ser positivo")
+    EndIf
+    If nVigenciaMeses <= 0
+        UserException("Vigencia deve ser positiva")
+    EndIf
+    aAdd(aContrato, "servico")
+    aAdd(aContrato, nValorMensal)
+    aAdd(aContrato, nVigenciaMeses)
+    aAdd(aContrato, cContratante)
+    aAdd(aContrato, If(Len(aExtra) > 0 .And. !Empty(aExtra[1]), aExtra[1], "Servicos gerais"))
+Return aContrato
+
+Static Function MontarLocacao(nValorMensal, nVigenciaMeses, cContratante, aExtra)
+    Local aContrato := {}
+    If nValorMensal <= 0
+        UserException("Valor mensal deve ser positivo")
+    EndIf
+    aAdd(aContrato, "locacao")
+    aAdd(aContrato, nValorMensal)
+    aAdd(aContrato, nVigenciaMeses)
+    aAdd(aContrato, cContratante)
+    aAdd(aContrato, If(Len(aExtra) > 0, aExtra[1], ""))  // cObjeto
+    aAdd(aContrato, If(Len(aExtra) > 1, aExtra[2], ""))  // cEndereco
+Return aContrato
+
+Static Function MontarFornecimento(nValorMensal, nVigenciaMeses, cContratante, aExtra)
+    Local aContrato := {}
+    If nValorMensal <= 0
+        UserException("Valor mensal deve ser positivo")
+    EndIf
+    aAdd(aContrato, "fornecimento")
+    aAdd(aContrato, nValorMensal)
+    aAdd(aContrato, nVigenciaMeses)
+    aAdd(aContrato, cContratante)
+    aAdd(aContrato, If(Len(aExtra) > 0, aExtra[1], ""))  // cFornecedorId
+    aAdd(aContrato, If(Len(aExtra) > 1, aExtra[2], 30))  // nPrazoEntrega
+Return aContrato
+
+
+// ─── Builder simulado — validações explícitas antes do retorno ───────────────
+
+/*
+ * Limitação ADVPL: sem encadeamento de métodos (fluent interface).
+ * O Builder é simulado como função montadora com todos os parâmetros
+ * nomeados e validação completa antes de montar o array de retorno.
+ * TLPP 4.0+ suporta Return Self, mas a cultura Protheus raramente usa.
+ */
+Static Function MontarContratoServicoCompleto(nValorMensal, nVigenciaMeses, ;
+                                               cContratante, cObjeto)
+    If nValorMensal <= 0
+        UserException("valor_mensal e obrigatorio e deve ser positivo")
+    EndIf
+    If nVigenciaMeses <= 0
+        UserException("vigencia_meses e obrigatorio e deve ser positivo")
+    EndIf
+    If Empty(cContratante)
+        UserException("contratante e obrigatorio")
+    EndIf
+    Local aContrato := {}
+    aAdd(aContrato, "servico")
+    aAdd(aContrato, nValorMensal)
+    aAdd(aContrato, nVigenciaMeses)
+    aAdd(aContrato, cContratante)
+    aAdd(aContrato, If(!Empty(cObjeto), cObjeto, "Servicos gerais"))
+Return aContrato
+
+
+// ─── Demo ────────────────────────────────────────────────────────────────────
+
+Static Function DemoGabarito()
+    // Registrar tipos
+    RegistrarTipoContrato("servico",      "MontarServico")
+    RegistrarTipoContrato("locacao",      "MontarLocacao")
+    RegistrarTipoContrato("fornecimento", "MontarFornecimento")
+
+    // Factory
+    Local aServico := FabricarContrato("servico", 5000.00, 12, "EMP-001", {"Consultoria em TI"})
+    ConOut("OK: Factory — " + aServico[1] + " R$ " + cValToChar(aServico[2]) + "/mes x " + cValToChar(aServico[3]) + " meses")
+
+    Local aLocacao := FabricarContrato("locacao", 3500.00, 24, "EMP-002", {"Sala 40m2", "Av. Paulista, 1000"})
+    ConOut("OK: Factory — " + aLocacao[1] + " " + aLocacao[5] + " " + aLocacao[6])
+
+    // Builder simulado
+    Local aContrato := MontarContratoServicoCompleto(5000.00, 12, "EMP-001", "Desenvolvimento de software")
+    ConOut("OK: Builder — " + aContrato[1] + " objeto=" + aContrato[5])
+
+    // Validacao: contratante vazio deve gerar excecao
+    Begin Sequence
+        MontarContratoServicoCompleto(5000.00, 12, "", "Objeto")
+        ConOut("FALHOU: deveria rejeitar contratante vazio")
+    Recover
+        ConOut("OK: Builder — rejeita contratante vazio")
+    End Sequence
+Return

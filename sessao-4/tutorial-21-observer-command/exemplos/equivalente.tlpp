@@ -1,0 +1,98 @@
+/*
+ * EQUIVALENTE ADVPL/TLPP — Observer e Command
+ * Execute: compile no Totvs IDE (SmartClient/TDS)
+ * Ponto de entrada: U_ObserverDemo
+ */
+
+// ─── Observer com array de codeblocks ─────────────────────────────────────────
+// Em ADVPL clássico, Observer é implementado com um array de codeblocks.
+// Cada observador é um bloco que recebe o pedido e executa sua ação.
+// Registrar um novo observador = aAdd(aObservadores, {|oPedido| ...})
+
+Static Function CriarGerenciadorPedido()
+    Local aGerenciador := {}
+    aAdd(aGerenciador, {})    // [1] = array de observadores aoConfirmar
+    aAdd(aGerenciador, {})    // [2] = array de observadores aoCancelar
+Return aGerenciador
+
+Static Function RegistrarObservador(aGerenciador, bAoConfirmar, bAoCancelar)
+    aAdd(aGerenciador[1], bAoConfirmar)
+    aAdd(aGerenciador[2], bAoCancelar)
+Return
+
+Static Function ConfirmarPedido(aGerenciador, aPedido)
+    Local nI := 0
+    aPedido[4] := "confirmado"    // [4] = status
+    For nI := 1 To Len(aGerenciador[1])
+        Eval(aGerenciador[1][nI], aPedido)
+    Next nI
+Return
+
+Static Function CancelarPedido(aGerenciador, aPedido)
+    Local nI := 0
+    aPedido[4] := "cancelado"
+    For nI := 1 To Len(aGerenciador[2])
+        Eval(aGerenciador[2][nI], aPedido)
+    Next nI
+Return
+
+// Limitação ADVPL: Observer via codeblocks não tem type-safety.
+// Um bloco mal-formado falha em tempo de execução, não de compilação.
+// TLPP 4.0+ permite interface/implementação com maior segurança de tipo.
+
+// ─── Command com struct como objeto de comando ─────────────────────────────────
+// Cada comando é um array: {cAcao, aPedido, bExecutar, bDesfazer}
+
+Static Function CriarComandoCancelamento(aPedido, aGerenciador)
+    Local aCmd := {}
+    Local cStatusAnterior := ""
+    aAdd(aCmd, "cancelamento")
+    aAdd(aCmd, aPedido)
+    aAdd(aCmd, {|| cStatusAnterior := aPedido[4], CancelarPedido(aGerenciador, aPedido), ConOut("  Estorno processado")})
+    aAdd(aCmd, {|| aPedido[4] := cStatusAnterior, ConOut("  Pedido " + aPedido[1] + " restaurado para: " + cStatusAnterior)})
+Return aCmd
+
+Static Function ExecutarComando(aHistorico, aCmd)
+    Eval(aCmd[3])
+    aAdd(aHistorico, aCmd)
+Return
+
+Static Function DesfazerUltimo(aHistorico)
+    Local nLen := Len(aHistorico)
+    If nLen > 0
+        Eval(aHistorico[nLen][4])
+        aSize(aHistorico, nLen - 1)
+    EndIf
+Return
+
+// Limitação ADVPL: Command com undo funcional mas sem encapsulamento.
+// O statusAnterior é capturado pela closure do codeblock — comportamento
+// correto, mas difícil de testar isoladamente. TLPP 4.0+ permite classes
+// com atributos privados para encapsulamento adequado.
+
+User Function ObserverDemo()
+    Local aGerenciador := CriarGerenciadorPedido()
+    Local aPedido      := {"PED-001", "CLI-100", "PROD-001", "pendente"}
+    Local aHistorico   := {}
+    Local aCmd         := {}
+
+    // Registrar observadores (email + estoque)
+    RegistrarObservador(aGerenciador, ;
+        {|p| ConOut("  [Email] confirmação → " + p[2] + ": " + p[1])}, ;
+        {|p| ConOut("  [Email] cancelamento → " + p[2] + ": " + p[1])})
+    RegistrarObservador(aGerenciador, ;
+        {|p| ConOut("  [Estoque] reservado: " + p[1])}, ;
+        {|p| ConOut("  [Estoque] liberado: " + p[1])})
+
+    // Confirmar pedido — notifica todos os observadores
+    ConfirmarPedido(aGerenciador, aPedido)
+    ConOut("OK: Observer — observadores notificados, status=" + aPedido[4])
+
+    // Command: cancelar e desfazer
+    aCmd := CriarComandoCancelamento(aPedido, aGerenciador)
+    ExecutarComando(aHistorico, aCmd)
+    ConOut("OK: Command — status após cancelar=" + aPedido[4])
+
+    DesfazerUltimo(aHistorico)
+    ConOut("OK: Command — status após desfazer=" + aPedido[4])
+Return

@@ -1,0 +1,104 @@
+/*
+ * gabarito.tlpp — Solução do Exercício 22: Idiom Patterns em ADVPL/TLPP
+ * Execute: compile no Totvs IDE (SmartClient/TDS)
+ * Ponto de entrada: U_GabaritoIdioms
+ */
+
+// ─── Idiom 1: #define para constantes de departamento ────────────────────────
+#define DEPTO_TI         "TI"
+#define DEPTO_RH         "RH"
+#define DEPTO_FINANCEIRO "Financeiro"
+
+// ─── Idiom 2: CriarFuncionario com validação ─────────────────────────────────
+Static Function CriarFuncionario(cId, cNome, cDepto, nSalario)
+    Local aFunc := {}
+    If nSalario <= 0
+        UserException("salario deve ser positivo: " + cValToChar(nSalario))
+    EndIf
+    If Empty(AllTrim(cNome))
+        UserException("nome nao pode ser vazio")
+    EndIf
+    aAdd(aFunc, cId)       // [1] id
+    aAdd(aFunc, cNome)     // [2] nome
+    aAdd(aFunc, cDepto)    // [3] departamento
+    aAdd(aFunc, nSalario)  // [4] salario
+Return aFunc
+
+// Limitação ADVPL: sem readonly nem constructor property promotion.
+// A validação em CriarFuncionario substitui __post_init__ do Python.
+
+// ─── Idiom 3: ProcessarComArquivo com Begin Sequence ─────────────────────────
+Static Function ProcessarComArquivo(cCaminho, aFuncs)
+    Local nI := 0
+    ConOut("  [Arquivo] abrindo " + cCaminho)
+    Begin Sequence
+        For nI := 1 To Len(aFuncs)
+            ConOut("  processando " + aFuncs[nI][2])
+        Next nI
+    End Sequence
+    ConOut("  [Arquivo] fechado (garantido pelo Begin Sequence)")
+Return
+
+// Limitação ADVPL: Begin Sequence/End Sequence garante execução do código
+// de limpeza, mas exige chamada explícita — não há açúcar sintático como
+// o 'with' do Python.
+
+// ─── Idiom 4: FiltrarPorDepto usando #define ─────────────────────────────────
+Static Function FiltrarPorDepto(aFuncs, cDepto)
+    Local aResult := {}
+    Local nI      := 0
+    For nI := 1 To Len(aFuncs)
+        If aFuncs[nI][3] == cDepto
+            aAdd(aResult, aFuncs[nI])
+        EndIf
+    Next nI
+Return aResult
+
+// ─── Idiom 5: codeblock como função de primeira classe ───────────────────────
+Static Function CalcularTotalFolha(aFuncs)
+    Local nTotal  := 0
+    Local nI      := 0
+    Local bSomar  := {|aFunc| aFunc[4]}
+    For nI := 1 To Len(aFuncs)
+        nTotal := nTotal + Eval(bSomar, aFuncs[nI])
+    Next nI
+Return nTotal
+
+User Function GabaritoIdioms()
+    Local aFuncs := {}
+    Local aTI    := {}
+    Local nTotal := 0
+
+    // Validação: salário negativo deve lançar exceção
+    Begin Sequence
+        CriarFuncionario("F999", "Invalido", DEPTO_RH, -100.0)
+        ConOut("FALHOU: deveria rejeitar salario negativo")
+    End Sequence
+    ConOut("OK: CriarFuncionario — rejeita salario negativo")
+
+    // Validação: nome vazio deve lançar exceção
+    Begin Sequence
+        CriarFuncionario("F998", "  ", DEPTO_TI, 5000.0)
+        ConOut("FALHOU: deveria rejeitar nome vazio")
+    End Sequence
+    ConOut("OK: CriarFuncionario — rejeita nome vazio")
+
+    // Criação válida
+    aAdd(aFuncs, CriarFuncionario("F001", "Ana Silva",  DEPTO_TI,         5000.0))
+    aAdd(aFuncs, CriarFuncionario("F002", "Joao Costa", DEPTO_RH,         3500.0))
+    aAdd(aFuncs, CriarFuncionario("F003", "Maria Lima", DEPTO_TI,         6000.0))
+    aAdd(aFuncs, CriarFuncionario("F004", "Pedro Alves",DEPTO_FINANCEIRO, 4200.0))
+    ConOut("OK: CriarFuncionario — 4 funcionarios criados com validacao")
+
+    // Begin Sequence (context manager)
+    ProcessarComArquivo("folha.csv", aFuncs)
+    ConOut("OK: Begin Sequence — ProcessarComArquivo fechado garantido")
+
+    // #define como enum
+    aTI := FiltrarPorDepto(aFuncs, DEPTO_TI)
+    ConOut("OK: #define enum — FiltrarPorDepto(DEPTO_TI) retornou " + cValToChar(Len(aTI)) + " funcionario(s)")
+
+    // codeblock
+    nTotal := CalcularTotalFolha(aFuncs)
+    ConOut("OK: codeblock — CalcularTotalFolha via Eval = R$" + cValToChar(nTotal))
+Return

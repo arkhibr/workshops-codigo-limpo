@@ -1,0 +1,93 @@
+/*
+ * EQUIVALENTE ADVPL/TLPP — Padrões de Criação
+ * Referência: Design Patterns (GoF), Cap. 3
+ */
+
+// ❌ Ruim — construtor gordo como array com 10 campos + Do Case de instanciação
+Static Function CriarDocumento(cTipo, nValor, cVencimento, cBeneficiario, ;
+                                cCodigoBarras, cChavePix, cNumeroNF, cCFOP, ;
+                                cDescricao, cObservacoes)
+    Local aDoc := {}
+    If cTipo == "boleto"
+        aAdd(aDoc, "boleto")
+        aAdd(aDoc, nValor)
+        aAdd(aDoc, cVencimento)
+        aAdd(aDoc, cBeneficiario)
+        aAdd(aDoc, If(!Empty(cCodigoBarras), cCodigoBarras, "9999.99999 99999.999999"))
+    ElseIf cTipo == "pix"
+        aAdd(aDoc, "pix")
+        aAdd(aDoc, nValor)
+        aAdd(aDoc, cVencimento)
+        aAdd(aDoc, cBeneficiario)
+        aAdd(aDoc, If(!Empty(cChavePix), cChavePix, "chave@exemplo.com.br"))
+    ElseIf cTipo == "nota_fiscal"
+        // ... idem
+    Else
+        UserException("Tipo desconhecido: " + cTipo)
+    EndIf
+Return aDoc
+
+// ✅ Bom — Factory como tabela de dispatch + montador por tipo
+// Tabela de factories registradas
+Static aTiposDocumento := {}  // {cTipo, cFuncaoMontadora}
+
+Static Function RegistrarTipoDocumento(cTipo, cFuncao)
+    aAdd(aTiposDocumento, {cTipo, cFuncao})
+Return .T.
+
+Static Function FabricarDocumento(cTipo, nValor, cVencimento, cBeneficiario, aExtra)
+    Local nI    := 0
+    Local bFunc := Nil
+    For nI := 1 To Len(aTiposDocumento)
+        If aTiposDocumento[nI][1] == cTipo
+            bFunc := &(aTiposDocumento[nI][2])
+            Return Eval(bFunc, nValor, cVencimento, cBeneficiario, aExtra)
+        EndIf
+    Next nI
+    UserException("Tipo nao registrado: " + cTipo)
+Return Nil
+
+Static Function MontarBoleto(nValor, cVencimento, cBeneficiario, aExtra)
+    Local aDoc := {}
+    If nValor <= 0
+        UserException("Valor deve ser positivo")
+    EndIf
+    aAdd(aDoc, "boleto")
+    aAdd(aDoc, nValor)
+    aAdd(aDoc, cVencimento)
+    aAdd(aDoc, cBeneficiario)
+    aAdd(aDoc, If(Len(aExtra) > 0, aExtra[1], "0000.00000 00000.000000"))
+Return aDoc
+
+/*
+ * Limitação ADVPL: sem encadeamento de métodos (fluent interface).
+ * Simule Builder com função montadora e validação antes do retorno.
+ * TLPP 4.0+ permite classes com métodos, mas o encadeamento requer
+ * que cada método retorne o próprio objeto (Return Self), o que é
+ * suportado mas menos comum na cultura Protheus.
+ */
+
+// Builder simulado em ADVPL
+Static Function MontarBoletoCompleto(nValor, cVencimento, cBeneficiario, cCodBarras)
+    If nValor <= 0
+        UserException("valor e obrigatorio e deve ser positivo")
+    EndIf
+    If Empty(cVencimento)
+        UserException("vencimento e obrigatorio")
+    EndIf
+    If Empty(cBeneficiario)
+        UserException("beneficiario e obrigatorio")
+    EndIf
+    Local aDoc := {}
+    aAdd(aDoc, "boleto")
+    aAdd(aDoc, nValor)
+    aAdd(aDoc, cVencimento)
+    aAdd(aDoc, cBeneficiario)
+    aAdd(aDoc, If(!Empty(cCodBarras), cCodBarras, "0000.00000 00000.000000"))
+Return aDoc
+
+Static Function DemoCriacao()
+    RegistrarTipoDocumento("boleto", "MontarBoleto")
+    Local aDoc := FabricarDocumento("boleto", 1500.00, "2026-07-15", "CLI-100", {"9999.00000"})
+    ConOut("Boleto: R$ " + cValToChar(aDoc[2]) + " venc " + aDoc[3])
+Return

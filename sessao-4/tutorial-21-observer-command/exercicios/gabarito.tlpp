@@ -1,0 +1,124 @@
+/*
+ * gabarito.tlpp — Solução do Exercício 21: Observer e Command em ADVPL/TLPP
+ * Execute: compile no Totvs IDE (SmartClient/TDS)
+ * Ponto de entrada: U_GabaritoObserver
+ */
+
+// ─── Observer com array de codeblocks ─────────────────────────────────────────
+// aPagamento = {cId, nValor, cClienteId, cStatus}
+
+Static Function CriarProcessadorPagamento()
+    Local aProc := {}
+    aAdd(aProc, {})    // [1] = array de codeblocks aoAprovar
+    aAdd(aProc, {})    // [2] = array de codeblocks aoRecusar
+Return aProc
+
+Static Function RegistrarObservadorPag(aProc, bAoAprovar, bAoRecusar)
+    aAdd(aProc[1], bAoAprovar)
+    aAdd(aProc[2], bAoRecusar)
+Return
+
+Static Function AprovarPagamento(aProc, aPagamento)
+    Local nI := 0
+    aPagamento[4] := "aprovado"
+    For nI := 1 To Len(aProc[1])
+        Eval(aProc[1][nI], aPagamento)
+    Next nI
+Return
+
+Static Function RecusarPagamento(aProc, aPagamento)
+    Local nI := 0
+    aPagamento[4] := "recusado"
+    For nI := 1 To Len(aProc[2])
+        Eval(aProc[2][nI], aPagamento)
+    Next nI
+Return
+
+// Limitação ADVPL: Observer via codeblocks não tem type-safety.
+// TLPP 4.0+ permite interface/classe com maior segurança de tipo.
+
+// ─── Command com codeblocks de executar/desfazer ──────────────────────────────
+
+Static Function CriarComandoEstorno(aPagamento, aProc)
+    Local aCmd := {}
+    Local cStatusAnterior := ""
+    aAdd(aCmd, "estorno")
+    aAdd(aCmd, aPagamento)
+    aAdd(aCmd, {|| ;
+        cStatusAnterior := aPagamento[4], ;
+        aPagamento[4] := "estornado", ;
+        ConOut("  Credito devolvido a " + aPagamento[3] + ": R$ " + cValToChar(aPagamento[2])), ;
+        ConOut("  Pagamento " + aPagamento[1] + " marcado como estornado") ;
+    })
+    aAdd(aCmd, {|| ;
+        aPagamento[4] := cStatusAnterior, ;
+        ConOut("  Pagamento " + aPagamento[1] + " restaurado para: " + cStatusAnterior) ;
+    })
+Return aCmd
+
+Static Function ExecutarComandoPag(aHistorico, aCmd)
+    Eval(aCmd[3])
+    aAdd(aHistorico, aCmd)
+Return
+
+Static Function DesfazerUltimoPag(aHistorico)
+    Local nLen := Len(aHistorico)
+    If nLen > 0
+        Eval(aHistorico[nLen][4])
+        aSize(aHistorico, nLen - 1)
+    Else
+        ConOut("  Nada para desfazer")
+    EndIf
+Return
+
+// Limitação ADVPL: cStatusAnterior capturado por closure — correto funcionalmente,
+// mas difícil de testar isoladamente. TLPP 4.0+ permite atributos privados.
+
+// ─── Verificação ──────────────────────────────────────────────────────────────
+
+User Function GabaritoObserver()
+    Local aProc      := CriarProcessadorPagamento()
+    Local aPagamento := {"PAG-001", 500.00, "CLI-100", "pendente"}
+    Local aHistorico := {}
+    Local aCmd       := {}
+
+    ConOut("=== Gabarito 21 — Observer e Command: Pagamentos ADVPL/TLPP ===")
+    ConOut("")
+
+    // Registrar observadores (email + auditoria + fraude)
+    RegistrarObservadorPag(aProc, ;
+        {|p| ConOut("  [Email] aprovado: " + p[1] + " cliente=" + p[3])}, ;
+        {|p| ConOut("  [Email] recusado: " + p[1] + " cliente=" + p[3])})
+    RegistrarObservadorPag(aProc, ;
+        {|p| ConOut("  [Auditoria] pagamento_aprovado: " + p[1])}, ;
+        {|p| ConOut("  [Auditoria] pagamento_recusado: " + p[1])})
+    RegistrarObservadorPag(aProc, ;
+        {|p| ConOut("  [Fraude] aprovado: " + p[1])}, ;
+        {|p| ConOut("  [Fraude] recusado: " + p[1])})
+
+    // Aprovar — notifica 3 observadores
+    AprovarPagamento(aProc, aPagamento)
+    If aPagamento[4] == "aprovado"
+        ConOut("OK: Observer — 3 observadores notificados em AprovarPagamento()")
+        ConOut("OK: Observer — adicionar SMS nao altera AprovarPagamento()")
+    Else
+        ConOut("FALHOU: Observer — status esperado 'aprovado', obtido '" + aPagamento[4] + "'")
+    EndIf
+    ConOut("")
+
+    // Command: estornar e desfazer
+    aCmd := CriarComandoEstorno(aPagamento, aProc)
+    ExecutarComandoPag(aHistorico, aCmd)
+    If aPagamento[4] == "estornado"
+        ConOut("OK: Command — estorno executado")
+    Else
+        ConOut("FALHOU: Command — status esperado 'estornado', obtido '" + aPagamento[4] + "'")
+    EndIf
+
+    DesfazerUltimoPag(aHistorico)
+    If aPagamento[4] == "aprovado"
+        ConOut("OK: Command — estorno desfeito, pagamento restaurado para 'aprovado'")
+    Else
+        ConOut("FALHOU: Command — status esperado 'aprovado', obtido '" + aPagamento[4] + "'")
+    EndIf
+Return

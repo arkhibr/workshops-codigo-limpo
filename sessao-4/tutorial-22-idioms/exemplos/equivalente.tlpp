@@ -1,0 +1,92 @@
+/*
+ * EQUIVALENTE ADVPL/TLPP — Idiom Patterns por Linguagem
+ * Execute: compile no Totvs IDE (SmartClient/TDS)
+ * Ponto de entrada: U_IdiomsDemo
+ *
+ * Tabela: Idiom em outras linguagens → Equivalente ADVPL/TLPP
+ *
+ * | Idiom                  | Python/PHP/TS         | ADVPL equivalente          | TLPP 4.0+? |
+ * |------------------------|-----------------------|----------------------------|------------|
+ * | @dataclass / readonly  | Python/PHP 8.1        | Array + validação manual   | Não        |
+ * | context manager (with) | Python                | Try/Catch/Finally          | Não        |
+ * | generator (yield)      | Python                | Loop inline                | Não        |
+ * | decorator              | Python                | Sem equivalente direto     | Não        |
+ * | enum                   | PHP 8.1 / TS          | #define ou constantes      | Parcial    |
+ * | discriminated union    | TypeScript            | Do Case por cTipo          | Não        |
+ * | optional chaining ?.   | TypeScript / PHP 8.0+ | If !Empty() aninhado       | Não        |
+ * | readonly class         | PHP 8.2               | Sem equivalente            | Não        |
+ *
+ * O que ADVPL faz bem:
+ *   - Prefixos de tipo (n/c/a/l/d/o) como "type hints" convencionais
+ *   - xFilial() / cEmpAnt para contexto multiempresa automático
+ *   - aAdd() + aSize() para arrays dinâmicos tipados por convenção
+ *   - codeblocks como funções de primeira classe
+ */
+
+// ─── Equivalente de @dataclass com validação ──────────────────────────────────
+Static Function CriarItemVenda(cProdutoId, cDescricao, nPrecoUnit, nQtd, nMes)
+    Local aItem := {}
+    If nPrecoUnit <= 0
+        UserException("precoUnitario deve ser positivo: " + cValToChar(nPrecoUnit))
+    EndIf
+    If nQtd <= 0
+        UserException("quantidade deve ser positiva: " + cValToChar(nQtd))
+    EndIf
+    aAdd(aItem, cProdutoId)    // [1] produto_id
+    aAdd(aItem, cDescricao)    // [2] descricao
+    aAdd(aItem, nPrecoUnit)    // [3] preco_unitario
+    aAdd(aItem, nQtd)          // [4] quantidade
+    aAdd(aItem, nMes)          // [5] mes
+Return aItem
+
+// Limitação ADVPL: sem @dataclass nem readonly. A convenção de prefixos e
+// comentários de índice substitui type hints. Mutabilidade não é controlada.
+
+// ─── Equivalente de context manager ──────────────────────────────────────────
+Static Function ProcessarComConexao(aItens, bProcessar)
+    Local nI := 0
+    ConOut("  [BD] conexão aberta")
+    Begin Sequence
+        For nI := 1 To Len(aItens)
+            Eval(bProcessar, aItens[nI])
+        Next nI
+    End Sequence
+    ConOut("  [BD] conexão fechada (garantido pelo Begin Sequence)")
+Return
+
+// Limitação ADVPL: Begin Sequence/End Sequence é o equivalente ao try/finally,
+// mas sem o açúcar sintático do 'with'. A conexão é fechada via código
+// explícito após o bloco — não automático como o context manager do Python.
+
+// ─── Equivalente de enum com #define ─────────────────────────────────────────
+#define STATUS_ATIVO   "A"
+#define STATUS_PREMIUM "P"
+#define STATUS_INATIVO "I"
+
+Static Function CalcularDesconto(cStatus, nValor)
+    Local nDesc := 0
+    Do Case
+        Case cStatus == STATUS_ATIVO
+            nDesc := nValor * 0.10
+        Case cStatus == STATUS_PREMIUM
+            nDesc := nValor * 0.20
+        Case cStatus == STATUS_INATIVO
+            nDesc := 0
+    EndCase
+Return Round(nDesc, 2)
+
+User Function IdiomsDemo()
+    Local aItem  := {}
+    Local aItens := {}
+    Local nTotal := 0
+
+    aItem := CriarItemVenda("P001", "Webcam HD", 299.90, 2, 6)
+    ConOut("OK: CriarItemVenda — produto=" + aItem[1] + ", preco=" + cValToChar(aItem[3]))
+
+    aAdd(aItens, aItem)
+    ProcessarComConexao(aItens, {|aI| ConOut("  processando " + aI[1])})
+    ConOut("OK: Begin Sequence — equivalente ao context manager")
+
+    nTotal := CalcularDesconto(STATUS_PREMIUM, 1000.0)
+    ConOut("OK: #define enum — Premium desconto=R$" + cValToChar(nTotal))
+Return

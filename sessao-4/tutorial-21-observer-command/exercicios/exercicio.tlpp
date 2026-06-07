@@ -1,0 +1,69 @@
+/*
+ * EXERCÍCIO 21 — Observer e Command em ADVPL/TLPP
+ * Execute: compile no Totvs IDE (SmartClient/TDS)
+ * Ponto de entrada: U_ExercicioObserver
+ *
+ * INSTRUÇÕES:
+ *   O código abaixo tem dois problemas:
+ *   1. ProcessarPagamentoRuim() chama NotificarEmail, RegistrarAuditoria e
+ *      MarcarFraude inline — acoplamento direto. Adicionar SMS exige alterar
+ *      a função.
+ *   2. EstornarPagamento() não tem undo — sem histórico, sem reversão.
+ *
+ *   1. Refatore para Observer: crie CriarProcessadorPagamento() com array de
+ *      codeblocks aoAprovar/aoRecusar, e RegistrarObservadorPag().
+ *   2. Refatore para Command: crie CriarComandoEstorno() com bExecutar/bDesfazer,
+ *      e DesfazerUltimoPag().
+ */
+
+// ─── Serviços inline (acoplados) ──────────────────────────────────────────────
+
+Static Function NotificarEmail(aPagamento)
+    ConOut("  [Email] → " + aPagamento[3] + ": pagamento aprovado R$ " + cValToChar(aPagamento[2]))
+Return
+
+Static Function RegistrarAuditoria(cEvento, aPagamento)
+    ConOut("  [Auditoria] " + cEvento + ": " + aPagamento[1])
+Return
+
+Static Function MarcarFraude(aPagamento)
+    ConOut("  [Fraude] aprovado: " + aPagamento[1])
+Return
+
+// ─── Sem Observer: ProcessarPagamentoRuim conhece todos os serviços ───────────
+// aPagamento = {cId, nValor, cClienteId, cStatus}
+
+Static Function ProcessarPagamentoRuim(aPagamento)
+    aPagamento[4] := "aprovado"
+    // Adicionar SMS exige alterar ProcessarPagamentoRuim()
+    NotificarEmail(aPagamento)
+    RegistrarAuditoria("pagamento_aprovado", aPagamento)
+    MarcarFraude(aPagamento)
+Return
+
+// ─── Sem Command: EstornarPagamento sem undo ──────────────────────────────────
+
+Static Function EstornarPagamento(aPagamento)
+    // Sem estado anterior. Sem histórico. Sem desfazer.
+    aPagamento[4] := "estornado"
+    ConOut("  Crédito devolvido a " + aPagamento[3] + ": R$ " + cValToChar(aPagamento[2]))
+    ConOut("  Pagamento " + aPagamento[1] + " marcado como estornado")
+Return
+
+// Limitação ADVPL: sem encapsulamento de estado, o undo exige variável externa.
+// TLPP 4.0+ permite classes com atributos privados para Command adequado.
+
+User Function ExercicioObserver()
+    Local aPagamento := {"PAG-001", 500.00, "CLI-100", "pendente"}
+
+    ConOut("=== Exercício 21 — sem Observer, sem undo ===")
+    ConOut("")
+
+    ProcessarPagamentoRuim(aPagamento)
+    ConOut("Status: " + aPagamento[4])
+    ConOut("")
+
+    EstornarPagamento(aPagamento)
+    ConOut("Status: " + aPagamento[4])
+    ConOut("(sem desfazer disponivel)")
+Return
