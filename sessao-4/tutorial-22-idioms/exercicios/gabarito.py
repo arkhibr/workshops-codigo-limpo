@@ -86,7 +86,6 @@ def verificar_gabarito() -> None:
     funcs = [Funcionario("F001", "Ana Silva", "TI", 5000.0)]
     with AbridorArquivo("folha.csv") as arq:
         for f in funcs:
-            arq.__class__  # apenas acessa o objeto para demonstração
             print(f"  processando {f.nome}")
     print("OK: Context manager — AbridorArquivo fechado automaticamente")
 

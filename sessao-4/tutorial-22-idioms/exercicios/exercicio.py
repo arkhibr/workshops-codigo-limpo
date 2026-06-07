@@ -14,7 +14,7 @@ INSTRUÇÕES:
      — extraia um decorator @medir_tempo.
   Execute: python3 exercicio.py (deve rodar antes e depois)
 """
-from typing import List, Optional
+from typing import List
 import time
 
 
