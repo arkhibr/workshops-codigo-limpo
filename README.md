@@ -3,7 +3,7 @@
 Workshop organizado em temas, baseado em **Clean Code** de Robert C. Martin e **Working Effectively with Legacy Code** de Michael Feathers.
 
 - **Tema 1 (Sessões 1–2):** Fundamentos de Clean Code — 4 horas
-- **Tema 2 (Sessões 3–4):** *reservado para tema futuro*
+- **Tema 2 (Sessões 3–4):** Design Patterns e Idiom Patterns Aplicados — 4 horas
 - **Tema 3 (Sessões 5–6):** Clean Code e uso consciente de IA — 4 horas
 
 **Público:** Times mistos (Júnior + Pleno + Sênior).
@@ -34,7 +34,27 @@ Workshop organizado em temas, baseado em **Clean Code** de Robert C. Martin e **
 | — | **Pulmão** | | | **10 min** |
 | | **Total** | **55 min** | **55 min** | **120 min** |
 
-### Sessões 3 e 4 — *reservadas para tema futuro*
+### Sessão 3 — Design Patterns: Princípios e Estrutura · 2 horas
+
+| # | Tutorial | Teoria | Prática | Total |
+|---|---|---|---|---|
+| 16 | SOLID na Prática | 15 min | 15 min | 30 min |
+| 17 | Padrões de Criação | 15 min | 15 min | 30 min |
+| 18 | Padrões Estruturais | 15 min | 15 min | 30 min |
+| 19 | Anti-patterns Clássicos | 10 min | 10 min | 20 min |
+| — | **Pulmão** | | | **10 min** |
+| | **Total** | **55 min** | **55 min** | **120 min** |
+
+### Sessão 4 — Design Patterns: Comportamento e Idioms · 2 horas
+
+| # | Tutorial | Teoria | Prática | Total |
+|---|---|---|---|---|
+| 20 | Strategy e Template Method | 15 min | 15 min | 30 min |
+| 21 | Observer e Command ⭐ | 15 min | 15 min | 30 min |
+| 22 | Idiom Patterns por Linguagem | 15 min | 15 min | 30 min |
+| 23 | Code Review Orientado a Padrões ⭐ | 10 min | 10 min | 20 min |
+| — | **Pulmão** | | | **10 min** |
+| | **Total** | **55 min** | **55 min** | **120 min** |
 
 ### Sessão 5 — Gerando Código com IA: Dirigir e Revisar · 2 horas
 
@@ -75,6 +95,24 @@ Workshop organizado em temas, baseado em **Clean Code** de Robert C. Martin e **
 | 05 | [Code Review Simulado ⭐](sessao-2/tutorial-05-code-review/) | Exercício âncora: revisar código real acumulando todos os tópicos anteriores | — |
 | 06 | [Dívida Técnica](sessao-2/tutorial-06-divida-tecnica/) | Quadrante de Fowler, Teoria da Janela Quebrada, Regra do Escoteiro, code smells | *Clean Code*, Cap. 17 |
 | 07 | [Gestão de Código Legado](sessao-2/tutorial-07-codigo-legado/) | Testes de caracterização, Seam Model, Strangler Fig Pattern | Feathers + *Clean Code*, Cap. 1 |
+
+## Sessão 3 — Princípios e Padrões de Estrutura (2 horas)
+
+| # | Tutorial | Conceito central | Referência |
+|---|---|---|---|
+| 16 | [SOLID na Prática](sessao-3/tutorial-16-solid/) | SRP, OCP, LSP, ISP, DIP com código real | SOLID papers — Robert C. Martin |
+| 17 | [Padrões de Criação](sessao-3/tutorial-17-criacao/) | Factory Method e Builder | *Design Patterns* (GoF), Cap. 3 |
+| 18 | [Padrões Estruturais](sessao-3/tutorial-18-estrutural/) | Adapter para código legado + Facade | *Design Patterns* (GoF), Cap. 4 |
+| 19 | [Anti-patterns Clássicos](sessao-3/tutorial-19-antipatterns/) | God Object, Magic Strings, Feature Envy, Copy-Paste | *Clean Code*, Cap. 17 |
+
+## Sessão 4 — Padrões Comportamentais e Idioms (2 horas)
+
+| # | Tutorial | Conceito central | Referência |
+|---|---|---|---|
+| 20 | [Strategy e Template Method](sessao-4/tutorial-20-strategy-template/) | Substituir if/elif por polimorfismo; esqueleto fixo com variação | *Design Patterns* (GoF), Cap. 5 |
+| 21 | [Observer e Command ⭐](sessao-4/tutorial-21-observer-command/) | Desacoplamento de eventos; operações reversíveis | *Design Patterns* (GoF), Cap. 5 |
+| 22 | [Idiom Patterns por Linguagem](sessao-4/tutorial-22-idioms/) | Python, TypeScript, PHP 8.1+, ADVPL/TLPP | PEP 557, TS Handbook, PHP 8.1 |
+| 23 | [Code Review Orientado a Padrões ⭐](sessao-4/tutorial-23-code-review-padroes/) | Âncora: revisão integrando T16–T22; catálogo da equipe | — |
 
 ## Sessão 5 — Gerando Código com IA: Dirigir e Revisar (2 horas)
 

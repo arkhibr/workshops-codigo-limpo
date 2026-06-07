@@ -170,6 +170,138 @@ O Strangler Fig substitui partes do sistema gradualmente construindo a nova vers
 
 ---
 
+## Tutorial 16 — SOLID na Prática
+
+> Material de referência: [sessao-3/tutorial-16-solid/README.md](sessao-3/tutorial-16-solid/README.md)
+
+Uma classe com muitas responsabilidades é difícil de testar e de mudar com segurança. Qual classe no seu sistema atual faz coisas demais? O que você separaria primeiro?
+> _:_
+
+Quando o seu código precisa de email real e banco real para rodar um teste unitário, o DIP está sendo violado. Como você vai inverter essa dependência no próximo módulo que escrever?
+> _:_
+
+OCP diz que você deve poder adicionar comportamento sem alterar código existente. Pense em um `if/elif` que cresce toda vez que surge um novo tipo no seu sistema. Como você o tornaria extensível?
+> _:_
+
+LSP é violado quando uma subclasse lança exceção que a base nunca lança, ou ignora um parâmetro obrigatório. Há alguma herança no seu código que quebra silenciosamente o contrato da classe pai?
+> _:_
+
+**Minha decisão para este tutorial:**
+> _:_
+
+---
+
+## Tutorial 17 — Padrões de Criação
+
+> Material de referência: [sessao-3/tutorial-17-criacao/README.md](sessao-3/tutorial-17-criacao/README.md)
+
+Construtores com 6+ parâmetros opcionais são difíceis de ler e de chamar corretamente. Existe algum objeto no seu código que seria melhor construído com um Builder? Quais seriam os campos obrigatórios vs. opcionais?
+> _:_
+
+Factory Method permite adicionar um novo tipo concreto sem alterar a fábrica. Em que parte do seu sistema você tem um `if/elif tipo == "X"` que cresce a cada nova variante?
+> _:_
+
+**Minha decisão para este tutorial:**
+> _:_
+
+---
+
+## Tutorial 18 — Padrões Estruturais
+
+> Material de referência: [sessao-3/tutorial-18-estrutural/README.md](sessao-3/tutorial-18-estrutural/README.md)
+
+Adapter é especialmente valioso em código ADVPL/TLPP: isola as User Functions do Protheus do restante da lógica. Quando o ERP é atualizado, apenas o Adapter muda. Há alguma integração no seu código que chamaria diretamente funções de terceiros que poderiam mudar?
+> _:_
+
+Facade simplifica subsistemas com muitas etapas. Existe algum fluxo no seu código onde o chamador precisa conhecer 5+ subsistemas para realizar uma operação simples?
+> _:_
+
+**Minha decisão para este tutorial:**
+> _:_
+
+---
+
+## Tutorial 19 — Anti-patterns Clássicos
+
+> Material de referência: [sessao-3/tutorial-19-antipatterns/README.md](sessao-3/tutorial-19-antipatterns/README.md)
+
+God Object: uma classe que faz tudo é a forma mais comum de violação de SRP em sistemas legados. Sem olhar o código agora — qual classe do seu sistema você suspeita que tem responsabilidades demais?
+> _:_
+
+Magic Strings e Magic Numbers tornam o código frágil: uma string errada em qualquer lugar quebra silenciosamente. Faça uma busca rápida por `== "` no seu código. Quantos desses são strings mágicas sem contexto?
+> _:_
+
+Feature Envy: quando um método acessa mais dados de outro objeto do que do próprio, ele está no lugar errado. Você consegue identificar um método assim no seu código atual?
+> _:_
+
+**Minha decisão para este tutorial:**
+> _:_
+
+---
+
+## Tutorial 20 — Strategy e Template Method
+
+> Material de referência: [sessao-4/tutorial-20-strategy-template/README.md](sessao-4/tutorial-20-strategy-template/README.md)
+
+Strategy substitui `if/elif algoritmo == "X"` por polimorfismo. Qual função no seu código muda de comportamento dependendo de um parâmetro de tipo? Ela poderia ser uma Strategy?
+> _:_
+
+Template Method é útil quando você tem dois processos com o mesmo esqueleto mas etapas diferentes. Há duas classes no seu código com métodos quase idênticos, diferindo apenas em 1–2 passos?
+> _:_
+
+**Minha decisão para este tutorial:**
+> _:_
+
+---
+
+## Tutorial 21 — Observer e Command
+
+> Material de referência: [sessao-4/tutorial-21-observer-command/README.md](sessao-4/tutorial-21-observer-command/README.md)
+
+Observer desacopla eventos de seus consumidores. Existe algum ponto no seu código onde uma ação (ex: confirmar pedido) dispara 3+ efeitos colaterais diretamente? Adicionar um novo efeito exige alterar o código original?
+> _:_
+
+Command encapsula uma operação e seu estado anterior, permitindo desfazer. Existe alguma operação crítica no seu sistema que hoje não pode ser revertida? O que seria necessário para implementar um undo?
+> _:_
+
+**Minha decisão para este tutorial:**
+> _:_
+
+---
+
+## Tutorial 22 — Idiom Patterns por Linguagem
+
+> Material de referência: [sessao-4/tutorial-22-idioms/README.md](sessao-4/tutorial-22-idioms/README.md)
+
+`@dataclass` com `__post_init__` elimina `__init__` manual e centraliza validação. Quais classes no seu código Python têm `__init__` com mais de 4 linhas que poderiam usar `@dataclass`?
+> _:_
+
+Context managers garantem cleanup mesmo quando há exceções — sem depender de `finally` espalhados. Há algum recurso (arquivo, conexão, lock) no seu código que é fechado manualmente em vários lugares?
+> _:_
+
+Em ADVPL/TLPP, `@dataclass` e `with` não existem. Como você vai aplicar os princípios equivalentes (validação centralizada, cleanup garantido) com as ferramentas disponíveis?
+> _:_
+
+**Minha decisão para este tutorial:**
+> _:_
+
+---
+
+## Tutorial 23 — Code Review Orientado a Padrões (Âncora)
+
+> Material de referência: [sessao-4/tutorial-23-code-review-padroes/README.md](sessao-4/tutorial-23-code-review-padroes/README.md)
+
+Antes de ver o gabarito, liste os problemas que você encontrou em `codigo_para_revisar.py`. Quantas violações você identificou? Quais ficaram invisíveis na primeira leitura?
+> _:_
+
+O `gabarito_patterns.md` é um catálogo de referência para usar em code reviews reais. Quais padrões da tabela você vai adotar como critério de revisão na sua equipe a partir de agora?
+> _:_
+
+**Minha decisão para este tutorial:**
+> _:_
+
+---
+
 ## Tutorial 08 — O novo fluxo: dirigir e revisar
 
 > Material de referência: [`sessao-5/tutorial-08-novo-fluxo-ia/README.md`](sessao-5/tutorial-08-novo-fluxo-ia/README.md)
