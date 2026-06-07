@@ -170,9 +170,9 @@ O Strangler Fig substitui partes do sistema gradualmente construindo a nova vers
 
 ---
 
-## Tutorial 16 — SOLID na Prática
+## Tutorial 08 — SOLID na Prática
 
-> Material de referência: [sessao-3/tutorial-16-solid/README.md](sessao-3/tutorial-16-solid/README.md)
+> Material de referência: [sessao-3/tutorial-08-solid/README.md](sessao-3/tutorial-08-solid/README.md)
 
 Uma classe com muitas responsabilidades é difícil de testar e de mudar com segurança. Qual classe no seu sistema atual faz coisas demais? O que você separaria primeiro?
 > _:_
@@ -191,9 +191,9 @@ LSP é violado quando uma subclasse lança exceção que a base nunca lança, ou
 
 ---
 
-## Tutorial 17 — Padrões de Criação
+## Tutorial 09 — Padrões de Criação
 
-> Material de referência: [sessao-3/tutorial-17-criacao/README.md](sessao-3/tutorial-17-criacao/README.md)
+> Material de referência: [sessao-3/tutorial-09-criacao/README.md](sessao-3/tutorial-09-criacao/README.md)
 
 Construtores com 6+ parâmetros opcionais são difíceis de ler e de chamar corretamente. Existe algum objeto no seu código que seria melhor construído com um Builder? Quais seriam os campos obrigatórios vs. opcionais?
 > _:_
@@ -206,9 +206,9 @@ Factory Method permite adicionar um novo tipo concreto sem alterar a fábrica. E
 
 ---
 
-## Tutorial 18 — Padrões Estruturais
+## Tutorial 10 — Padrões Estruturais
 
-> Material de referência: [sessao-3/tutorial-18-estrutural/README.md](sessao-3/tutorial-18-estrutural/README.md)
+> Material de referência: [sessao-3/tutorial-10-estrutural/README.md](sessao-3/tutorial-10-estrutural/README.md)
 
 Adapter é especialmente valioso em código ADVPL/TLPP: isola as User Functions do Protheus do restante da lógica. Quando o ERP é atualizado, apenas o Adapter muda. Há alguma integração no seu código que chamaria diretamente funções de terceiros que poderiam mudar?
 > _:_
@@ -221,9 +221,9 @@ Facade simplifica subsistemas com muitas etapas. Existe algum fluxo no seu códi
 
 ---
 
-## Tutorial 19 — Anti-patterns Clássicos
+## Tutorial 11 — Anti-patterns Clássicos
 
-> Material de referência: [sessao-3/tutorial-19-antipatterns/README.md](sessao-3/tutorial-19-antipatterns/README.md)
+> Material de referência: [sessao-3/tutorial-11-antipatterns/README.md](sessao-3/tutorial-11-antipatterns/README.md)
 
 God Object: uma classe que faz tudo é a forma mais comum de violação de SRP em sistemas legados. Sem olhar o código agora — qual classe do seu sistema você suspeita que tem responsabilidades demais?
 > _:_
@@ -239,9 +239,9 @@ Feature Envy: quando um método acessa mais dados de outro objeto do que do pró
 
 ---
 
-## Tutorial 20 — Strategy e Template Method
+## Tutorial 12 — Strategy e Template Method
 
-> Material de referência: [sessao-4/tutorial-20-strategy-template/README.md](sessao-4/tutorial-20-strategy-template/README.md)
+> Material de referência: [sessao-4/tutorial-12-strategy-template/README.md](sessao-4/tutorial-12-strategy-template/README.md)
 
 Strategy substitui `if/elif algoritmo == "X"` por polimorfismo. Qual função no seu código muda de comportamento dependendo de um parâmetro de tipo? Ela poderia ser uma Strategy?
 > _:_
@@ -254,9 +254,9 @@ Template Method é útil quando você tem dois processos com o mesmo esqueleto m
 
 ---
 
-## Tutorial 21 — Observer e Command
+## Tutorial 13 — Observer e Command
 
-> Material de referência: [sessao-4/tutorial-21-observer-command/README.md](sessao-4/tutorial-21-observer-command/README.md)
+> Material de referência: [sessao-4/tutorial-13-observer-command/README.md](sessao-4/tutorial-13-observer-command/README.md)
 
 Observer desacopla eventos de seus consumidores. Existe algum ponto no seu código onde uma ação (ex: confirmar pedido) dispara 3+ efeitos colaterais diretamente? Adicionar um novo efeito exige alterar o código original?
 > _:_
@@ -269,9 +269,9 @@ Command encapsula uma operação e seu estado anterior, permitindo desfazer. Exi
 
 ---
 
-## Tutorial 22 — Idiom Patterns por Linguagem
+## Tutorial 14 — Idiom Patterns por Linguagem
 
-> Material de referência: [sessao-4/tutorial-22-idioms/README.md](sessao-4/tutorial-22-idioms/README.md)
+> Material de referência: [sessao-4/tutorial-14-idioms/README.md](sessao-4/tutorial-14-idioms/README.md)
 
 `@dataclass` com `__post_init__` elimina `__init__` manual e centraliza validação. Quais classes no seu código Python têm `__init__` com mais de 4 linhas que poderiam usar `@dataclass`?
 > _:_
@@ -287,9 +287,9 @@ Em ADVPL/TLPP, `@dataclass` e `with` não existem. Como você vai aplicar os pri
 
 ---
 
-## Tutorial 23 — Code Review Orientado a Padrões (Âncora)
+## Tutorial 15 — Code Review Orientado a Padrões (Âncora)
 
-> Material de referência: [sessao-4/tutorial-23-code-review-padroes/README.md](sessao-4/tutorial-23-code-review-padroes/README.md)
+> Material de referência: [sessao-4/tutorial-15-code-review-padroes/README.md](sessao-4/tutorial-15-code-review-padroes/README.md)
 
 Antes de ver o gabarito, liste os problemas que você encontrou em `codigo_para_revisar.py`. Quantas violações você identificou? Quais ficaram invisíveis na primeira leitura?
 > _:_
@@ -302,9 +302,9 @@ O `gabarito_patterns.md` é um catálogo de referência para usar em code review
 
 ---
 
-## Tutorial 08 — O novo fluxo: dirigir e revisar
+## Tutorial 16 — O novo fluxo: dirigir e revisar
 
-> Material de referência: [`sessao-5/tutorial-08-novo-fluxo-ia/README.md`](sessao-5/tutorial-08-novo-fluxo-ia/README.md)
+> Material de referência: [`sessao-5/tutorial-16-novo-fluxo-ia/README.md`](sessao-5/tutorial-16-novo-fluxo-ia/README.md)
 
 O modelo não conhece seu projeto por padrão — sem contexto explícito, ele produz código genérico que não segue os padrões do repo. **Quais convenções do seu repo você sempre vai dar ao modelo (via CLAUDE.md, AGENTS.md ou GEMINI.md)?**
 > _:_
@@ -320,9 +320,9 @@ A política de uso de IA define expectativas para o time inteiro: quando usar, o
 
 ---
 
-## Tutorial 09 — Engenharia de contexto e prompt para gerar código
+## Tutorial 17 — Engenharia de contexto e prompt para gerar código
 
-> Material de referência: [`sessao-5/tutorial-09-engenharia-de-prompt/README.md`](sessao-5/tutorial-09-engenharia-de-prompt/README.md)
+> Material de referência: [`sessao-5/tutorial-17-engenharia-de-prompt/README.md`](sessao-5/tutorial-17-engenharia-de-prompt/README.md)
 
 Um bom prompt inclui mais do que o pedido — contexto, domínio, exemplos, assinatura-alvo e restrições determinam a qualidade do ponto de partida. **Quais elementos do toolkit (contexto, domínio, few-shot, assinatura-alvo, restrições, plano) você vai incluir no template de prompt da sua equipe?**
 > _:_
@@ -338,9 +338,9 @@ Mesmo um prompt excelente não elimina a revisão — o modelo pode gerar algo f
 
 ---
 
-## Tutorial 10 — Spec-first: do requisito ao código verificável
+## Tutorial 18 — Spec-first: do requisito ao código verificável
 
-> Material de referência: [`sessao-5/tutorial-10-spec-first/README.md`](sessao-5/tutorial-10-spec-first/README.md)
+> Material de referência: [`sessao-5/tutorial-18-spec-first/README.md`](sessao-5/tutorial-18-spec-first/README.md)
 
 Exigências implícitas não entram no código sozinhas — o modelo gera o que o prompt descreve, não o que a equipe pressupõe. **Qual o seu processo para transformar um requisito em spec antes de pedir o código ao modelo?**
 > _:_
@@ -356,9 +356,9 @@ Testes como contrato no pedido ajudam o modelo a gerar o comportamento certo —
 
 ---
 
-## Tutorial 11 — Geração multi-arquivo com agentes
+## Tutorial 19 — Geração multi-arquivo com agentes
 
-> Material de referência: [`sessao-5/tutorial-11-multiarquivo-agentes/README.md`](sessao-5/tutorial-11-multiarquivo-agentes/README.md)
+> Material de referência: [`sessao-5/tutorial-19-multiarquivo-agentes/README.md`](sessao-5/tutorial-19-multiarquivo-agentes/README.md)
 
 Um agente que edita vários arquivos de uma vez é poderoso e perigoso — o risco não está só no arquivo editado, mas no efeito sobre os arquivos que ele toca indiretamente. **Como você vai revisar um diff multi-arquivo — o que procura além do arquivo editado?**
 > _:_
@@ -374,9 +374,9 @@ Inconsistências cross-file só aparecem na revisão em altitude — nomes dupli
 
 ---
 
-## Tutorial 12 — Revisão crítica de código gerado por IA
+## Tutorial 20 — Revisão crítica de código gerado por IA
 
-> Material de referência: [`sessao-6/tutorial-12-revisao-critica-ia/README.md`](sessao-6/tutorial-12-revisao-critica-ia/README.md)
+> Material de referência: [`sessao-6/tutorial-20-revisao-critica-ia/README.md`](sessao-6/tutorial-20-revisao-critica-ia/README.md)
 
 O perigo não é o código feio, é o código confiante com um defeito sutil — compila, o caminho feliz passa, mas um edge case silencioso está errado. **Qual será o seu checklist mínimo de revisão de código de IA (os 6 modos de falha)?**
 > _:_
@@ -392,9 +392,9 @@ Um comentário que mente é pior do que nenhum — o leitor confia na docstring 
 
 ---
 
-## Tutorial 13 — Refatoração assistida avançada
+## Tutorial 21 — Refatoração assistida avançada
 
-> Material de referência: [`sessao-6/tutorial-13-refatoracao-avancada/README.md`](sessao-6/tutorial-13-refatoracao-avancada/README.md)
+> Material de referência: [`sessao-6/tutorial-21-refatoracao-avancada/README.md`](sessao-6/tutorial-21-refatoracao-avancada/README.md)
 
 Uma refatoração que parece equivalente pode deslocar um limite de faixa — a lógica principal funciona, mas um edge case de fronteira mudou silenciosamente. **Como você vai verificar que a refatoração assistida preservou o comportamento, inclusive nas bordas?**
 > _:_
@@ -410,9 +410,9 @@ Refatorações em passos são mais seguras — cada passo é pequeno o suficient
 
 ---
 
-## Tutorial 14 — Segurança em código gerado (2026)
+## Tutorial 22 — Segurança em código gerado (2026)
 
-> Material de referência: [`sessao-6/tutorial-14-seguranca-ia/README.md`](sessao-6/tutorial-14-seguranca-ia/README.md)
+> Material de referência: [`sessao-6/tutorial-22-seguranca-ia/README.md`](sessao-6/tutorial-22-seguranca-ia/README.md)
 
 O WHERE pode estar parametrizado e o ORDER BY interpolado na mesma função — a vulnerabilidade fica exatamente onde você não olhou porque o resto parecia correto. **Qual será o seu checklist de segurança para código de IA (além do óbvio)?**
 > _:_
@@ -428,9 +428,9 @@ Uma regex de validação pode aceitar exatamente o que deveria barrar — a expr
 
 ---
 
-## Tutorial 15 — Testes como guard-rails e manutenibilidade
+## Tutorial 23 — Testes como guard-rails e manutenibilidade
 
-> Material de referência: [`sessao-6/tutorial-15-testes-manutenibilidade/README.md`](sessao-6/tutorial-15-testes-manutenibilidade/README.md)
+> Material de referência: [`sessao-6/tutorial-23-testes-manutenibilidade/README.md`](sessao-6/tutorial-23-testes-manutenibilidade/README.md)
 
 Caracterizar antes é mais barato que regredir depois — uma rede de testes de caracterização custa horas; uma regressão descoberta em produção custa dias. **O que você vai fazer antes de deixar o agente mexer em código sem testes?**
 > _:_

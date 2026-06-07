@@ -100,37 +100,37 @@ Workshop organizado em temas, baseado em **Clean Code** de Robert C. Martin e **
 
 | # | Tutorial | Conceito central | Referência |
 |---|---|---|---|
-| 16 | [SOLID na Prática](sessao-3/tutorial-16-solid/) | SRP, OCP, LSP, ISP, DIP com código real | SOLID papers — Robert C. Martin |
-| 17 | [Padrões de Criação](sessao-3/tutorial-17-criacao/) | Factory Method e Builder | *Design Patterns* (GoF), Cap. 3 |
-| 18 | [Padrões Estruturais](sessao-3/tutorial-18-estrutural/) | Adapter para código legado + Facade | *Design Patterns* (GoF), Cap. 4 |
-| 19 | [Anti-patterns Clássicos](sessao-3/tutorial-19-antipatterns/) | God Object, Magic Strings, Feature Envy, Copy-Paste | *Clean Code*, Cap. 17 |
+| 16 | [SOLID na Prática](sessao-3/tutorial-08-solid/) | SRP, OCP, LSP, ISP, DIP com código real | SOLID papers — Robert C. Martin |
+| 17 | [Padrões de Criação](sessao-3/tutorial-09-criacao/) | Factory Method e Builder | *Design Patterns* (GoF), Cap. 3 |
+| 18 | [Padrões Estruturais](sessao-3/tutorial-10-estrutural/) | Adapter para código legado + Facade | *Design Patterns* (GoF), Cap. 4 |
+| 19 | [Anti-patterns Clássicos](sessao-3/tutorial-11-antipatterns/) | God Object, Magic Strings, Feature Envy, Copy-Paste | *Clean Code*, Cap. 17 |
 
 ## Sessão 4 — Padrões Comportamentais e Idioms (2 horas)
 
 | # | Tutorial | Conceito central | Referência |
 |---|---|---|---|
-| 20 | [Strategy e Template Method](sessao-4/tutorial-20-strategy-template/) | Substituir if/elif por polimorfismo; esqueleto fixo com variação | *Design Patterns* (GoF), Cap. 5 |
-| 21 | [Observer e Command ⭐](sessao-4/tutorial-21-observer-command/) | Desacoplamento de eventos; operações reversíveis | *Design Patterns* (GoF), Cap. 5 |
-| 22 | [Idiom Patterns por Linguagem](sessao-4/tutorial-22-idioms/) | Python, TypeScript, PHP 8.1+, ADVPL/TLPP | PEP 557, TS Handbook, PHP 8.1 |
-| 23 | [Code Review Orientado a Padrões ⭐](sessao-4/tutorial-23-code-review-padroes/) | Âncora: revisão integrando T16–T22; catálogo da equipe | — |
+| 20 | [Strategy e Template Method](sessao-4/tutorial-12-strategy-template/) | Substituir if/elif por polimorfismo; esqueleto fixo com variação | *Design Patterns* (GoF), Cap. 5 |
+| 21 | [Observer e Command ⭐](sessao-4/tutorial-13-observer-command/) | Desacoplamento de eventos; operações reversíveis | *Design Patterns* (GoF), Cap. 5 |
+| 22 | [Idiom Patterns por Linguagem](sessao-4/tutorial-14-idioms/) | Python, TypeScript, PHP 8.1+, ADVPL/TLPP | PEP 557, TS Handbook, PHP 8.1 |
+| 23 | [Code Review Orientado a Padrões ⭐](sessao-4/tutorial-15-code-review-padroes/) | Âncora: revisão integrando T16–T22; catálogo da equipe | — |
 
 ## Sessão 5 — Gerando Código com IA: Dirigir e Revisar (2 horas)
 
 | # | Tutorial | Conceito central | Referência |
 |---|---|---|---|
-| 08 | [O novo fluxo: dirigir e revisar](sessao-5/tutorial-08-novo-fluxo-ia/) | O dev dirige o modelo e revisa em altitude; CLAUDE.md/AGENTS.md/GEMINI.md como contexto | *Clean Code*, Cap. 1–2 |
-| 09 | [Engenharia de contexto e prompt para gerar código](sessao-5/tutorial-09-engenharia-de-prompt/) | Toolkit robusto: contexto, few-shot, assinatura-alvo, restrições, plano-antes-do-código | Engenharia de contexto |
-| 10 | [Spec-first: do requisito ao código verificável](sessao-5/tutorial-10-spec-first/) | Requisito → spec → código; testes como contrato no pedido | Spec-first / plan-first |
-| 11 | [Geração multi-arquivo com agentes ⭐](sessao-5/tutorial-11-multiarquivo-agentes/) | Dirigir mudança multi-arquivo; revisar o diff em altitude | Diffs multi-arquivo com agentes |
+| 08 | [O novo fluxo: dirigir e revisar](sessao-5/tutorial-16-novo-fluxo-ia/) | O dev dirige o modelo e revisa em altitude; CLAUDE.md/AGENTS.md/GEMINI.md como contexto | *Clean Code*, Cap. 1–2 |
+| 09 | [Engenharia de contexto e prompt para gerar código](sessao-5/tutorial-17-engenharia-de-prompt/) | Toolkit robusto: contexto, few-shot, assinatura-alvo, restrições, plano-antes-do-código | Engenharia de contexto |
+| 10 | [Spec-first: do requisito ao código verificável](sessao-5/tutorial-18-spec-first/) | Requisito → spec → código; testes como contrato no pedido | Spec-first / plan-first |
+| 11 | [Geração multi-arquivo com agentes ⭐](sessao-5/tutorial-19-multiarquivo-agentes/) | Dirigir mudança multi-arquivo; revisar o diff em altitude | Diffs multi-arquivo com agentes |
 
 ## Sessão 6 — Revisando e Sustentando Código de IA (2 horas)
 
 | # | Tutorial | Conceito central | Referência |
 |---|---|---|---|
-| 12 | [Revisão crítica de código gerado por IA ⭐](sessao-6/tutorial-12-revisao-critica-ia/) | Modos de falha sutis em código polido de fronteira; checklist de revisão reutilizável | Âncora do tema |
-| 13 | [Refatoração assistida avançada](sessao-6/tutorial-13-refatoracao-avancada/) | Migração de API/padrão preservando comportamento; verificação de equivalência | Feathers + *Clean Code*, Cap. 9 |
-| 14 | [Segurança em código gerado (2026)](sessao-6/tutorial-14-seguranca-ia/) | Brechas sutis (ORDER BY interpolado, regex bypass) em código que parece seguro | Complementa T12 |
-| 15 | [Testes como guard-rails e manutenibilidade](sessao-6/tutorial-15-testes-manutenibilidade/) | Caracterização antes de deixar o agente mudar; testes que confirmam o bug; revisar o diff | Feathers + *Clean Code*, Cap. 9; Regra do Escoteiro |
+| 12 | [Revisão crítica de código gerado por IA ⭐](sessao-6/tutorial-20-revisao-critica-ia/) | Modos de falha sutis em código polido de fronteira; checklist de revisão reutilizável | Âncora do tema |
+| 13 | [Refatoração assistida avançada](sessao-6/tutorial-21-refatoracao-avancada/) | Migração de API/padrão preservando comportamento; verificação de equivalência | Feathers + *Clean Code*, Cap. 9 |
+| 14 | [Segurança em código gerado (2026)](sessao-6/tutorial-22-seguranca-ia/) | Brechas sutis (ORDER BY interpolado, regex bypass) em código que parece seguro | Complementa T12 |
+| 15 | [Testes como guard-rails e manutenibilidade](sessao-6/tutorial-23-testes-manutenibilidade/) | Caracterização antes de deixar o agente mudar; testes que confirmam o bug; revisar o diff | Feathers + *Clean Code*, Cap. 9; Regra do Escoteiro |
 
 ---
 
@@ -191,10 +191,10 @@ tutorial-0N-<tema>/           # Sessões 5–6 (padrão)
     └── gabarito_revisao.md    # notas de revisão do gabarito
 ```
 
-O Tutorial 11 tem estrutura estendida com subpastas separando gerado e revisado, mais diff comentado:
+O Tutorial 19 tem estrutura estendida com subpastas separando gerado e revisado, mais diff comentado:
 
 ```
-tutorial-11-multiarquivo-agentes/
+tutorial-19-multiarquivo-agentes/
 ├── README.md
 ├── exemplos/
 │   ├── prompt.md              # prompt de mudança multi-arquivo
@@ -214,10 +214,10 @@ tutorial-11-multiarquivo-agentes/
     └── gabarito_revisao.md
 ```
 
-O Tutorial 12 tem estrutura análoga ao Tutorial 05 (o código gerado por IA *é* o exercício) e é o exercício âncora do tema:
+O Tutorial 20 tem estrutura análoga ao Tutorial 05 (o código gerado por IA *é* o exercício) e é o exercício âncora do tema:
 
 ```
-tutorial-12-revisao-critica-ia/
+tutorial-20-revisao-critica-ia/
 ├── README.md
 ├── prompt_original.md         # prompt que originou o código
 ├── codigo_gerado_por_ia.py    # código a revisar — Python
@@ -268,10 +268,10 @@ Ponto de entrada: a User Function ou Procedure indicada no topo de cada arquivo.
 
 ```bash
 # Python — Sessões 5–6
-python3 sessao-5/tutorial-08-novo-fluxo-ia/exemplos/catalogo_revisado.py
+python3 sessao-5/tutorial-16-novo-fluxo-ia/exemplos/catalogo_revisado.py
 
 # TypeScript — Sessões 5–6
-npx ts-node sessao-6/tutorial-12-revisao-critica-ia/codigo_gerado_por_ia.ts
+npx ts-node sessao-6/tutorial-20-revisao-critica-ia/codigo_gerado_por_ia.ts
 ```
 
 ---
@@ -363,7 +363,7 @@ npx ts-node sessao-6/tutorial-12-revisao-critica-ia/codigo_gerado_por_ia.ts
 | `exercicios/exercicio.*` | Módulo de comissões em produção desde 2020 para caracterizar e refatorar (4 linguagens) |
 | `exercicios/gabarito.*` | Testes de caracterização + refatoração completa com classes de responsabilidade única (4 linguagens) |
 
-### Sessão 5 — Tutorial 08: O novo fluxo: dirigir e revisar
+### Sessão 5 — Tutorial 16: O novo fluxo: dirigir e revisar
 
 | Arquivo | Descrição |
 |---|---|
@@ -379,7 +379,7 @@ npx ts-node sessao-6/tutorial-12-revisao-critica-ia/codigo_gerado_por_ia.ts
 | `exercicios/gabarito.ts` | Solução — TypeScript |
 | `exercicios/gabarito_revisao.md` | Notas de revisão do gabarito |
 
-### Sessão 5 — Tutorial 09: Engenharia de contexto e prompt para gerar código
+### Sessão 5 — Tutorial 17: Engenharia de contexto e prompt para gerar código
 
 | Arquivo | Descrição |
 |---|---|
@@ -395,7 +395,7 @@ npx ts-node sessao-6/tutorial-12-revisao-critica-ia/codigo_gerado_por_ia.ts
 | `exercicios/gabarito.ts` | Solução — TypeScript |
 | `exercicios/gabarito_revisao.md` | Notas de revisão do gabarito |
 
-### Sessão 5 — Tutorial 10: Spec-first: do requisito ao código verificável
+### Sessão 5 — Tutorial 18: Spec-first: do requisito ao código verificável
 
 | Arquivo | Descrição |
 |---|---|
@@ -412,7 +412,7 @@ npx ts-node sessao-6/tutorial-12-revisao-critica-ia/codigo_gerado_por_ia.ts
 | `exercicios/gabarito.ts` | Solução — TypeScript |
 | `exercicios/gabarito_revisao.md` | Notas de revisão do gabarito |
 
-### Sessão 5 — Tutorial 11: Geração multi-arquivo com agentes ⭐
+### Sessão 5 — Tutorial 19: Geração multi-arquivo com agentes ⭐
 
 | Arquivo | Descrição |
 |---|---|
@@ -437,7 +437,7 @@ npx ts-node sessao-6/tutorial-12-revisao-critica-ia/codigo_gerado_por_ia.ts
 | `exercicios/gabarito_precificacao.ts` | Solução precificação — TypeScript |
 | `exercicios/gabarito_revisao.md` | Notas de revisão do gabarito |
 
-### Sessão 6 — Tutorial 12: Revisão crítica de código gerado por IA ⭐
+### Sessão 6 — Tutorial 20: Revisão crítica de código gerado por IA ⭐
 
 | Arquivo | Descrição |
 |---|---|
@@ -449,7 +449,7 @@ npx ts-node sessao-6/tutorial-12-revisao-critica-ia/codigo_gerado_por_ia.ts
 | `gabarito_review.md` | Lista comentada de problemas encontrados — Python |
 | `gabarito_review_ts.md` | Lista comentada de problemas encontrados — TypeScript |
 
-### Sessão 6 — Tutorial 13: Refatoração assistida avançada
+### Sessão 6 — Tutorial 21: Refatoração assistida avançada
 
 | Arquivo | Descrição |
 |---|---|
@@ -465,7 +465,7 @@ npx ts-node sessao-6/tutorial-12-revisao-critica-ia/codigo_gerado_por_ia.ts
 | `exercicios/gabarito.ts` | Solução — TypeScript |
 | `exercicios/gabarito_revisao.md` | Notas de revisão do gabarito |
 
-### Sessão 6 — Tutorial 14: Segurança em código gerado (2026)
+### Sessão 6 — Tutorial 22: Segurança em código gerado (2026)
 
 | Arquivo | Descrição |
 |---|---|
@@ -481,7 +481,7 @@ npx ts-node sessao-6/tutorial-12-revisao-critica-ia/codigo_gerado_por_ia.ts
 | `exercicios/gabarito.ts` | Solução — TypeScript |
 | `exercicios/gabarito_revisao.md` | Notas de revisão do gabarito |
 
-### Sessão 6 — Tutorial 15: Testes como guard-rails e manutenibilidade
+### Sessão 6 — Tutorial 23: Testes como guard-rails e manutenibilidade
 
 | Arquivo | Descrição |
 |---|---|
