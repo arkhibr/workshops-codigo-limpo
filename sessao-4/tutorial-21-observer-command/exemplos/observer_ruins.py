@@ -2,7 +2,7 @@
 observer_ruins.py — Acoplamento direto e ausência de undo.
 Execute: python3 observer_ruins.py
 """
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import List
 
 

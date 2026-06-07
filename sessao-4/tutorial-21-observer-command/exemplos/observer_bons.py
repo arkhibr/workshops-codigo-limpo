@@ -3,8 +3,7 @@ observer_bons.py — Observer desacopla eventos; Command adiciona undo.
 Execute: python3 observer_bons.py
 """
 from typing import Protocol, List, Optional
-from dataclasses import dataclass, field
-from abc import ABC, abstractmethod
+from dataclasses import dataclass
 
 
 @dataclass

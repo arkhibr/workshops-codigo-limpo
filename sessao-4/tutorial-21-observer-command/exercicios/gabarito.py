@@ -59,6 +59,11 @@ class ProcessadorPagamento:
 
 # ─── Command ──────────────────────────────────────────────────────────────────
 
+class Comando(Protocol):
+    def executar(self) -> None: ...
+    def desfazer(self) -> None: ...
+
+
 class ComandoEstorno:
     def __init__(self, pagamento: Pagamento, processador: ProcessadorPagamento) -> None:
         self._pagamento       = pagamento
@@ -80,9 +85,9 @@ class ComandoEstorno:
 
 class HistoricoComandos:
     def __init__(self) -> None:
-        self._historico: List[ComandoEstorno] = []
+        self._historico: List[Comando] = []
 
-    def executar(self, cmd: ComandoEstorno) -> None:
+    def executar(self, cmd: Comando) -> None:
         cmd.executar()
         self._historico.append(cmd)
 
