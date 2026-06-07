@@ -1,0 +1,75 @@
+/*
+ * EXERCÍCIO 22 — Idiom Patterns em ADVPL/TLPP
+ * Execute: compile no Totvs IDE (SmartClient/TDS)
+ * Ponto de entrada: U_ExercicioIdioms
+ *
+ * INSTRUÇÕES:
+ *   O código abaixo é funcional mas não aplica os idioms ADVPL.
+ *   1. CriarFuncionario() não valida nSalario — adicione validação
+ *      (UserException se nSalario <= 0 ou cNome vazio).
+ *   2. ProcessarComArquivo() não usa Begin Sequence/End Sequence
+ *      — envolva o loop com Begin Sequence para garantir fechamento.
+ *   3. As constantes de departamento estão como strings soltas
+ *      — defina #define DEPTO_TI, DEPTO_RH, DEPTO_FINANCEIRO.
+ *   4. CalcularTotalFolha() não usa codeblock
+ *      — substitua o loop for por Eval() com codeblock acumulador.
+ */
+
+// ─── CriarFuncionario sem validação ──────────────────────────────────────────
+Static Function CriarFuncionario(cId, cNome, cDepto, nSalario)
+    Local aFunc := {}
+    // sem validação: nSalario=-500 passa silenciosamente
+    aAdd(aFunc, cId)       // [1] id
+    aAdd(aFunc, cNome)     // [2] nome
+    aAdd(aFunc, cDepto)    // [3] departamento
+    aAdd(aFunc, nSalario)  // [4] salario
+Return aFunc
+
+// ─── ProcessarComArquivo sem Begin Sequence ───────────────────────────────────
+Static Function ProcessarComArquivo(cCaminho, aFuncs)
+    Local nI := 0
+    ConOut("  [Arquivo] abrindo " + cCaminho)
+    // sem Begin Sequence: se erro ocorrer, arquivo não é "fechado"
+    For nI := 1 To Len(aFuncs)
+        ConOut("  processando " + aFuncs[nI][2])
+    Next nI
+    ConOut("  [Arquivo] fechado")
+Return
+
+// ─── Strings de departamento soltas (sem #define) ─────────────────────────────
+Static Function FiltrarPorDepto(aFuncs, cDepto)
+    Local aResult := {}
+    Local nI      := 0
+    For nI := 1 To Len(aFuncs)
+        If aFuncs[nI][3] == cDepto
+            aAdd(aResult, aFuncs[nI])
+        EndIf
+    Next nI
+Return aResult
+
+// ─── CalcularTotalFolha com loop for em vez de codeblock ─────────────────────
+Static Function CalcularTotalFolha(aFuncs)
+    Local nTotal := 0
+    Local nI     := 0
+    For nI := 1 To Len(aFuncs)
+        nTotal := nTotal + aFuncs[nI][4]
+    Next nI
+Return nTotal
+
+User Function ExercicioIdioms()
+    Local aFuncs := {}
+    Local aTI    := {}
+    Local nTotal := 0
+
+    aAdd(aFuncs, CriarFuncionario("F001", "Ana Silva",  "TI",        5000.0))
+    aAdd(aFuncs, CriarFuncionario("F002", "Joao Costa", "RH",        3500.0))
+    aAdd(aFuncs, CriarFuncionario("F003", "Maria Lima", "TI",        6000.0))
+
+    ProcessarComArquivo("folha.csv", aFuncs)
+
+    aTI := FiltrarPorDepto(aFuncs, "TI")
+    ConOut("TI: " + cValToChar(Len(aTI)) + " funcionario(s)")
+
+    nTotal := CalcularTotalFolha(aFuncs)
+    ConOut("Total folha: R$" + cValToChar(nTotal))
+Return
