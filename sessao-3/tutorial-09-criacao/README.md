@@ -11,6 +11,11 @@ Criar objetos parece trivial — até o construtor acumular 10 parâmetros ou a 
 
 Os padrões de criação encapsulam *como* e *quando* os objetos são construídos, protegendo o restante do código dessas decisões.
 
+Abaixo trazemos 2 exemplos dos padrões de criação explicados no livro de Design Patterns original de Erich Gamma.
+
+<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/52200c2e-a677-471a-9bb9-bc1dfed92a7e" />
+
+
 ---
 
 ## 2. Conceito Central
