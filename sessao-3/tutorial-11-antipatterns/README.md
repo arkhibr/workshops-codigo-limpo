@@ -4,6 +4,9 @@
 
 ## 1. Contexto e Motivação
 
+<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/9e58f6d9-0830-4697-92d1-8b0db7aa6cbb" />
+
+
 Anti-patterns surgem de decisões pragmáticas sob pressão — é mais rápido adicionar um método a uma classe existente do que criar uma nova. O problema acumula: uma classe que começa com 3 métodos tem 15 depois de 6 meses, e cada mudança toca a mesma classe.
 
 O custo real não é a classe grande. É o efeito cascata: testes difíceis de escrever, mudanças que quebram comportamentos não relacionados, e nenhum lugar óbvio para colocar código novo.
