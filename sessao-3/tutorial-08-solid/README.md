@@ -5,14 +5,19 @@
 
 ## 1. Contexto e Motivação
 
-Código que cresce sem princípios acumula dívida técnica de forma exponencial: classes com dezenas de razões para mudar, hierarquias que quebram silenciosamente, dependências que tornam testes impossíveis. Os princípios SOLID são um conjunto de cinco diretrizes que, aplicadas em conjunto, reduzem o custo cognitivo de leitura, o risco de regressão ao modificar código e o tempo para integrar novos membros à equipe.
+Código que cresce sem princípios acumula dívida técnica ao longo do tempo: classes com dezenas de razões para mudar, hierarquias que quebram silenciosamente, dependências que tornam testes impossíveis. Os princípios SOLID são um conjunto de cinco diretrizes que, aplicadas em conjunto, reduzem o custo cognitivo de leitura, o risco de regressão ao modificar código e o tempo para integrar novos membros à equipe.
 
-**Por que importa na prática:**
+**Contra-exemplos:**
 - Uma classe que valida, persiste e envia e-mail tem três razões distintas para mudar. Qualquer alteração pode introduzir bugs nas outras responsabilidades.
 - Um método com `if/elif` por tipo de relatório precisa ser reaberto cada vez que um novo tipo é adicionado.
 - Uma subclasse que lança `NotImplementedError` onde a base nunca lança quebra código existente de forma silenciosa em runtime.
-- Uma interface de 6 métodos força implementações que usam apenas 2 a carregar código morto.
+- Uma interface/classe virtual complexa de 10 métodos força implementações que usam apenas 2 a carregar código morto.
 - Uma classe que instancia `new EmailSmtp()` internamente não pode ser testada com um dublê de e-mail sem alterar o código de produção.
+
+O SOLID é um conjunto de princípios de design de código que busca endereçar esses e outros pontos e garantir a você um código robusto e manutenível ao longo do tempo.
+
+<img width="1254" height="1254" alt="image" src="https://github.com/user-attachments/assets/8d7b0d1c-954d-4d53-b2e4-df7d22b7eea6" />
+
 
 ---
 
@@ -239,6 +244,18 @@ Gabarito: `exercicios/gabarito.py`
 
 ## 5. Referências
 
-- Martin, Robert C. *Clean Code*. Cap. 1.
-- Martin, Robert C. SOLID papers (2000–2003): SRP, OCP, LSP, ISP, DIP.
-- Martin, Robert C. *Agile Software Development, Principles, Patterns, and Practices*. Cap. 7–11.
+Martin, R. C. (2008). Clean code: A handbook of agile software craftsmanship. Prentice Hall. https://www.pearson.com/en-us/subject-catalog/p/clean-code/P200000009528
+
+Martin, R. C. (2000). Design principles and design patterns. Object Mentor. http://www.objectmentor.com/resources/articles/Principles_and_Patterns.pdf
+
+Martin, R. C. (2003). The Single Responsibility Principle. Object Mentor. http://www.objectmentor.com/resources/articles/srp.pdf
+
+Martin, R. C. (2003). The Open-Closed Principle. Object Mentor. http://www.objectmentor.com/resources/articles/ocp.pdf
+
+Martin, R. C. (2003). The Liskov Substitution Principle. Object Mentor. http://www.objectmentor.com/resources/articles/lsp.pdf
+
+Martin, R. C. (2003). The Interface Segregation Principle. Object Mentor. http://www.objectmentor.com/resources/articles/isp.pdf
+
+Martin, R. C. (2003). The Dependency Inversion Principle. Object Mentor. http://www.objectmentor.com/resources/articles/dip.pdf
+
+Martin, R. C. (2003). Agile software development: Principles, patterns, and practices. Prentice Hall. https://www.pearson.com/en-us/subject-catalog/p/agile-software-development-principles-patterns-and-practices/P200000003420
