@@ -105,7 +105,7 @@ class NotificadorEmail:
 # ══════════════════════════════════════════════
 
 @runtime_checkable
-class IFormatador(Protocol):
+class Formatador(Protocol):
     def formatar(self, pedido: "Pedido", total: float) -> str: ...
 
 
@@ -186,25 +186,25 @@ def confirmar_e_exibir(pedido: Pedido) -> None:
 # ══════════════════════════════════════════════
 
 @runtime_checkable
-class IValidavel(Protocol):
+class Validavel(Protocol):
     def validar(self) -> bool: ...
 
 @runtime_checkable
-class ICalculavel(Protocol):
+class Calculavel(Protocol):
     def calcular(self) -> float: ...
 
 @runtime_checkable
-class IArquivavel(Protocol):
+class Arquivavel(Protocol):
     def arquivar(self) -> None: ...
     def exportar_csv(self) -> str: ...
 
 @runtime_checkable
-class IExportavelPDF(Protocol):
+class ExportavelEmPDF(Protocol):
     def exportar_pdf(self) -> bytes: ...
 
 
 class ProcessadorSimples:
-    """Só precisa de validar e calcular — implementa IValidavel e ICalculavel.
+    """Só precisa de validar e calcular — implementa Validavel e Calculavel.
     Sem métodos mortos, sem exportar_csv/pdf que nunca serão chamados."""
 
     def __init__(self, pedido: Pedido) -> None:
@@ -258,12 +258,12 @@ class ProcessadorCompleto:
 # ══════════════════════════════════════════════
 
 @runtime_checkable
-class IRepositorioPedido(Protocol):
+class RepositorioDePedido(Protocol):
     def salvar(self, pedido: "Pedido") -> None: ...
     def buscar(self, pedido_id: str) -> Optional[dict]: ...
 
 @runtime_checkable
-class INotificador(Protocol):
+class Notificador(Protocol):
     def notificar(self, destinatario: str, mensagem: str) -> None: ...
 
 
@@ -294,9 +294,9 @@ class GeradorRelatorio:
 
     def __init__(
         self,
-        repo:        IRepositorioPedido,
-        notificador: INotificador,
-        formatador:  IFormatador,
+        repo:        RepositorioDePedido,
+        notificador: Notificador,
+        formatador:  Formatador,
         calculador:  CalculadorTotal,
     ) -> None:
         self._repo        = repo
@@ -371,9 +371,9 @@ if __name__ == "__main__":
     print("\n── I — ISP: ProcessadorSimples usa 2 interfaces, sem métodos mortos ──")
     simples = ProcessadorSimples(pedido)
     print(f"  validar={simples.validar()}, calcular=R${simples.calcular():.2f}")
-    assert isinstance(simples, IValidavel)
-    assert isinstance(simples, ICalculavel)
-    # simples não implementa IArquivavel nem IExportavelPDF — zero código morto
+    assert isinstance(simples, Validavel)
+    assert isinstance(simples, Calculavel)
+    # simples não implementa Arquivavel nem ExportavelEmPDF — zero código morto
 
     completo = ProcessadorCompleto(pedido)
     completo.arquivar()

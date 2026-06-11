@@ -85,16 +85,16 @@ class GeradorRelatorioRuim {
 // S — SRP: interfaces e classes com responsabilidade única
 // ============================================================
 
-interface INotificador {
+interface Notificador {
     notificar(destinatario: string, mensagem: string): void;
 }
 
-interface IRepositorioPedido {
+interface RepositorioDePedido {
     salvar(pedido: Pedido): void;
     buscar(pedidoId: string): Record<string, unknown> | undefined;
 }
 
-interface IFormatador {
+interface Formatador {
     formatar(pedido: Pedido, total: number): string;
 }
 
@@ -136,20 +136,20 @@ class CalculadorTotal {
     }
 }
 
-class NotificadorEmail implements INotificador {
+class NotificadorEmail implements Notificador {
     notificar(destinatario: string, mensagem: string): void {
         console.log(`  [Email] → ${destinatario}: ${mensagem}`);
     }
 }
 
-class NotificadorLog implements INotificador {
+class NotificadorLog implements Notificador {
     // Alternativa sem SMTP — mesma interface, zero alteração no chamador
     notificar(destinatario: string, mensagem: string): void {
         console.log(`  [Log] ${destinatario}: ${mensagem}`);
     }
 }
 
-class RepositorioPedido implements IRepositorioPedido {
+class RepositorioPedido implements RepositorioDePedido {
     private dados = new Map<string, Record<string, unknown>>();
 
     salvar(pedido: Pedido): void {
@@ -167,7 +167,7 @@ class RepositorioPedido implements IRepositorioPedido {
     }
 }
 
-class RepositorioEmMemoria implements IRepositorioPedido {
+class RepositorioEmMemoria implements RepositorioDePedido {
     private dados = new Map<string, Record<string, unknown>>();
 
     salvar(pedido: Pedido): void {
@@ -184,14 +184,14 @@ class RepositorioEmMemoria implements IRepositorioPedido {
 // O — OCP: novos formatadores sem alterar GeradorRelatorio
 // ============================================================
 
-class FormatadorVendas implements IFormatador {
+class FormatadorVendas implements Formatador {
     formatar(pedido: Pedido, total: number): string {
         const itens = pedido.itens.map(i => `${i.descricao} x${i.quantidade}`).join(", ");
         return `[Vendas] Pedido ${pedido.id} | ${itens} | Total: R$${total.toFixed(2)}`;
     }
 }
 
-class FormatadorFinanceiro implements IFormatador {
+class FormatadorFinanceiro implements Formatador {
     formatar(pedido: Pedido, total: number): string {
         const calc     = new CalculadorTotal();
         const subtotal = calc.calcularSubtotal(pedido);
@@ -200,14 +200,14 @@ class FormatadorFinanceiro implements IFormatador {
     }
 }
 
-class FormatadorEstoque implements IFormatador {
+class FormatadorEstoque implements Formatador {
     formatar(pedido: Pedido, total: number): string {
         const linhas = pedido.itens.map(i => `  • ${i.descricao} (ref: ${i.produtoId}): ${i.quantidade} un`);
         return `[Estoque] Pedido ${pedido.id} — movimentação:\n${linhas.join("\n")}`;
     }
 }
 
-class FormatadorNFe implements IFormatador {
+class FormatadorNFe implements Formatador {
     // Adicionado sem nenhuma alteração em GeradorRelatorio — OCP respeitado
     formatar(pedido: Pedido, total: number): string {
         return `[NF-e] DANFE | Dest: ${pedido.clienteId} | Nr: ${pedido.id} | Valor: R$${total.toFixed(2)}`;
@@ -251,24 +251,24 @@ function confirmarEExibir(pedido: Pedido): void {
 // I — ISP: interfaces pequenas e coesas
 // ============================================================
 
-interface IValidavel {
+interface Validavel {
     validar(): boolean;
 }
 
-interface ICalculavel {
+interface Calculavel {
     calcular(): number;
 }
 
-interface IArquivavel {
+interface Arquivavel {
     arquivar(): void;
     exportarCsv(): string;
 }
 
-interface IExportavelPDF {
+interface ExportavelEmPDF {
     exportarPdf(): Uint8Array;
 }
 
-class ProcessadorSimples implements IValidavel, ICalculavel {
+class ProcessadorSimples implements Validavel, Calculavel {
     // Só precisa de validar e calcular — sem métodos mortos
     constructor(private readonly pedido: Pedido) {}
 
@@ -283,7 +283,7 @@ class ProcessadorSimples implements IValidavel, ICalculavel {
     }
 }
 
-class ProcessadorCompleto implements IValidavel, ICalculavel, IArquivavel, IExportavelPDF {
+class ProcessadorCompleto implements Validavel, Calculavel, Arquivavel, ExportavelEmPDF {
     constructor(private readonly pedido: Pedido) {}
 
     validar(): boolean {
@@ -324,9 +324,9 @@ class ProcessadorCompleto implements IValidavel, ICalculavel, IArquivavel, IExpo
 
 class GeradorRelatorio {
     constructor(
-        private readonly repo:        IRepositorioPedido,
-        private readonly notificador: INotificador,
-        private readonly formatador:  IFormatador,
+        private readonly repo:        RepositorioDePedido,
+        private readonly notificador: Notificador,
+        private readonly formatador:  Formatador,
         private readonly calculador:  CalculadorTotal,
     ) {}
 
@@ -368,7 +368,7 @@ notifEmail.notificar(pedido.clienteId, `Pedido ${pedido.id} registrado`);
 
 // ── O — OCP ──────────────────────────────────────────────────
 console.log("\n── O — OCP: novos formatadores sem alterar GeradorRelatorio ──");
-const formatadores: Array<[string, IFormatador]> = [
+const formatadores: Array<[string, Formatador]> = [
     ["vendas",     new FormatadorVendas()],
     ["financeiro", new FormatadorFinanceiro()],
     ["estoque",    new FormatadorEstoque()],

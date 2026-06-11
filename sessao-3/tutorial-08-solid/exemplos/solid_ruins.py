@@ -68,7 +68,7 @@ class GeradorRelatorioPedidos:
             raise ValueError(f"Tipo desconhecido: {tipo}")
 
 
-class IProcessador:
+class Processador:
     """ISP violation: interface com 6 métodos — clientes implementam todos."""
     def validar(self)      -> bool:  raise NotImplementedError
     def calcular(self)     -> float: raise NotImplementedError
@@ -78,7 +78,7 @@ class IProcessador:
     def exportar_pdf(self) -> bytes: raise NotImplementedError
 
 
-class ProcessadorSimples(IProcessador):
+class ProcessadorSimples(Processador):
     """Precisa apenas de validar e calcular — mas é forçado a implementar tudo."""
     def validar(self)       -> bool:  return True
     def calcular(self)      -> float: return 0.0

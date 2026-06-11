@@ -95,16 +95,16 @@ class GeradorRelatorioRuim {
 // S — SRP: interfaces e classes com responsabilidade única
 // ============================================================
 
-interface INotificador {
+interface Notificador {
     public function notificar(string $destinatario, string $mensagem): void;
 }
 
-interface IRepositorioPedido {
+interface RepositorioDePedido {
     public function salvar(Pedido $pedido): void;
     public function buscar(string $pedidoId): ?array;
 }
 
-interface IFormatador {
+interface Formatador {
     public function formatar(Pedido $pedido, float $total): string;
 }
 
@@ -155,20 +155,20 @@ class CalculadorTotal {
     }
 }
 
-class NotificadorEmail implements INotificador {
+class NotificadorEmail implements Notificador {
     public function notificar(string $destinatario, string $mensagem): void {
         echo "  [Email] → {$destinatario}: {$mensagem}" . PHP_EOL;
     }
 }
 
-class NotificadorLog implements INotificador {
+class NotificadorLog implements Notificador {
     // Alternativa sem SMTP — mesma interface, zero alteração no chamador
     public function notificar(string $destinatario, string $mensagem): void {
         echo "  [Log] {$destinatario}: {$mensagem}" . PHP_EOL;
     }
 }
 
-class RepositorioPedido implements IRepositorioPedido {
+class RepositorioPedido implements RepositorioDePedido {
     private array $dados = [];
 
     public function salvar(Pedido $pedido): void {
@@ -186,7 +186,7 @@ class RepositorioPedido implements IRepositorioPedido {
     }
 }
 
-class RepositorioEmMemoria implements IRepositorioPedido {
+class RepositorioEmMemoria implements RepositorioDePedido {
     private array $dados = [];
 
     public function salvar(Pedido $pedido): void {
@@ -203,7 +203,7 @@ class RepositorioEmMemoria implements IRepositorioPedido {
 // O — OCP: novos formatadores sem alterar GeradorRelatorio
 // ============================================================
 
-class FormatadorVendas implements IFormatador {
+class FormatadorVendas implements Formatador {
     public function formatar(Pedido $pedido, float $total): string {
         $itens = implode(', ', array_map(
             fn(ItemPedido $i) => "{$i->descricao} x{$i->quantidade}",
@@ -213,7 +213,7 @@ class FormatadorVendas implements IFormatador {
     }
 }
 
-class FormatadorFinanceiro implements IFormatador {
+class FormatadorFinanceiro implements Formatador {
     public function formatar(Pedido $pedido, float $total): string {
         $calc     = new CalculadorTotal();
         $subtotal = $calc->calcularSubtotal($pedido);
@@ -224,7 +224,7 @@ class FormatadorFinanceiro implements IFormatador {
     }
 }
 
-class FormatadorEstoque implements IFormatador {
+class FormatadorEstoque implements Formatador {
     public function formatar(Pedido $pedido, float $total): string {
         $linhas = array_map(
             fn(ItemPedido $i) => "  • {$i->descricao} (ref: {$i->produtoId}): {$i->quantidade} un",
@@ -234,7 +234,7 @@ class FormatadorEstoque implements IFormatador {
     }
 }
 
-class FormatadorNFe implements IFormatador {
+class FormatadorNFe implements Formatador {
     // Adicionado sem nenhuma alteração em GeradorRelatorio — OCP respeitado
     public function formatar(Pedido $pedido, float $total): string {
         return "[NF-e] DANFE | Dest: {$pedido->clienteId} | Nr: {$pedido->id} | Valor: R$" . number_format($total, 2);
@@ -278,24 +278,24 @@ function confirmarEExibir(Pedido $pedido): void {
 // I — ISP: interfaces pequenas e coesas
 // ============================================================
 
-interface IValidavel {
+interface Validavel {
     public function validar(): bool;
 }
 
-interface ICalculavel {
+interface Calculavel {
     public function calcular(): float;
 }
 
-interface IArquivavel {
+interface Arquivavel {
     public function arquivar(): void;
     public function exportarCsv(): string;
 }
 
-interface IExportavelPDF {
+interface ExportavelEmPDF {
     public function exportarPdf(): string;
 }
 
-class ProcessadorSimples implements IValidavel, ICalculavel {
+class ProcessadorSimples implements Validavel, Calculavel {
     // Só precisa de validar e calcular — sem métodos mortos
     public function __construct(private readonly Pedido $pedido) {}
 
@@ -311,7 +311,7 @@ class ProcessadorSimples implements IValidavel, ICalculavel {
     }
 }
 
-class ProcessadorCompleto implements IValidavel, ICalculavel, IArquivavel, IExportavelPDF {
+class ProcessadorCompleto implements Validavel, Calculavel, Arquivavel, ExportavelEmPDF {
     public function __construct(private readonly Pedido $pedido) {}
 
     public function validar(): bool {
@@ -352,9 +352,9 @@ class ProcessadorCompleto implements IValidavel, ICalculavel, IArquivavel, IExpo
 
 readonly class GeradorRelatorio {
     public function __construct(
-        private IRepositorioPedido $repo,
-        private INotificador       $notificador,
-        private IFormatador        $formatador,
+        private RepositorioDePedido $repo,
+        private Notificador       $notificador,
+        private Formatador        $formatador,
         private CalculadorTotal    $calculador,
     ) {}
 
