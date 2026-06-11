@@ -1,15 +1,45 @@
 /*
  * EXERCÍCIO 19 — Anti-patterns Clássicos (ADVPL/TLPP)
- * Tempo estimado: 15 minutos
+ * Tempo estimado: 34 minutos (4 micro-passos)
  * Referência: Clean Code Cap. 17 + Fowler Refactoring Cap. 3
  *
- * INSTRUÇÕES:
- *   O código abaixo demonstra dois anti-patterns em ADVPL:
- *   1. God Object: ProcFolha faz tudo — validação, cálculo, email, relatório.
- *   2. Magic Strings/Numbers: If cCategoria == "C", If nSalario <= 1412.
+ * INSTRUÇÕES GERAIS:
+ *   O código abaixo demonstra 4 anti-patterns em ADVPL.
+ *   Siga os 4 passos em ordem — cada passo é independente e verificável.
+ *   Compilar no Totvs IDE (SmartClient/TDS). Ponto de entrada: ProcFolha().
  *
- *   1. Quebre ProcFolha em Static Functions separadas por responsabilidade.
- *   2. Substitua as strings/números mágicos por #define com nomes claros.
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+ * PASSO 1 — MAGIC STRINGS/NUMBERS  (8 min)
+ *   Extraia as strings e números mágicos para constantes nomeadas:
+ *     #define SALARIO_MINIMO_2026   1412.00
+ *     #define CATEGORIA_CLT        "C"
+ *     #define CATEGORIA_PJ         "P"
+ *     #define CATEGORIA_ESTAGIARIO "E"
+ *   Substitua todas as ocorrências em ProcFolha().
+ *   Verifique que a função ainda compila e retorna o mesmo resultado.
+ *
+ * PASSO 2 — FEATURE ENVY  (8 min)
+ *   Extraia o bloco de cálculo de INSS de ProcFolha() para uma Static Function:
+ *     Static Function CalcularInss(nSalario, cCategoria)
+ *   Use os #define do Passo 1 dentro dessa função.
+ *   Chame CalcularInss() de ProcFolha().
+ *   Verifique que a função ainda compila e retorna o mesmo resultado.
+ *
+ * PASSO 3 — COPY-PASTE  (8 min)
+ *   Extraia o bloco de cálculo de FGTS de ProcFolha() para:
+ *     Static Function CalcularFgts(nSalario, cCategoria)
+ *   Chame CalcularFgts() de ProcFolha().
+ *   Verifique que a função ainda compila e retorna o mesmo resultado.
+ *
+ * PASSO 4 — GOD OBJECT  (10 min)
+ *   Separe ProcFolha() em 4 Static Functions com responsabilidade única:
+ *     ValidarFuncionario(cFuncId)           — validação
+ *     NotificarFuncionario(cFuncId, nLiq)   — email/notificação
+ *     SalvarFolha(cFuncId, nMes, nAno)      — persistência
+ *     GerarRelatorio(cFuncId, nAno, nInss)  — relatório
+ *   Crie ProcessarFolha() como orquestradora que chama as 4 funções.
+ *   Verifique que ProcessarFolha() retorna o mesmo resultado que ProcFolha().
+ * ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
  */
 
 // ─── Anti-pattern 1: God Object + Magic Strings/Numbers ──────────────────────
@@ -56,8 +86,31 @@ Static Function ProcFolha(cFuncId, cCategoria, nSalario, nMes, nAno)
 
 Return nInss + nFgts
 
-// ─── EXERCÍCIO: refatore o código acima ──────────────────────────────────────
-// Dica 1: crie ValidarFuncionario(), CalcularInss(), CalcularFgts(),
-//         NotificarFuncionario(), SalvarFolha() como Static Functions separadas.
-// Dica 2: use #define CATEGORIA_CLT "C" etc. no lugar das strings literais.
-// Dica 3: use #define SALARIO_MINIMO_2026 1412.00 no lugar do número hardcoded.
+/*
+ * ── Stubs de verificação — adicione após cada passo ──────────────────────────
+ *
+ * PASSO 1 — adicione após as diretivas #define:
+ *   // verificar que o valor retornado de ProcFolha não mudou
+ *   Local nResultado := ProcFolha("FUNC1", CATEGORIA_CLT, 3500, 6, 2026)
+ *   ConOut("PASSO 1 OK: resultado=" + cValToChar(nResultado))
+ *
+ * PASSO 2 — adicione após criar CalcularInss():
+ *   Local nInssTest := CalcularInss(3500, CATEGORIA_CLT)
+ *   If Round(nInssTest, 2) == Round(3500 * 0.12, 2)
+ *       ConOut("PASSO 2 OK: CalcularInss CLT correto")
+ *   EndIf
+ *   Local nInssPJ := CalcularInss(8000, CATEGORIA_PJ)
+ *   If nInssPJ == 0
+ *       ConOut("PASSO 2 OK: CalcularInss PJ = zero")
+ *   EndIf
+ *
+ * PASSO 3 — adicione após criar CalcularFgts():
+ *   Local nFgtsTest := CalcularFgts(3500, CATEGORIA_CLT)
+ *   If Round(nFgtsTest, 2) == Round(3500 * 0.08, 2)
+ *       ConOut("PASSO 3 OK: CalcularFgts CLT correto")
+ *   EndIf
+ *
+ * PASSO 4 — adicione após criar ProcessarFolha():
+ *   Local nRes := ProcessarFolha("FUNC1", CATEGORIA_CLT, 3500, 6, 2026)
+ *   ConOut("PASSO 4 OK: ProcessarFolha resultado=" + cValToChar(nRes))
+ */

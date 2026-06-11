@@ -1,18 +1,38 @@
 /*
  * EXERCÍCIO 17 ADVPL/TLPP — Padrões de Criação
- * Tempo estimado: 15 minutos
  * Referência: Design Patterns (GoF), Cap. 3
  *
- * INSTRUÇÕES:
- *   O código abaixo tem dois problemas:
- *   1. Função CriarContrato() recebe 9 parâmetros — maioria pode ficar vazia.
- *   2. If/ElseIf de instanciação — adicionar novo tipo exige alterar a função.
+ * PASSOS (31 min no total):
  *
- *   Aplique:
- *   1. Factory: crie aTiposContrato e FabricarContrato() por tabela de dispatch.
- *   2. Builder simulado: crie MontarContratoServicoCompleto() com validações.
+ *   PASSO 1 — IDENTIFICAR (5 min)
+ *     Leia o código abaixo e adicione comentários marcando os dois problemas:
+ *       // PROBLEMA: 9 parâmetros — maioria pode ficar vazia
+ *       // PROBLEMA: If/ElseIf rígido — adicionar tipo exige alterar CriarContrato()
+ *     Meta: encontrar os 2 problemas e anotar onde estão antes de alterar código.
  *
- *   Compile e execute no Totvs IDE / SmartClient.
+ *   PASSO 2 — FACTORY COM ARRAY (8 min)
+ *     Substitua o If/ElseIf de CriarContrato() por uma tabela de dispatch:
+ *       aFabrica := {{"servico", {|...|...}}, {"locacao", {|...|...}}, ...}
+ *     CriarContrato() usa AScan para localizar o tipo e Eval para chamar o codeblock.
+ *     Verifique que o demo ainda roda.
+ *
+ *   PASSO 3 — FACTORY REGISTRÁVEL (8 min)
+ *     Mova aFabrica para variável Static e crie:
+ *       RegistrarTipoContrato(cTipo, bFunc)  // bFunc é um codeblock
+ *       FabricarContrato(cTipo, nValorMensal, nVigenciaMeses, cContratante, aExtra)
+ *     Registre os 3 tipos existentes com RegistrarTipoContrato().
+ *     Verifique que o demo ainda roda e que um novo tipo pode ser registrado
+ *     sem alterar FabricarContrato().
+ *
+ *   PASSO 4 — BUILDER SIMULADO (10 min)
+ *     Crie MontarContratoServicoCompleto(nValorMensal, nVigenciaMeses, cContratante, cObjeto)
+ *     com validações explícitas antes de montar o array de retorno:
+ *       UserException se nValorMensal <= 0
+ *       UserException se nVigenciaMeses <= 0
+ *       UserException se Empty(cContratante)
+ *     Verifique que o demo roda e que contratante vazio gera exceção.
+ *
+ * Compile e execute no Totvs IDE / SmartClient.
  */
 
 // ❌ Ruim — muitos parâmetros + If/ElseIf de instanciação
@@ -50,4 +70,15 @@ Static Function DemoExercicio()
     Local aContrato := CriarContrato("servico", 5000.00, 12, "EMP-001", "", "", "", 0, "")
     ConOut("Contrato: " + aContrato[1] + " R$ " + cValToChar(aContrato[2]) + "/mes")
     // Observe: parametros cFornecedorId e nPrazoEntrega passados vazios/0 sem uso
+
+    // --- Stub Passo 3: registrar novo tipo sem alterar FabricarContrato() ---
+    // Apos implementar RegistrarTipoContrato e FabricarContrato, descomente:
+    // RegistrarTipoContrato("obras_civil", {|nV, nVig, cC, aE| MontarObrasCivil(nV, nVig, cC, aE)})
+    // Local aObras := FabricarContrato("obras_civil", 25000.00, 8, "EMP-004", {})
+    // ConOut("Novo tipo: " + aObras[1] + " R$ " + cValToChar(aObras[2]) + "/mes")
+
+    // --- Stub Passo 4: builder simulado com validacoes ---
+    // Apos implementar MontarContratoServicoCompleto, descomente:
+    // Local aBuilt := MontarContratoServicoCompleto(5000.00, 12, "EMP-001", "Consultoria")
+    // ConOut("Builder: " + aBuilt[1] + " objeto=" + aBuilt[5])
 Return

@@ -1,18 +1,39 @@
 <?php
 // EXERCÍCIO 17 PHP 8.1+ — Padrões de Criação
-// Tempo estimado: 15 minutos
 // Referência: Design Patterns (GoF), Cap. 3
 //
-// INSTRUÇÕES:
-//   O código abaixo tem dois problemas:
-//   1. Construtor gordo: Contrato tem 9 parâmetros, maioria opcional.
-//   2. Função criarContrato() com if/else — adicionar novo tipo exige alterá-la.
+// PASSOS (31 min no total):
 //
-//   Aplique:
-//   1. Factory Method: crie uma FabricaContrato registrável.
-//   2. Builder: crie ConstruirContratoServico com métodos fluentes.
+//   PASSO 1 — IDENTIFICAR (5 min)
+//     Leia o código abaixo e adicione comentários marcando os dois problemas:
+//       // PROBLEMA: construtor gordo (9 parâmetros, maioria opcional)
+//       // PROBLEMA: if/else rígido — adicionar tipo exige alterar criarContrato()
+//     Meta: encontrar os 2 problemas e anotar onde estão antes de alterar código.
 //
-//   Execute: php exercicio.php
+//   PASSO 2 — FACTORY COM ARRAY (8 min)
+//     Substitua o if/else de criarContrato() por um array associativo:
+//       $fabrica = ["servico" => fn($d) => ..., "locacao" => ..., "fornecimento" => ...]
+//     criarContrato() consulta o array e chama a entrada correspondente.
+//     Verifique que o demo ainda roda.
+//
+//   PASSO 3 — FACTORY REGISTRÁVEL (8 min)
+//     Transforme $fabrica em FabricaContrato com:
+//       FabricaContrato::registrar(string $tipo, callable $fabrica): void
+//       FabricaContrato::criar(string $tipo, array $dados): Contrato
+//     Use private static array $registro = [] para guardar os callables.
+//     Registre os 3 tipos existentes externamente.
+//     Verifique que o demo ainda roda e que um novo tipo pode ser registrado
+//     sem alterar FabricaContrato.
+//
+//   PASSO 4 — BUILDER (10 min)
+//     Crie ConstruirContratoServico com métodos fluentes:
+//       comValorMensal(float $valor): static
+//       comVigencia(int $meses): static
+//       comContratante(string $c): static
+//       construir(): Contrato  (lança RuntimeException se campos obrigatórios faltarem)
+//     Verifique que o demo roda com a nova sintaxe fluente.
+//
+// Execute: php exercicio.php (deve rodar antes e depois de cada passo)
 
 class Contrato
 {
@@ -69,3 +90,25 @@ $c1 = criarContrato('servico', [
 ]);
 echo "Contrato: {$c1->tipo} R\${$c1->valorMensal}/mês × {$c1->vigenciaMeses} meses" . PHP_EOL;
 echo "  campos não usados: endereco={$c1->endereco}, fornecedorId={$c1->fornecedorId}" . PHP_EOL;
+
+// --- Stub Passo 3: registrar novo tipo sem alterar FabricaContrato ---
+// Após implementar FabricaContrato, descomente e verifique:
+// FabricaContrato::registrar('obras_civil', fn(array $d) => new Contrato(
+//     tipo:          'obras_civil',
+//     valorMensal:   $d['valor_mensal'],
+//     vigenciaMeses: $d['vigencia_meses'],
+//     contratante:   $d['contratante'],
+// ));
+// $obras = FabricaContrato::criar('obras_civil', [
+//     'valor_mensal' => 25000.0, 'vigencia_meses' => 8, 'contratante' => 'EMP-004'
+// ]);
+// echo "Novo tipo: {$obras->tipo} R\${$obras->valorMensal}/mês" . PHP_EOL;
+
+// --- Stub Passo 4: sintaxe fluente do Builder ---
+// Após implementar ConstruirContratoServico, descomente e verifique:
+// $c2 = (new ConstruirContratoServico())
+//     ->comValorMensal(5000.0)
+//     ->comVigencia(12)
+//     ->comContratante('EMP-001')
+//     ->construir();
+// echo "Builder: {$c2->tipo} R\${$c2->valorMensal}/mês × {$c2->vigenciaMeses} meses" . PHP_EOL;

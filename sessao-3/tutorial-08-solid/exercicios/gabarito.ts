@@ -1,9 +1,11 @@
 // GABARITO 16 — SOLID na Prática (TypeScript)
 // Execute: npx ts-node gabarito.ts
 //
-// Correções aplicadas:
-//   SRP — ValidadorFatura, CalculadorFatura, RepositorioFatura separados
-//   DIP — GeradorFatura recebe INotificador no construtor, não instancia EmailSMTP
+// Quatro passos aplicados em sequência sobre o código original:
+//   Passo 1: violações anotadas (// SRP: e // DIP:)
+//   Passo 2: ValidadorFatura extraído; GeradorFatura recebe no construtor
+//   Passo 3: CalculadorFatura e RepositorioFatura extraídos
+//   Passo 4: interface INotificador; EmailSMTP substituído por injeção
 
 interface ItemFatura {
     descricao: string;
@@ -19,7 +21,7 @@ class Fatura {
     ) {}
 }
 
-// ─── Interfaces (DIP) ────────────────────────────────────────────────────────
+// ── Passo 4 — Interfaces (DIP) ───────────────────────────────────────────────
 
 interface INotificador {
     notificar(destinatario: string, mensagem: string): void;
@@ -29,13 +31,15 @@ interface IRepositorioFatura {
     salvar(fatura: Fatura): void;
 }
 
-// ─── Classes com responsabilidade única (SRP) ────────────────────────────────
+// ── Passo 2 — ValidadorFatura (SRP) ──────────────────────────────────────────
 
 class ValidadorFatura {
     validar(fatura: Fatura): boolean {
         return fatura.itens.length > 0 && fatura.clienteId.length > 0;
     }
 }
+
+// ── Passo 3 — CalculadorFatura + RepositorioFatura (SRP) ─────────────────────
 
 class CalculadorFatura {
     calcularTotal(fatura: Fatura): number {
@@ -49,13 +53,15 @@ class RepositorioFatura implements IRepositorioFatura {
     }
 }
 
+// ── Passo 4 — Implementação concreta de INotificador ─────────────────────────
+
 class NotificadorEmail implements INotificador {
     notificar(destinatario: string, mensagem: string): void {
         console.log(`  [SMTP] → ${destinatario}: ${mensagem}`);
     }
 }
 
-// ─── GeradorFatura: orquestra, não executa (DIP + SRP) ───────────────────────
+// ── Passo 2–4 — GeradorFatura: orquestra, não executa (DIP + SRP) ────────────
 
 class GeradorFatura {
     constructor(
@@ -76,7 +82,7 @@ class GeradorFatura {
     }
 }
 
-// ─── Demo ────────────────────────────────────────────────────────────────────
+// ── Demo ─────────────────────────────────────────────────────────────────────
 
 const itens: ItemFatura[] = [
     { descricao: "Consultoria", valor: 1500.0 },

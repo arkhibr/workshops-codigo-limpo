@@ -1,13 +1,27 @@
 // EXERCÍCIO 16 — SOLID na Prática (TypeScript)
 // Execute: npx ts-node exercicio.ts
 //
-// INSTRUÇÕES:
-//   A classe GeradorFatura abaixo viola SRP (valida, calcula, persiste e envia
-//   email) e DIP (instancia EmailSMTP diretamente).
+// PASSOS (faça um de cada vez, em ordem):
 //
-//   1. Separe em classes com responsabilidade única.
-//   2. Inverta a dependência de email: GeradorFatura deve receber um INotificador.
-//   3. Execute: npx ts-node exercicio.ts (deve rodar antes e depois da refatoração)
+//   PASSO 1 — IDENTIFICAR (5 min)
+//     Leia GeradorFatura e adicione comentários // SRP: e // DIP: antes de
+//     cada trecho problemático.
+//     Meta: encontrar pelo menos 4 violações antes de alterar código.
+//
+//   PASSO 2 — EXTRAIR ValidadorFatura (8 min)
+//     Mova validar() para uma nova classe ValidadorFatura.
+//     GeradorFatura passa a receber ValidadorFatura no construtor.
+//     Verifique que o demo ainda roda: npx ts-node exercicio.ts
+//
+//   PASSO 3 — EXTRAIR CalculadorFatura + RepositorioFatura (8 min)
+//     Repita para calcularTotal() e salvar().
+//     GeradorFatura.processar() delega para os colaboradores injetados.
+//     Verifique que o demo ainda roda: npx ts-node exercicio.ts
+//
+//   PASSO 4 — INVERTER DEPENDÊNCIA DE EMAIL (8 min)
+//     Crie interface INotificador { notificar(dest: string, msg: string): void }
+//     Substitua this.email = new EmailSMTP() por injeção no construtor.
+//     Verifique que o demo ainda roda: npx ts-node exercicio.ts
 
 interface ItemFatura {
     descricao: string;
@@ -72,3 +86,20 @@ const fatura  = new Fatura("FAT-001", "CLI-200", itens);
 const gerador = new GeradorFatura();
 const total   = gerador.processar(fatura);
 console.log(`Total: R$${total.toFixed(2)}`);
+
+// -----------------------------------------------------------------------
+// PASSO 4 — stub para verificar a injeção de dependência.
+// Após criar INotificador, descomente e rode npx ts-node exercicio.ts.
+// -----------------------------------------------------------------------
+// class NotificadorLog implements INotificador {
+//     chamado = false;
+//     notificar(_dest: string, _msg: string): void { this.chamado = true; }
+// }
+//
+// const notifLog = new NotificadorLog();
+// const gerador2 = new GeradorFatura(
+//     new ValidadorFatura(), new CalculadorFatura(), new RepositorioFatura(), notifLog
+// );
+// gerador2.processar(fatura);
+// console.assert(notifLog.chamado, "FALHOU: notificador substituto não foi chamado");
+// console.log("OK: DIP — GeradorFatura aceita qualquer INotificador");

@@ -1,17 +1,42 @@
 """
 EXERCÍCIO 19 — Anti-patterns Clássicos
-Tempo estimado: 20 minutos
+Tempo estimado: 34 minutos (4 micro-passos)
 Referência: Clean Code Cap. 17 + Fowler Refactoring Cap. 3
 
-INSTRUÇÕES:
-  O código abaixo demonstra 4 anti-patterns:
-  1. God Object: GestorFolhaPagamento faz tudo — CRUD, cálculo, relatório, email.
-  2. Magic Strings/Numbers: if categoria == "C", salario_base = 1412.
-  3. Feature Envy: Pagamento.calcular_inss(funcionario) acessa dados de Funcionario.
-  4. Copy-Paste: CalculoNormal e CalculoTerceirizado duplicam calcular_base().
+INSTRUÇÕES GERAIS:
+  O código abaixo demonstra 4 anti-patterns.
+  Siga os 4 passos em ordem — cada passo é independente e verificável.
+  Execute: python3 exercicio.py (deve rodar sem erro antes e depois de cada passo)
 
-  Refatore para eliminar cada um dos 4 anti-patterns.
-  Execute: python3 exercicio.py (deve rodar sem erro antes e depois)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PASSO 1 — MAGIC STRINGS/NUMBERS  (8 min)
+  Extraia as strings e números mágicos para constantes nomeadas:
+    SALARIO_MINIMO_2026 = 1412.0
+    CATEGORIA_CLT = "C"  /  CATEGORIA_PJ = "P"  /  CATEGORIA_ESTAGIARIO = "E"
+  Substitua todas as ocorrências nos lugares onde estão usados.
+  Verifique que o demo ainda roda.
+
+PASSO 2 — FEATURE ENVY  (8 min)
+  Mova calcular_inss() da classe Pagamento para a classe Funcionario.
+  Funcionario.calcular_inss(self) — sem parâmetro, usa self.salario/self.categoria.
+  Atualize os chamadores.
+  Verifique que o demo ainda roda.
+
+PASSO 3 — COPY-PASTE  (8 min)
+  Extraia calcular_base() como função de módulo:
+    def _calcular_base(func: Funcionario) -> float: ...
+  Faça CalculoNormal.calcular_base() e CalculoTerceirizado.calcular_base()
+  chamarem _calcular_base().
+  Verifique que o demo ainda roda.
+
+PASSO 4 — GOD OBJECT  (10 min)
+  Separe GestorFolhaPagamento em 3 classes com responsabilidade única:
+    RepositorioFuncionario  — buscar_funcionario, salvar_funcionario
+    ServicoNotificacao      — enviar_contracheque, notificar_rh
+    GeradorRelatorioRH      — gerar_relatorio, exportar_csv, arquivar_folha
+  Deixe calcular_fgts() em RepositorioFuncionario ou crie CalculadorFolha separado.
+  Verifique que o demo ainda roda.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 """
 from typing import List, Optional
 from dataclasses import dataclass
@@ -139,3 +164,36 @@ if __name__ == "__main__":
     terceirizado = CalculoTerceirizado()
     print(f"Líquido CLT: R${normal.calcular_liquido(func):.2f}")
     print(f"Líquido Terc: R${terceirizado.calcular_liquido(func):.2f}")
+
+    # ── Stubs de verificação — descomente após cada passo ─────────────────────
+
+    # PASSO 1 — descomente para verificar:
+    # assert CATEGORIA_CLT == "C"
+    # assert CATEGORIA_PJ == "P"
+    # assert CATEGORIA_ESTAGIARIO == "E"
+    # assert SALARIO_MINIMO_2026 == 1412.0
+    # print("PASSO 1 OK: constantes definidas e usadas")
+
+    # PASSO 2 — descomente para verificar (requer Passo 1 feito):
+    # func_clt = Funcionario("F1", "João", "j@e.com", CATEGORIA_CLT, 3500.0)
+    # assert func_clt.calcular_inss() == round(3500.0 * 0.12, 2)
+    # func_pj = Funcionario("F2", "Ana", "a@e.com", CATEGORIA_PJ, 8000.0)
+    # assert func_pj.calcular_inss() == 0.0
+    # print("PASSO 2 OK: calcular_inss() pertence a Funcionario")
+
+    # PASSO 3 — descomente para verificar (requer Passo 1 feito):
+    # func_teste = Funcionario("F3", "Leo", "l@e.com", CATEGORIA_CLT, 3500.0)
+    # n = CalculoNormal()
+    # t = CalculoTerceirizado()
+    # assert n.calcular_liquido(func_teste) == round(3500.0 * 0.85, 2)
+    # assert t.calcular_liquido(func_teste) == round(3500.0 * 0.80, 2)
+    # print("PASSO 3 OK: _calcular_base() sem duplicação")
+
+    # PASSO 4 — descomente para verificar:
+    # repo = RepositorioFuncionario()
+    # notif = ServicoNotificacao()
+    # rel = GeradorRelatorioRH()
+    # for cls in [RepositorioFuncionario, ServicoNotificacao, GeradorRelatorioRH]:
+    #     metodos_cls = [m for m in dir(cls()) if not m.startswith("_")]
+    #     assert len(metodos_cls) <= 5, f"{cls.__name__} ainda tem responsabilidades demais"
+    # print("PASSO 4 OK: God Object separado em 3 classes")

@@ -2,13 +2,31 @@
 // EXERCÍCIO 18 PHP — Padrões Estruturais: Adapter + Facade
 // Execute: php exercicio.php
 //
-// INSTRUÇÕES:
-//   O sistema de boletos bancários abaixo tem uma API legada com nomes e
-//   estruturas de dados inconsistentes. O código de negócio chama essas
-//   funções diretamente em 3 lugares diferentes.
+// PASSOS:
 //
-//   1. Crie um Adapter que isole o sistema legado do código de negócio.
-//   2. Crie uma Facade que simplifique o fluxo completo (emitir + consultar + cancelar).
+//   PASSO 1 — IDENTIFICAR (5 min)
+//     Nas 3 funções de negócio (emitir_cobranca, verificar_cobranca, estornar_cobranca),
+//     adicione um comentário // ACOPLAMENTO: antes de cada chamada à API legada.
+//     Meta: marcar os 3 acoplamentos antes de alterar código.
+//
+//   PASSO 2 — MODELO DE DOMÍNIO (5 min)
+//     Crie a readonly class Boleto com propriedades:
+//       id: int, codigoBarras: string, status: string, valor: float
+//     (sem alterar mais nada ainda)
+//
+//   PASSO 3 — ADAPTER (10 min)
+//     Crie a classe LegadoCobrancaAdapter com 3 métodos:
+//       emitir(float $valor, string $vencimento, string $clienteId): Boleto
+//       consultar(int $boletoId): string
+//       cancelar(int $boletoId): bool
+//     Cada método chama uma função *_legado e normaliza os campos.
+//     Verifique: $adapter->emitir(500.0, '2026-08-15', 'CLI-200') retorna um Boleto.
+//
+//   PASSO 4 — FACADE (8 min)
+//     Crie FachadaCobranca recebendo um adapter no construtor, com:
+//       processarCobrancaCompleta(float $valor, string $vencimento, string $clienteId): array
+//     Que chama emitir + consultar + cancelar e devolve resumo.
+//     Verifique que o caller não precisa mais conhecer a API legada.
 
 // ─── API legada (não pode ser alterada) ───────────────────────────────────────
 
@@ -55,30 +73,47 @@ function estornar_cobranca(int $boletoId): bool {
 }
 
 
-// ─── TODO: Implemente aqui ────────────────────────────────────────────────────
-//
-// 1. Crie uma readonly class Boleto com propriedades:
-//    id, codigoBarras, status, valor
-//
-// 2. Crie uma interface ServicoCobranca com os métodos:
-//    - emitir(float $valor, string $vencimento, string $clienteId): Boleto
-//    - consultar(int $boletoId): string
-//    - cancelar(int $boletoId): bool
-//
-// 3. Crie a classe LegadoCobrancaAdapter implements ServicoCobranca
-//    que chama as funções *_legado e normaliza os resultados
-//
-// 4. Crie a classe FachadaCobranca com o método:
-//    - processarCobrancaCompleta(float $valor, string $vencimento, string $clienteId): array
-//      (emite + consulta + cancela e retorna um resumo)
-//
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Passo 2: implemente readonly class Boleto aqui ──────────────────────────
+// readonly class Boleto {
+//     public function __construct(
+//         public int    $id,
+//         public string $codigoBarras,
+//         public string $status,
+//         public float  $valor,
+//     ) {}
+// }
 
 
-// Demo
+// ─── Passo 3: implemente LegadoCobrancaAdapter aqui ──────────────────────────
+// class LegadoCobrancaAdapter {
+//     public function emitir(float $valor, string $vencimento, string $clienteId): Boleto { ... }
+//     public function consultar(int $boletoId): string { ... }
+//     public function cancelar(int $boletoId): bool { ... }
+// }
+
+
+// ─── Passo 4: implemente FachadaCobranca aqui ────────────────────────────────
+// class FachadaCobranca {
+//     public function __construct(private readonly LegadoCobrancaAdapter $adapter) {}
+//     public function processarCobrancaCompleta(float $valor, string $vencimento, string $clienteId): array { ... }
+// }
+
+
+// Demo (código original)
+// Passo 1: adicione // ACOPLAMENTO: nas linhas de chamada legada dentro das funções acima
 $boleto = emitir_cobranca(500.0, '2026-08-15', 'CLI-200');
 echo "Boleto: id={$boleto['id']}, status={$boleto['status']}\n";
 $status = verificar_cobranca($boleto['id']);
 echo "Status: {$status}\n";
 $cancelado = estornar_cobranca($boleto['id']) ? 'true' : 'false';
 echo "Cancelado: {$cancelado}\n";
+
+// Passo 3 — descomente para verificar o Adapter:
+// $adapter = new LegadoCobrancaAdapter();
+// $b = $adapter->emitir(500.0, '2026-08-15', 'CLI-200');
+// echo "[Adapter] Boleto: id={$b->id}, status={$b->status}\n";
+
+// Passo 4 — descomente para verificar a Facade:
+// $fachada = new FachadaCobranca(new LegadoCobrancaAdapter());
+// $resultado = $fachada->processarCobrancaCompleta(500.0, '2026-08-15', 'CLI-200');
+// print_r($resultado);

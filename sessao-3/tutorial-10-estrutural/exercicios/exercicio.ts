@@ -1,13 +1,31 @@
 // EXERCÍCIO 18 TypeScript — Padrões Estruturais: Adapter + Facade
 // Execute: npx ts-node exercicio.ts
 //
-// INSTRUÇÕES:
-//   O sistema de boletos bancários abaixo tem uma API legada com nomes e
-//   estruturas de dados inconsistentes. O código de negócio chama essas
-//   funções diretamente em 3 lugares diferentes.
+// PASSOS:
 //
-//   1. Crie um Adapter que isole o sistema legado do código de negócio.
-//   2. Crie uma Facade que simplifique o fluxo completo (emitir + consultar + cancelar).
+//   PASSO 1 — IDENTIFICAR (5 min)
+//     Nas 3 funções de negócio (emitirCobranca, verificarCobranca, estornarCobranca),
+//     adicione um comentário // ACOPLAMENTO: antes de cada chamada à API legada.
+//     Meta: marcar os 3 acoplamentos antes de alterar código.
+//
+//   PASSO 2 — MODELO DE DOMÍNIO (5 min)
+//     Crie a interface Boleto com propriedades:
+//       id: number, codigoBarras: string, status: string, valor: number
+//     (sem alterar mais nada ainda)
+//
+//   PASSO 3 — ADAPTER (10 min)
+//     Crie a classe LegadoCobrancaAdapter com 3 métodos:
+//       emitir(valor: number, vencimento: string, clienteId: string): Boleto
+//       consultar(boletoId: number): string
+//       cancelar(boletoId: number): boolean
+//     Cada método chama uma função *_legado e normaliza os campos.
+//     Verifique: adapter.emitir(500.0, '2026-08-15', 'CLI-200') retorna um Boleto.
+//
+//   PASSO 4 — FACADE (8 min)
+//     Crie FachadaCobranca recebendo um adapter no construtor, com:
+//       processarCobrancaCompleta(valor, vencimento, clienteId): Record<string, unknown>
+//     Que chama emitir + consultar + cancelar e devolve resumo.
+//     Verifique que o caller não precisa mais conhecer a API legada.
 
 // ─── API legada (não pode ser alterada) ───────────────────────────────────────
 
@@ -54,30 +72,45 @@ function estornarCobranca(boletoId: number): boolean {
 }
 
 
-// ─── TODO: Implemente aqui ────────────────────────────────────────────────────
-//
-// 1. Crie uma interface Boleto com propriedades:
-//    id, codigoBarras, status, valor
-//
-// 2. Crie uma interface IServicoCobranca com os métodos:
-//    - emitir(valor: number, vencimento: string, clienteId: string): Boleto
-//    - consultar(boletoId: number): string
-//    - cancelar(boletoId: number): boolean
-//
-// 3. Crie a classe LegadoCobrancaAdapter implements IServicoCobranca
-//    que chama as funções *_legado e normaliza os resultados
-//
-// 4. Crie a classe FachadaCobranca com o método:
-//    - processarCobrancaCompleta(valor, vencimento, clienteId): Record<string, unknown>
-//      (emite + consulta + cancela e retorna um resumo)
-//
-// ─────────────────────────────────────────────────────────────────────────────
+// ─── Passo 2: implemente a interface Boleto aqui ─────────────────────────────
+// interface Boleto {
+//     id:           number;
+//     codigoBarras: string;
+//     status:       string;
+//     valor:        number;
+// }
 
 
-// Demo
+// ─── Passo 3: implemente LegadoCobrancaAdapter aqui ──────────────────────────
+// class LegadoCobrancaAdapter {
+//     emitir(valor: number, vencimento: string, clienteId: string): Boleto { ... }
+//     consultar(boletoId: number): string { ... }
+//     cancelar(boletoId: number): boolean { ... }
+// }
+
+
+// ─── Passo 4: implemente FachadaCobranca aqui ────────────────────────────────
+// class FachadaCobranca {
+//     constructor(private readonly adapter: LegadoCobrancaAdapter) {}
+//     processarCobrancaCompleta(valor: number, vencimento: string, clienteId: string): Record<string, unknown> { ... }
+// }
+
+
+// Demo (código original)
+// Passo 1: adicione // ACOPLAMENTO: nas linhas de chamada legada dentro das funções acima
 const boleto = emitirCobranca(500.0, '2026-08-15', 'CLI-200');
 console.log(`Boleto: id=${boleto['id']}, status=${boleto['status']}`);
 const status = verificarCobranca(boleto['id'] as number);
 console.log(`Status: ${status}`);
 const cancelado = estornarCobranca(boleto['id'] as number);
 console.log(`Cancelado: ${cancelado}`);
+
+// Passo 3 — descomente para verificar o Adapter:
+// const adapter = new LegadoCobrancaAdapter();
+// const b = adapter.emitir(500.0, '2026-08-15', 'CLI-200');
+// console.log(`[Adapter] Boleto: id=${b.id}, status=${b.status}`);
+
+// Passo 4 — descomente para verificar a Facade:
+// const fachada = new FachadaCobranca(new LegadoCobrancaAdapter());
+// const resultado = fachada.processarCobrancaCompleta(500.0, '2026-08-15', 'CLI-200');
+// console.log('[Facade] resultado:', resultado);

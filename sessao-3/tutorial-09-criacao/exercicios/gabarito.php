@@ -2,106 +2,27 @@
 // GABARITO 17 PHP 8.1+ — Padrões de Criação
 // Referência: Design Patterns (GoF), Cap. 3
 //
-// SOLUÇÃO:
-//   1. Factory Method: FabricaContrato com registrar/criar.
-//   2. Builder: ConstruirContratoServico com interface fluente.
-//
 // Execute: php gabarito.php
 
-// ─── Factory Method ───────────────────────────────────────────────────────────
+// ─── Classe (mesma do exercício) ──────────────────────────────────────────────
 
-interface Contrato
-{
-    public function descricao(): string;
-    public function getValorMensal(): float;
-    public function getVigenciaMeses(): int;
-    public function getContratante(): string;
-    public function getValorTotal(): float;
-}
-
-abstract class ContratoBase implements Contrato
+class Contrato
 {
     public function __construct(
-        protected readonly float  $valorMensal,
-        protected readonly int    $vigenciaMeses,
-        protected readonly string $contratante,
-    ) {
-        if ($valorMensal <= 0) {
-            throw new \InvalidArgumentException("Valor mensal deve ser positivo, recebido: $valorMensal");
-        }
-        if ($vigenciaMeses <= 0) {
-            throw new \InvalidArgumentException("Vigência deve ser positiva, recebida: $vigenciaMeses");
-        }
-    }
-
-    public function getValorMensal(): float    { return $this->valorMensal; }
-    public function getVigenciaMeses(): int     { return $this->vigenciaMeses; }
-    public function getContratante(): string    { return $this->contratante; }
-    public function getValorTotal(): float      { return $this->valorMensal * $this->vigenciaMeses; }
+        public readonly string  $tipo,
+        public readonly float   $valorMensal,
+        public readonly int     $vigenciaMeses,
+        public readonly string  $contratante,
+        public readonly ?string $objeto       = null,
+        public readonly ?string $endereco     = null,
+        public readonly ?string $fornecedorId = null,
+        public readonly ?int    $prazoEntrega = null,
+        public readonly ?string $observacoes  = null,
+    ) {}
 }
 
-class ContratoServico extends ContratoBase
-{
-    public function __construct(
-        float  $valorMensal,
-        int    $vigenciaMeses,
-        string $contratante,
-        public readonly string $objeto,
-    ) {
-        parent::__construct($valorMensal, $vigenciaMeses, $contratante);
-    }
 
-    public function descricao(): string
-    {
-        return sprintf(
-            'Serviço: %s | %s | R$%.2f/mês × %d meses',
-            $this->objeto, $this->contratante, $this->valorMensal, $this->vigenciaMeses
-        );
-    }
-}
-
-class ContratoLocacao extends ContratoBase
-{
-    public function __construct(
-        float  $valorMensal,
-        int    $vigenciaMeses,
-        string $contratante,
-        public readonly string $objeto,
-        public readonly string $endereco,
-    ) {
-        parent::__construct($valorMensal, $vigenciaMeses, $contratante);
-    }
-
-    public function descricao(): string
-    {
-        return sprintf(
-            'Locação: %s | %s | %s | R$%.2f/mês × %d meses',
-            $this->objeto, $this->endereco, $this->contratante,
-            $this->valorMensal, $this->vigenciaMeses
-        );
-    }
-}
-
-class ContratoFornecimento extends ContratoBase
-{
-    public function __construct(
-        float  $valorMensal,
-        int    $vigenciaMeses,
-        string $contratante,
-        public readonly string $fornecedorId,
-        public readonly int    $prazoEntrega,
-    ) {
-        parent::__construct($valorMensal, $vigenciaMeses, $contratante);
-    }
-
-    public function descricao(): string
-    {
-        return sprintf(
-            'Fornecimento: %s | prazo %dd | R$%.2f/mês × %d meses',
-            $this->fornecedorId, $this->prazoEntrega, $this->valorMensal, $this->vigenciaMeses
-        );
-    }
-}
+// ─── Passo 3: Factory registrável ────────────────────────────────────────────
 
 class FabricaContrato
 {
@@ -125,21 +46,32 @@ class FabricaContrato
     }
 }
 
-FabricaContrato::registrar('servico', fn(array $d) => new ContratoServico(
-    $d['valor_mensal'], $d['vigencia_meses'], $d['contratante'],
-    $d['objeto'] ?? 'Serviços gerais'
+FabricaContrato::registrar('servico', fn(array $d) => new Contrato(
+    tipo:          'servico',
+    valorMensal:   $d['valor_mensal'],
+    vigenciaMeses: $d['vigencia_meses'],
+    contratante:   $d['contratante'],
+    objeto:        $d['objeto'] ?? 'Serviços gerais',
 ));
-FabricaContrato::registrar('locacao', fn(array $d) => new ContratoLocacao(
-    $d['valor_mensal'], $d['vigencia_meses'], $d['contratante'],
-    $d['objeto'] ?? '', $d['endereco'] ?? ''
+FabricaContrato::registrar('locacao', fn(array $d) => new Contrato(
+    tipo:          'locacao',
+    valorMensal:   $d['valor_mensal'],
+    vigenciaMeses: $d['vigencia_meses'],
+    contratante:   $d['contratante'],
+    objeto:        $d['objeto'] ?? null,
+    endereco:      $d['endereco'] ?? null,
 ));
-FabricaContrato::registrar('fornecimento', fn(array $d) => new ContratoFornecimento(
-    $d['valor_mensal'], $d['vigencia_meses'], $d['contratante'],
-    $d['fornecedor_id'] ?? '', $d['prazo_entrega'] ?? 30
+FabricaContrato::registrar('fornecimento', fn(array $d) => new Contrato(
+    tipo:          'fornecimento',
+    valorMensal:   $d['valor_mensal'],
+    vigenciaMeses: $d['vigencia_meses'],
+    contratante:   $d['contratante'],
+    fornecedorId:  $d['fornecedor_id'] ?? null,
+    prazoEntrega:  $d['prazo_entrega'] ?? null,
 ));
 
 
-// ─── Builder ──────────────────────────────────────────────────────────────────
+// ─── Passo 4: Builder ─────────────────────────────────────────────────────────
 
 class ConstruirContratoServico
 {
@@ -166,13 +98,7 @@ class ConstruirContratoServico
         return $this;
     }
 
-    public function comObjeto(string $objeto): static
-    {
-        $this->objeto = $objeto;
-        return $this;
-    }
-
-    public function construir(): ContratoServico
+    public function construir(): Contrato
     {
         if ($this->valorMensal === null) {
             throw new \RuntimeException('valor_mensal é obrigatório');
@@ -183,9 +109,12 @@ class ConstruirContratoServico
         if ($this->contratante === null) {
             throw new \RuntimeException('contratante é obrigatório');
         }
-        return new ContratoServico(
-            $this->valorMensal, $this->vigenciaMeses,
-            $this->contratante, $this->objeto
+        return new Contrato(
+            tipo:          'servico',
+            valorMensal:   $this->valorMensal,
+            vigenciaMeses: $this->vigenciaMeses,
+            contratante:   $this->contratante,
+            objeto:        $this->objeto,
         );
     }
 }
@@ -195,48 +124,65 @@ class ConstruirContratoServico
 
 echo "=== Gabarito 17 PHP — Factory Method + Builder ===" . PHP_EOL . PHP_EOL;
 
-// Factory
+// Passo 3: factory registrável
 $servico = FabricaContrato::criar('servico', [
-    'valor_mensal' => 5000.0, 'vigencia_meses' => 12,
-    'contratante' => 'EMP-001', 'objeto' => 'Consultoria em TI'
+    'valor_mensal' => 5000.0, 'vigencia_meses' => 12, 'contratante' => 'EMP-001'
 ]);
-assert($servico instanceof ContratoServico);
-assert($servico->getValorTotal() === 60000.0);
-echo "OK: Factory — ContratoServico criado via FabricaContrato" . PHP_EOL;
-echo "  " . $servico->descricao() . PHP_EOL;
-
-$locacao = FabricaContrato::criar('locacao', [
-    'valor_mensal' => 3500.0, 'vigencia_meses' => 24,
-    'contratante' => 'EMP-002', 'objeto' => 'Sala comercial 40m²',
-    'endereco' => 'Av. Paulista, 1000 — SP'
-]);
-assert($locacao instanceof ContratoLocacao);
-echo "OK: Factory — ContratoLocacao criado via FabricaContrato" . PHP_EOL;
+assert($servico instanceof Contrato);
+assert($servico->valorMensal * $servico->vigenciaMeses === 60000.0);
+echo "OK: Passo 3 — FabricaContrato::criar: {$servico->tipo} R\${$servico->valorMensal}/mês" . PHP_EOL;
 
 try {
-    FabricaContrato::criar('obras_civil', ['valor_mensal' => 1000.0, 'vigencia_meses' => 6, 'contratante' => 'X']);
-    echo "FALHOU: Factory — deveria rejeitar tipo não registrado" . PHP_EOL;
+    FabricaContrato::criar('desconhecido', ['valor_mensal' => 1.0, 'vigencia_meses' => 1, 'contratante' => 'X']);
+    echo "FALHOU: deveria rejeitar tipo não registrado" . PHP_EOL;
 } catch (\InvalidArgumentException $e) {
-    echo "OK: Factory — tipo desconhecido rejeitado com InvalidArgumentException" . PHP_EOL;
+    echo "OK: Passo 3 — tipo desconhecido rejeitado com InvalidArgumentException" . PHP_EOL;
 }
+
+// Passo 3: novo tipo sem alterar FabricaContrato
+FabricaContrato::registrar('obras_civil', fn(array $d) => new Contrato(
+    tipo:        'obras_civil',
+    valorMensal: $d['valor_mensal'],
+    vigenciaMeses: $d['vigencia_meses'],
+    contratante: $d['contratante'],
+    observacoes: $d['responsavel_tecnico'] ?? null,
+));
+$obras = FabricaContrato::criar('obras_civil', [
+    'valor_mensal' => 25000.0, 'vigencia_meses' => 8,
+    'contratante' => 'EMP-004', 'responsavel_tecnico' => 'Eng. Silva CREA-12345'
+]);
+assert($obras instanceof Contrato);
+echo "OK: Passo 3 — novo tipo registrado sem alterar FabricaContrato: {$obras->tipo}" . PHP_EOL;
 
 echo PHP_EOL;
 
-// Builder
-$contrato = (new ConstruirContratoServico())
+// Passo 4: builder
+$c = (new ConstruirContratoServico())
     ->comValorMensal(5000.0)
     ->comVigencia(12)
     ->comContratante('EMP-001')
-    ->comObjeto('Desenvolvimento de software')
     ->construir();
-assert($contrato instanceof ContratoServico);
-assert($contrato->getValorTotal() === 60000.0);
-echo "OK: Builder — ContratoServico construído com encadeamento fluente" . PHP_EOL;
-echo "  " . $contrato->descricao() . PHP_EOL;
+assert($c instanceof Contrato);
+assert($c->valorMensal * $c->vigenciaMeses === 60000.0);
+echo "OK: Passo 4 — builder fluente: {$c->tipo} R\${$c->valorMensal}/mês × {$c->vigenciaMeses} meses" . PHP_EOL;
 
 try {
     (new ConstruirContratoServico())->comValorMensal(5000.0)->construir();
-    echo "FALHOU: Builder — deveria rejeitar contrato sem vigencia_meses" . PHP_EOL;
+    echo "FALHOU: deveria rejeitar sem vigencia_meses" . PHP_EOL;
 } catch (\RuntimeException $e) {
-    echo "OK: Builder — rejeita contrato incompleto — {$e->getMessage()}" . PHP_EOL;
+    echo "OK: Passo 4 — rejeita construir() sem vigencia_meses" . PHP_EOL;
+}
+
+try {
+    (new ConstruirContratoServico())->comVigencia(12)->construir();
+    echo "FALHOU: deveria rejeitar sem valor_mensal" . PHP_EOL;
+} catch (\RuntimeException $e) {
+    echo "OK: Passo 4 — rejeita construir() sem valor_mensal" . PHP_EOL;
+}
+
+try {
+    (new ConstruirContratoServico())->comValorMensal(5000.0)->comVigencia(12)->construir();
+    echo "FALHOU: deveria rejeitar sem contratante" . PHP_EOL;
+} catch (\RuntimeException $e) {
+    echo "OK: Passo 4 — rejeita construir() sem contratante" . PHP_EOL;
 }

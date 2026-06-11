@@ -1,17 +1,35 @@
 """
 EXERCÍCIO 18 — Padrões Estruturais: Adapter + Facade
-Tempo estimado: 15 minutos
+Tempo estimado: 28 minutos (4 micro-passos)
 Referência: Design Patterns (GoF), Cap. 4
 
-INSTRUÇÕES:
-  O sistema de boletos bancários abaixo tem uma API legada com nomes e
-  estruturas de dados inconsistentes. O código de negócio chama essas
-  funções diretamente em 3 lugares diferentes.
+PASSOS:
 
-  1. Crie um Adapter que isole o sistema legado do código de negócio.
-  2. Crie uma Facade que simplifique o fluxo completo (criar + consultar + cancelar).
+  PASSO 1 — IDENTIFICAR (5 min)
+    Nas 3 funções de negócio (emitir_cobranca, verificar_cobranca, estornar_cobranca),
+    adicione um comentário # ACOPLAMENTO: antes de cada chamada à API legada.
+    Meta: marcar os 3 acoplamentos antes de alterar código.
 
-  Execute: python3 exercicio.py (deve rodar antes e depois)
+  PASSO 2 — MODELO DE DOMÍNIO (5 min)
+    Crie o dataclass Boleto com campos:
+      id: int, codigo_barras: str, status: str, valor: float
+    (sem alterar mais nada ainda)
+
+  PASSO 3 — ADAPTER (10 min)
+    Crie a classe LegadoCobrancaAdapter com 3 métodos:
+      emitir(valor, vencimento, cliente_id) -> Boleto
+      consultar(boleto_id) -> str
+      cancelar(boleto_id) -> bool
+    Cada método chama uma função *_legado e normaliza os campos.
+    Verifique: adapter.emitir(500.0, "2026-08-15", "CLI-200") retorna um Boleto.
+
+  PASSO 4 — FACADE (8 min)
+    Crie FachadaCobranca recebendo um adapter no construtor, com:
+      processar_cobranca_completa(valor, vencimento, cliente_id) -> dict
+    Que chama emitir + consultar + cancelar e devolve resumo.
+    Verifique que o caller não precisa mais conhecer a API legada.
+
+  Execute: python3 exercicio.py (deve rodar antes e depois de cada passo)
 """
 from typing import Optional
 from dataclasses import dataclass
@@ -56,29 +74,40 @@ def estornar_cobranca(boleto_id: int) -> bool:
     return cancelar_boleto_legado(boleto_id, "SOLICITACAO_CLIENTE")  # acoplamento direto
 
 
-# ─── TODO: Implemente aqui ────────────────────────────────────────────────────
-#
-# 1. Crie um dataclass Boleto com campos: id, codigo_barras, status, valor
-#
-# 2. Crie um Protocol IServicoCobranca com os métodos:
-#    - emitir(valor, vencimento, cliente_id) -> Boleto
-#    - consultar(boleto_id) -> str
-#    - cancelar(boleto_id) -> bool
-#
-# 3. Crie a classe LegadoCobrancaAdapter implementando IServicoCobranca
-#    que chama as funções *_legado e normaliza os resultados
-#
-# 4. Crie a classe FachadaCobranca com o método:
-#    - processar_cobranca_completa(valor, vencimento, cliente_id) -> dict
-#      (emite + consulta + cancela e retorna um resumo)
-#
-# ─────────────────────────────────────────────────────────────────────────────
+# ─── Passo 2: implemente o dataclass Boleto aqui ─────────────────────────────
+# @dataclass
+# class Boleto:
+#     ...
+
+
+# ─── Passo 3: implemente LegadoCobrancaAdapter aqui ──────────────────────────
+# class LegadoCobrancaAdapter:
+#     def emitir(self, valor, vencimento, cliente_id) -> Boleto: ...
+#     def consultar(self, boleto_id) -> str: ...
+#     def cancelar(self, boleto_id) -> bool: ...
+
+
+# ─── Passo 4: implemente FachadaCobranca aqui ────────────────────────────────
+# class FachadaCobranca:
+#     def __init__(self, adapter): ...
+#     def processar_cobranca_completa(self, valor, vencimento, cliente_id) -> dict: ...
 
 
 if __name__ == "__main__":
+    # Código original (Passo 1: adicione # ACOPLAMENTO: nas linhas de chamada legada)
     boleto = emitir_cobranca(500.0, "2026-08-15", "CLI-200")
     print(f"Boleto: id={boleto['id']}, status={boleto['status']}")
     status = verificar_cobranca(boleto["id"])
     print(f"Status: {status}")
     cancelado = estornar_cobranca(boleto["id"])
     print(f"Cancelado: {cancelado}")
+
+    # Passo 3 — descomente para verificar o Adapter:
+    # adapter = LegadoCobrancaAdapter()
+    # b = adapter.emitir(500.0, "2026-08-15", "CLI-200")
+    # print(f"[Adapter] Boleto: id={b.id}, status={b.status}")
+
+    # Passo 4 — descomente para verificar a Facade:
+    # fachada = FachadaCobranca(LegadoCobrancaAdapter())
+    # resultado = fachada.processar_cobranca_completa(500.0, "2026-08-15", "CLI-200")
+    # print(f"[Facade] resultado={resultado}")

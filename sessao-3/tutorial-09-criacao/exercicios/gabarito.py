@@ -2,92 +2,79 @@
 GABARITO 17 — Padrões de Criação
 Referência: Design Patterns (GoF), Cap. 3
 
-SOLUÇÃO:
-  1. Factory Method: FabricaContrato com registrar/criar registrável.
-  2. Builder: ConstruirContratoServico com interface fluente.
-
 Execute: python3 gabarito.py
 """
-from typing import Optional, Dict
-from abc import ABC, abstractmethod
+from typing import Optional, Callable
+from dataclasses import dataclass
 
 
-# ─── Factory Method ───────────────────────────────────────────────────────────
+# ─── Dataclass (mesma do exercício) ──────────────────────────────────────────
 
-class Contrato(ABC):
-    def __init__(self, valor_mensal: float, vigencia_meses: int, contratante: str) -> None:
-        if valor_mensal <= 0:
-            raise ValueError(f"Valor mensal deve ser positivo, recebido: {valor_mensal}")
-        if vigencia_meses <= 0:
-            raise ValueError(f"Vigência deve ser positiva, recebida: {vigencia_meses}")
-        self.valor_mensal   = valor_mensal
-        self.vigencia_meses = vigencia_meses
-        self.contratante    = contratante
-
-    @abstractmethod
-    def descricao(self) -> str: ...
-
-    @property
-    def valor_total(self) -> float:
-        return self.valor_mensal * self.vigencia_meses
+@dataclass
+class Contrato:
+    tipo:           str
+    valor_mensal:   float
+    vigencia_meses: int
+    contratante:    str
+    objeto:         Optional[str] = None
+    endereco:       Optional[str] = None
+    fornecedor_id:  Optional[str] = None
+    prazo_entrega:  Optional[int] = None
+    observacoes:    Optional[str] = None
 
 
-class ContratoServico(Contrato):
-    def __init__(self, valor_mensal: float, vigencia_meses: int,
-                 contratante: str, objeto: str) -> None:
-        super().__init__(valor_mensal, vigencia_meses, contratante)
-        self.objeto = objeto
+# ─── Passo 2: Factory com dict ────────────────────────────────────────────────
 
-    def descricao(self) -> str:
-        return (f"Serviço: {self.objeto} | {self.contratante} | "
-                f"R${self.valor_mensal:.2f}/mês × {self.vigencia_meses} meses")
+_FABRICA: dict[str, Callable[[dict], Contrato]] = {
+    "servico": lambda d: Contrato(
+        tipo="servico",
+        valor_mensal=d["valor_mensal"],
+        vigencia_meses=d["vigencia_meses"],
+        contratante=d["contratante"],
+        objeto=d.get("objeto", "Serviços gerais"),
+    ),
+    "locacao": lambda d: Contrato(
+        tipo="locacao",
+        valor_mensal=d["valor_mensal"],
+        vigencia_meses=d["vigencia_meses"],
+        contratante=d["contratante"],
+        objeto=d.get("objeto"),
+        endereco=d.get("endereco"),
+    ),
+    "fornecimento": lambda d: Contrato(
+        tipo="fornecimento",
+        valor_mensal=d["valor_mensal"],
+        vigencia_meses=d["vigencia_meses"],
+        contratante=d["contratante"],
+        fornecedor_id=d.get("fornecedor_id"),
+        prazo_entrega=d.get("prazo_entrega"),
+    ),
+}
 
 
-class ContratoLocacao(Contrato):
-    def __init__(self, valor_mensal: float, vigencia_meses: int,
-                 contratante: str, objeto: str, endereco: str) -> None:
-        super().__init__(valor_mensal, vigencia_meses, contratante)
-        self.objeto   = objeto
-        self.endereco = endereco
-
-    def descricao(self) -> str:
-        return (f"Locação: {self.objeto} | {self.endereco} | {self.contratante} | "
-                f"R${self.valor_mensal:.2f}/mês × {self.vigencia_meses} meses")
-
-
-class ContratoFornecimento(Contrato):
-    def __init__(self, valor_mensal: float, vigencia_meses: int,
-                 contratante: str, fornecedor_id: str, prazo_entrega: int) -> None:
-        super().__init__(valor_mensal, vigencia_meses, contratante)
-        self.fornecedor_id = fornecedor_id
-        self.prazo_entrega = prazo_entrega
-
-    def descricao(self) -> str:
-        return (f"Fornecimento: {self.fornecedor_id} | prazo {self.prazo_entrega}d | "
-                f"R${self.valor_mensal:.2f}/mês × {self.vigencia_meses} meses")
-
+# ─── Passo 3: Factory registrável ────────────────────────────────────────────
 
 class FabricaContrato:
-    _registro: Dict[str, type] = {}
+    _registro: dict[str, Callable[[dict], Contrato]] = {}
 
     @classmethod
-    def registrar(cls, tipo: str, classe: type) -> None:
-        cls._registro[tipo] = classe
+    def registrar(cls, tipo: str, funcao_criadora: Callable[[dict], Contrato]) -> None:
+        cls._registro[tipo] = funcao_criadora
 
     @classmethod
-    def criar(cls, tipo: str, **dados) -> Contrato:
+    def criar(cls, tipo: str, dados: dict) -> Contrato:
         if tipo not in cls._registro:
             disponiveis = ", ".join(sorted(cls._registro.keys()))
             raise ValueError(f"Tipo '{tipo}' não registrado. Disponíveis: {disponiveis}")
-        return cls._registro[tipo](**dados)
+        return cls._registro[tipo](dados)
 
 
-FabricaContrato.registrar("servico",     ContratoServico)
-FabricaContrato.registrar("locacao",     ContratoLocacao)
-FabricaContrato.registrar("fornecimento", ContratoFornecimento)
+FabricaContrato.registrar("servico",      _FABRICA["servico"])
+FabricaContrato.registrar("locacao",      _FABRICA["locacao"])
+FabricaContrato.registrar("fornecimento", _FABRICA["fornecimento"])
 
 
-# ─── Builder ──────────────────────────────────────────────────────────────────
+# ─── Passo 4: Builder ─────────────────────────────────────────────────────────
 
 class ConstruirContratoServico:
     def __init__(self) -> None:
@@ -108,108 +95,89 @@ class ConstruirContratoServico:
         self._contratante = contratante
         return self
 
-    def com_objeto(self, objeto: str) -> "ConstruirContratoServico":
-        self._objeto = objeto
-        return self
-
-    def construir(self) -> ContratoServico:
+    def construir(self) -> Contrato:
         if self._valor_mensal is None:
             raise ValueError("valor_mensal é obrigatório")
         if self._vigencia_meses is None:
             raise ValueError("vigencia_meses é obrigatório")
         if self._contratante is None:
             raise ValueError("contratante é obrigatório")
-        return ContratoServico(
-            self._valor_mensal, self._vigencia_meses,
-            self._contratante, self._objeto
+        return Contrato(
+            tipo="servico",
+            valor_mensal=self._valor_mensal,
+            vigencia_meses=self._vigencia_meses,
+            contratante=self._contratante,
+            objeto=self._objeto,
         )
 
 
 # ─── Verificação ──────────────────────────────────────────────────────────────
 
-def verificar_factory() -> None:
-    servico = FabricaContrato.criar(
-        "servico", valor_mensal=5000.0, vigencia_meses=12,
-        contratante="EMP-001", objeto="Consultoria em TI"
-    )
-    assert isinstance(servico, ContratoServico)
-    assert servico.valor_total == 60000.0
-    print("OK: Factory — ContratoServico criado via FabricaContrato")
+if __name__ == "__main__":
+    print("=== Gabarito 17 — Factory Method + Builder ===\n")
 
-    locacao = FabricaContrato.criar(
-        "locacao", valor_mensal=3500.0, vigencia_meses=24,
-        contratante="EMP-002", objeto="Sala comercial 40m²",
-        endereco="Av. Paulista, 1000 — SP"
-    )
-    assert isinstance(locacao, ContratoLocacao)
-    print("OK: Factory — ContratoLocacao criado via FabricaContrato")
+    # Passo 2: factory com dict
+    c_dict = _FABRICA["servico"]({"valor_mensal": 5000.0, "vigencia_meses": 12, "contratante": "EMP-001"})
+    assert c_dict.tipo == "servico"
+    print(f"OK: Passo 2 — factory com dict: {c_dict.tipo} R${c_dict.valor_mensal:.2f}/mês")
 
-    fornecimento = FabricaContrato.criar(
-        "fornecimento", valor_mensal=8000.0, vigencia_meses=6,
-        contratante="EMP-003", fornecedor_id="FORN-42", prazo_entrega=15
-    )
-    assert isinstance(fornecimento, ContratoFornecimento)
-    print("OK: Factory — ContratoFornecimento criado via FabricaContrato")
+    # Passo 3: factory registrável
+    servico = FabricaContrato.criar("servico", {
+        "valor_mensal": 5000.0, "vigencia_meses": 12, "contratante": "EMP-001"
+    })
+    assert servico.tipo == "servico"
+    assert servico.valor_mensal * servico.vigencia_meses == 60000.0
+    print(f"OK: Passo 3 — FabricaContrato.criar: {servico.tipo}")
 
     try:
-        FabricaContrato.criar("obras_civil", valor_mensal=1000.0,
-                              vigencia_meses=6, contratante="X")
-        print("FALHOU: Factory — deveria rejeitar tipo não registrado")
+        FabricaContrato.criar("desconhecido", {"valor_mensal": 1.0, "vigencia_meses": 1, "contratante": "X"})
+        print("FALHOU: deveria rejeitar tipo não registrado")
     except ValueError:
-        print("OK: Factory — tipo desconhecido rejeitado com ValueError")
+        print("OK: Passo 3 — tipo desconhecido rejeitado com ValueError")
 
-    # Extensão sem alterar FabricaContrato
-    class ContratoObrasCivil(Contrato):
-        def __init__(self, valor_mensal: float, vigencia_meses: int,
-                     contratante: str, responsavel_tecnico: str) -> None:
-            super().__init__(valor_mensal, vigencia_meses, contratante)
-            self.responsavel_tecnico = responsavel_tecnico
-        def descricao(self) -> str:
-            return f"Obras: RT {self.responsavel_tecnico} | R${self.valor_mensal:.2f}/mês"
+    # Passo 3: novo tipo sem alterar FabricaContrato
+    FabricaContrato.registrar("obras_civil", lambda d: Contrato(
+        tipo="obras_civil",
+        valor_mensal=d["valor_mensal"],
+        vigencia_meses=d["vigencia_meses"],
+        contratante=d["contratante"],
+        observacoes=d.get("responsavel_tecnico"),
+    ))
+    obras = FabricaContrato.criar("obras_civil", {
+        "valor_mensal": 25000.0, "vigencia_meses": 8,
+        "contratante": "EMP-004", "responsavel_tecnico": "Eng. Silva CREA-12345"
+    })
+    assert obras.tipo == "obras_civil"
+    print(f"OK: Passo 3 — novo tipo registrado sem alterar FabricaContrato: {obras.tipo}")
 
-    FabricaContrato.registrar("obras_civil", ContratoObrasCivil)
-    obras = FabricaContrato.criar(
-        "obras_civil", valor_mensal=25000.0, vigencia_meses=8,
-        contratante="EMP-004", responsavel_tecnico="Eng. Silva CREA-12345"
-    )
-    assert isinstance(obras, ContratoObrasCivil)
-    print("OK: Factory — novo tipo registrado sem alterar FabricaContrato")
+    print()
 
-
-def verificar_builder() -> None:
-    contrato = (
+    # Passo 4: builder
+    c_builder = (
         ConstruirContratoServico()
         .com_valor_mensal(5000.0)
         .com_vigencia(12)
         .com_contratante("EMP-001")
-        .com_objeto("Desenvolvimento de software")
         .construir()
     )
-    assert isinstance(contrato, ContratoServico)
-    assert contrato.valor_total == 60000.0
-    print("OK: Builder — ContratoServico construído com encadeamento fluente")
+    assert c_builder.tipo == "servico"
+    assert c_builder.valor_mensal * c_builder.vigencia_meses == 60000.0
+    print(f"OK: Passo 4 — builder fluente: {c_builder.tipo} R${c_builder.valor_mensal:.2f}/mês")
 
     try:
         ConstruirContratoServico().com_valor_mensal(5000.0).construir()
-        print("FALHOU: Builder — deveria rejeitar contrato sem vigencia_meses")
+        print("FALHOU: deveria rejeitar sem vigencia_meses")
     except ValueError:
-        print("OK: Builder — rejeita contrato incompleto (sem vigencia_meses)")
+        print("OK: Passo 4 — rejeita construir() sem vigencia_meses")
 
     try:
         ConstruirContratoServico().com_vigencia(12).construir()
-        print("FALHOU: Builder — deveria rejeitar contrato sem valor_mensal")
+        print("FALHOU: deveria rejeitar sem valor_mensal")
     except ValueError:
-        print("OK: Builder — rejeita contrato incompleto (sem valor_mensal)")
+        print("OK: Passo 4 — rejeita construir() sem valor_mensal")
 
     try:
         ConstruirContratoServico().com_valor_mensal(5000.0).com_vigencia(12).construir()
-        print("FALHOU: Builder — deveria rejeitar contrato sem contratante")
+        print("FALHOU: deveria rejeitar sem contratante")
     except ValueError:
-        print("OK: Builder — rejeita contrato incompleto (sem contratante)")
-
-
-if __name__ == "__main__":
-    print("=== Gabarito 17 — Factory Method + Builder ===\n")
-    verificar_factory()
-    print()
-    verificar_builder()
+        print("OK: Passo 4 — rejeita construir() sem contratante")

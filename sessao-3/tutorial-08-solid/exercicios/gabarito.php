@@ -2,9 +2,11 @@
 // GABARITO 16 — SOLID na Prática (PHP 8.1+)
 // Execute: php gabarito.php
 //
-// Correções aplicadas:
-//   SRP — ValidadorFatura, CalculadorFatura, RepositorioFatura separados
-//   DIP — GeradorFatura recebe INotificador no construtor, não instancia EmailSMTP
+// Quatro passos aplicados em sequência sobre o código original:
+//   Passo 1: violações anotadas (// SRP: e // DIP:)
+//   Passo 2: ValidadorFatura extraído; GeradorFatura recebe no construtor
+//   Passo 3: CalculadorFatura e RepositorioFatura extraídos
+//   Passo 4: interface INotificador; EmailSMTP substituído por injeção
 
 class ItemFatura {
     public function __construct(
@@ -24,7 +26,7 @@ class Fatura {
     ) {}
 }
 
-// ─── Interfaces (DIP) ────────────────────────────────────────────────────────
+// ── Passo 4 — Interfaces (DIP) ───────────────────────────────────────────────
 
 interface INotificador {
     public function notificar(string $destinatario, string $mensagem): void;
@@ -34,13 +36,15 @@ interface IRepositorioFatura {
     public function salvar(Fatura $fatura): void;
 }
 
-// ─── Classes com responsabilidade única (SRP) ────────────────────────────────
+// ── Passo 2 — ValidadorFatura (SRP) ──────────────────────────────────────────
 
 class ValidadorFatura {
     public function validar(Fatura $fatura): bool {
         return !empty($fatura->itens) && !empty($fatura->clienteId);
     }
 }
+
+// ── Passo 3 — CalculadorFatura + RepositorioFatura (SRP) ─────────────────────
 
 class CalculadorFatura {
     public function calcularTotal(Fatura $fatura): float {
@@ -54,13 +58,15 @@ class RepositorioFatura implements IRepositorioFatura {
     }
 }
 
+// ── Passo 4 — Implementação concreta de INotificador ─────────────────────────
+
 class NotificadorEmail implements INotificador {
     public function notificar(string $destinatario, string $mensagem): void {
         echo "  [SMTP] → {$destinatario}: {$mensagem}" . PHP_EOL;
     }
 }
 
-// ─── GeradorFatura: orquestra, não executa (DIP + SRP) ───────────────────────
+// ── Passo 2–4 — GeradorFatura: orquestra, não executa (DIP + SRP) ────────────
 
 readonly class GeradorFatura {
     public function __construct(
@@ -81,7 +87,7 @@ readonly class GeradorFatura {
     }
 }
 
-// ─── Demo ────────────────────────────────────────────────────────────────────
+// ── Demo ─────────────────────────────────────────────────────────────────────
 
 $itens  = [new ItemFatura('Consultoria', 1500.0), new ItemFatura('Suporte', 300.0)];
 $fatura = new Fatura('FAT-001', 'CLI-200', $itens);

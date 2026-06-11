@@ -1,14 +1,33 @@
 /*
  * EXERCICIO 18 ADVPL/TLPP — Padroes Estruturais: Adapter + Facade
  *
- * INSTRUCOES:
- *   O sistema de boletos bancarios abaixo tem uma API legada com nomes e
- *   estruturas inconsistentes. O codigo de negocio chama essas User Functions
- *   diretamente em 3 lugares diferentes.
+ * PASSOS:
  *
- *   1. Crie funcoes Adaptar* que isolem as User Functions legadas.
- *   2. Crie uma funcao ProcessarCobrancaCompleta (Facade) que orquestre
- *      emissao + consulta + cancelamento em uma unica chamada.
+ *   PASSO 1 — IDENTIFICAR (5 min)
+ *     Nas 3 funcoes de negocio (EmitirCobranca, VerificarCobranca, EstornarCobranca),
+ *     adicione um comentario // ACOPLAMENTO: antes de cada chamada a User Function legada.
+ *     Meta: marcar os 3 acoplamentos antes de alterar codigo.
+ *
+ *   PASSO 2 — MODELO DE DOMINIO (5 min)
+ *     Em ADVPL/TLPP nao ha dataclass; represente o Boleto como array posicional:
+ *       [1]=nId, [2]=cCodigo, [3]=cStatus, [4]=nValor
+ *     Documente a struct num comentario acima de AdaptarEmitir.
+ *     (sem alterar mais nada ainda)
+ *
+ *   PASSO 3 — ADAPTER (10 min)
+ *     Crie as funcoes:
+ *       Static Function AdaptarEmitir(nValor, cVencimento, cClienteId)
+ *       Static Function AdaptarConsultar(nBoletoId)
+ *       Static Function AdaptarCancelar(nBoletoId)
+ *     Cada funcao chama a User Function *Legado e normaliza os campos.
+ *     Verifique: AdaptarEmitir(500.0, "2026-08-15", "CLI-200") retorna array com nId=12345.
+ *
+ *   PASSO 4 — FACADE (8 min)
+ *     Crie:
+ *       Static Function ProcessarCobrancaCompleta(nValor, cVencimento, cClienteId)
+ *     Que chama AdaptarEmitir + AdaptarConsultar + AdaptarCancelar e retorna
+ *     array com resumo: [1]=nBoletoId, [2]=cCodigo, [3]=cStatusFinal, [4]=lCancelado.
+ *     Verifique que o caller nao precisa mais conhecer as User Functions legadas.
  */
 
 // ─── API legada (User Functions — nao podem ser alteradas) ───────────────────
@@ -50,31 +69,46 @@ Static Function EstornarCobranca(nBoletoId)
 Return U_CancelarBoletoLegado(nBoletoId, "SOLICITACAO_CLIENTE")  // acoplamento direto
 
 
-/*
- * TODO: Implemente aqui
- *
- * 1. Crie funcoes Adaptar* que encapsulem as User Functions legadas:
- *    - AdaptarEmitir(nValor, cVencimento, cClienteId) -> aRet com campos normalizados
- *    - AdaptarConsultar(nBoletoId) -> cStatus normalizado
- *    - AdaptarCancelar(nBoletoId) -> lCancelado
- *
- * 2. Crie a funcao ProcessarCobrancaCompleta (Facade) que:
- *    - Usa os adaptadores acima
- *    - Executa emissao + consulta + cancelamento
- *    - Retorna array com resumo da operacao
- *
- * Convencao ADVPL: prefixo "Adaptar*" marca funcoes adapter.
- * // Limitacao ADVPL: sem interfaces formais para IServicoCobranca.
- * // TLPP 4.0+ suporta classes e heranca para implementar o padrao formalmente.
- */
+// ─── Passo 2: documente a struct Boleto aqui ──────────────────────────────────
+// Struct Boleto (array posicional):
+//   [1] nId          -> nIdBoleto do legado
+//   [2] cCodigo      -> cCodigoBarras do legado
+//   [3] cStatus      -> cStatusBoleto normalizado (Lower)
+//   [4] nValor       -> nValorBoleto do legado
+
+
+// ─── Passo 3: implemente as funcoes Adaptar* aqui ────────────────────────────
+// Static Function AdaptarEmitir(nValor, cVencimento, cClienteId)
+//     Local aRaw := U_GerarBoletoLegado(nValor, cVencimento, cClienteId)
+//     Local aRet := {}
+//     // monte aRet com os campos normalizados
+// Return aRet
+
+// Static Function AdaptarConsultar(nBoletoId)
+//     Local cStatusRaw := U_ConsultarStatusLegado(nBoletoId)
+// Return Lower(cStatusRaw)
+
+// Static Function AdaptarCancelar(nBoletoId)
+// Return U_CancelarBoletoLegado(nBoletoId, "SOLICITACAO_CLIENTE")
+
+
+// ─── Passo 4: implemente ProcessarCobrancaCompleta aqui ──────────────────────
+// Static Function ProcessarCobrancaCompleta(nValor, cVencimento, cClienteId)
+//     Local aBoleto    := AdaptarEmitir(nValor, cVencimento, cClienteId)
+//     Local cStatus    := AdaptarConsultar(aBoleto[1])
+//     Local lCancelado := AdaptarCancelar(aBoleto[1])
+//     Local aResultado := {}
+//     // monte aResultado: [1]=nBoletoId, [2]=cCodigo, [3]=cStatusFinal, [4]=lCancelado
+// Return aResultado
 
 
 // Demo (executar como User Function U_DemoExercicio18)
 User Function DemoExercicio18()
-    Local aBoleto   := {}
-    Local cStatus   := ""
+    Local aBoleto    := {}
+    Local cStatus    := ""
     Local lCancelado := .F.
 
+    // Codigo original (Passo 1: adicione // ACOPLAMENTO: nas linhas de chamada legada acima)
     ConOut("=== Exercicio 18 — Sem Adapter ===")
     aBoleto := EmitirCobranca(500.0, "2026-08-15", "CLI-200")
     ConOut("Boleto: id=" + cValToChar(aBoleto[1]) + ", status=" + aBoleto[3])
@@ -82,4 +116,16 @@ User Function DemoExercicio18()
     ConOut("Status: " + cStatus)
     lCancelado := EstornarCobranca(aBoleto[1])
     ConOut("Cancelado: " + IIf(lCancelado, "sim", "nao"))
+
+    // Passo 3 — descomente para verificar o Adapter:
+    // ConOut("")
+    // ConOut("=== Passo 3 — Adapter ===")
+    // Local aBoletoAdapter := AdaptarEmitir(500.0, "2026-08-15", "CLI-200")
+    // ConOut("[Adapter] id=" + cValToChar(aBoletoAdapter[1]) + ", status=" + aBoletoAdapter[3])
+
+    // Passo 4 — descomente para verificar a Facade:
+    // ConOut("")
+    // ConOut("=== Passo 4 — Facade ===")
+    // Local aResultado := ProcessarCobrancaCompleta(500.0, "2026-08-15", "CLI-200")
+    // ConOut("[Facade] id=" + cValToChar(aResultado[1]) + ", status=" + aResultado[3])
 Return

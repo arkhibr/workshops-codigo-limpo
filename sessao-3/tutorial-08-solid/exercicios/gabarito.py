@@ -1,11 +1,12 @@
 """
 GABARITO 16 — SOLID na Prática
-Referência: Clean Code + SOLID papers
-
-Correções aplicadas:
-  SRP — ValidadorFatura, CalculadorFatura, RepositorioFatura separados
-  DIP — GeradorFatura recebe INotificador no construtor, não instancia EmailSMTP
 Execute: python3 gabarito.py
+
+Quatro passos aplicados em sequência sobre o código original:
+  Passo 1: violações anotadas (# SRP: e # DIP:)
+  Passo 2: ValidadorFatura extraído; GeradorFatura recebe no construtor
+  Passo 3: CalculadorFatura e RepositorioFatura extraídos
+  Passo 4: INotificador (Protocol); EmailSMTP substituído por injeção
 """
 from dataclasses import dataclass
 from typing import List, Protocol, runtime_checkable
@@ -24,7 +25,7 @@ class Fatura:
     status:     str = "pendente"
 
 
-# ─── Abstrações (DIP) ────────────────────────────────────────────────────────
+# ── Passo 4 — Abstrações (DIP) ────────────────────────────────────────────────
 
 @runtime_checkable
 class INotificador(Protocol):
@@ -34,11 +35,14 @@ class IRepositorioFatura(Protocol):
     def salvar(self, fatura: "Fatura") -> None: ...
 
 
-# ─── Classes com responsabilidade única (SRP) ────────────────────────────────
+# ── Passo 2 — ValidadorFatura (SRP) ──────────────────────────────────────────
 
 class ValidadorFatura:
     def validar(self, fatura: Fatura) -> bool:
         return bool(fatura.itens) and bool(fatura.cliente_id)
+
+
+# ── Passo 3 — CalculadorFatura + RepositorioFatura (SRP) ─────────────────────
 
 class CalculadorFatura:
     def calcular_total(self, fatura: Fatura) -> float:
@@ -48,12 +52,15 @@ class RepositorioFatura:
     def salvar(self, fatura: Fatura) -> None:
         print(f"  [BD] fatura {fatura.id} salva ({fatura.status})")
 
+
+# ── Passo 4 — Implementação concreta de INotificador ─────────────────────────
+
 class NotificadorEmail:
     def notificar(self, destinatario: str, mensagem: str) -> None:
         print(f"  [SMTP] → {destinatario}: {mensagem}")
 
 
-# ─── GeradorFatura: orquestra, não executa (DIP + SRP) ───────────────────────
+# ── Passo 2–4 — GeradorFatura: orquestra, não executa (DIP + SRP) ────────────
 
 class GeradorFatura:
     def __init__(
@@ -77,7 +84,7 @@ class GeradorFatura:
         return total
 
 
-# ─── Verificação ─────────────────────────────────────────────────────────────
+# ── Verificação ───────────────────────────────────────────────────────────────
 
 def verificar_solid() -> None:
     itens  = [ItemFatura("Consultoria", 1500.0), ItemFatura("Suporte", 300.0)]
@@ -96,7 +103,7 @@ def verificar_solid() -> None:
     else:
         print(f"FALHOU: SRP — total calculado incorretamente (esperado 1800.0, obtido {total})")
 
-    # Substituição de notificador sem alterar GeradorFatura (DIP)
+    # Substituição de notificador sem alterar GeradorFatura (Passo 4 — DIP)
     class NotificadorLog:
         def __init__(self) -> None:
             self.chamado = False

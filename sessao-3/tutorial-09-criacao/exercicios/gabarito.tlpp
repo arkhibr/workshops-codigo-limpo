@@ -2,32 +2,26 @@
  * GABARITO 17 ADVPL/TLPP — Padrões de Criação
  * Referência: Design Patterns (GoF), Cap. 3
  *
- * SOLUÇÃO:
- *   1. Factory: aTiposContrato como tabela de dispatch + FabricarContrato().
- *   2. Builder simulado: MontarContratoServicoCompleto() com validações explícitas.
- *
  * Compile e execute no Totvs IDE / SmartClient.
  */
 
-// ─── Factory — tabela de dispatch ────────────────────────────────────────────
+// ─── Passo 3: Factory registrável ────────────────────────────────────────────
 
-Static aTiposContrato := {}  // { {cTipo, cFuncaoMontadora}, ... }
+Static aFabrica := {}  // { {cTipo, bFunc}, ... }
 
-Static Function RegistrarTipoContrato(cTipo, cFuncao)
-    aAdd(aTiposContrato, {cTipo, cFuncao})
+Static Function RegistrarTipoContrato(cTipo, bFunc)
+    // bFunc é um codeblock: {|nV, nVig, cC, aExtra| ...}
+    aAdd(aFabrica, {cTipo, bFunc})
 Return .T.
 
 Static Function FabricarContrato(cTipo, nValorMensal, nVigenciaMeses, cContratante, aExtra)
     Local nI    := 0
-    Local bFunc := Nil
-    For nI := 1 To Len(aTiposContrato)
-        If aTiposContrato[nI][1] == cTipo
-            bFunc := &(aTiposContrato[nI][2])
-            Return Eval(bFunc, nValorMensal, nVigenciaMeses, cContratante, aExtra)
-        EndIf
-    Next nI
-    UserException("Tipo nao registrado: " + cTipo)
-Return Nil
+    Local nPos  := 0
+    nPos := AScan(aFabrica, {|aItem| aItem[1] == cTipo})
+    If nPos == 0
+        UserException("Tipo nao registrado: " + cTipo)
+    EndIf
+Return Eval(aFabrica[nPos][2], nValorMensal, nVigenciaMeses, cContratante, aExtra)
 
 // Montadores especializados (um por tipo)
 Static Function MontarServico(nValorMensal, nVigenciaMeses, cContratante, aExtra)
@@ -72,14 +66,12 @@ Static Function MontarFornecimento(nValorMensal, nVigenciaMeses, cContratante, a
 Return aContrato
 
 
-// ─── Builder simulado — validações explícitas antes do retorno ───────────────
+// ─── Passo 4: Builder simulado ────────────────────────────────────────────────
+//
+// ADVPL nao suporta encadeamento de metodos (fluent interface).
+// O Builder e simulado como funcao montadora com todos os parametros
+// nomeados e validacao completa antes de montar o array de retorno.
 
-/*
- * Limitação ADVPL: sem encadeamento de métodos (fluent interface).
- * O Builder é simulado como função montadora com todos os parâmetros
- * nomeados e validação completa antes de montar o array de retorno.
- * TLPP 4.0+ suporta Return Self, mas a cultura Protheus raramente usa.
- */
 Static Function MontarContratoServicoCompleto(nValorMensal, nVigenciaMeses, ;
                                                cContratante, cObjeto)
     If nValorMensal <= 0
@@ -103,27 +95,50 @@ Return aContrato
 // ─── Demo ────────────────────────────────────────────────────────────────────
 
 Static Function DemoGabarito()
-    // Registrar tipos
-    RegistrarTipoContrato("servico",      "MontarServico")
-    RegistrarTipoContrato("locacao",      "MontarLocacao")
-    RegistrarTipoContrato("fornecimento", "MontarFornecimento")
+    // Passo 3: registrar os tipos
+    RegistrarTipoContrato("servico",      {|nV, nVig, cC, aE| MontarServico(nV, nVig, cC, aE)})
+    RegistrarTipoContrato("locacao",      {|nV, nVig, cC, aE| MontarLocacao(nV, nVig, cC, aE)})
+    RegistrarTipoContrato("fornecimento", {|nV, nVig, cC, aE| MontarFornecimento(nV, nVig, cC, aE)})
 
-    // Factory
+    // Passo 3: factory registravel
     Local aServico := FabricarContrato("servico", 5000.00, 12, "EMP-001", {"Consultoria em TI"})
-    ConOut("OK: Factory — " + aServico[1] + " R$ " + cValToChar(aServico[2]) + "/mes x " + cValToChar(aServico[3]) + " meses")
+    ConOut("OK: Passo 3 — " + aServico[1] + " R$ " + cValToChar(aServico[2]) + "/mes x " + cValToChar(aServico[3]) + " meses")
 
     Local aLocacao := FabricarContrato("locacao", 3500.00, 24, "EMP-002", {"Sala 40m2", "Av. Paulista, 1000"})
-    ConOut("OK: Factory — " + aLocacao[1] + " " + aLocacao[5] + " " + aLocacao[6])
+    ConOut("OK: Passo 3 — " + aLocacao[1] + " " + aLocacao[5] + " " + aLocacao[6])
 
-    // Builder simulado
+    // Passo 3: novo tipo sem alterar FabricarContrato
+    RegistrarTipoContrato("obras_civil", {|nV, nVig, cC, aE| MontarObrasCivil(nV, nVig, cC, aE)})
+    Local aObras := FabricarContrato("obras_civil", 25000.00, 8, "EMP-004", {"Eng. Silva CREA-12345"})
+    ConOut("OK: Passo 3 — novo tipo registrado: " + aObras[1] + " R$ " + cValToChar(aObras[2]) + "/mes")
+
+    // Passo 4: builder simulado
     Local aContrato := MontarContratoServicoCompleto(5000.00, 12, "EMP-001", "Desenvolvimento de software")
-    ConOut("OK: Builder — " + aContrato[1] + " objeto=" + aContrato[5])
+    ConOut("OK: Passo 4 — " + aContrato[1] + " objeto=" + aContrato[5])
 
-    // Validacao: contratante vazio deve gerar excecao
+    // Passo 4: validacao — contratante vazio deve gerar excecao
     Begin Sequence
         MontarContratoServicoCompleto(5000.00, 12, "", "Objeto")
         ConOut("FALHOU: deveria rejeitar contratante vazio")
     Recover
-        ConOut("OK: Builder — rejeita contratante vazio")
+        ConOut("OK: Passo 4 — rejeita contratante vazio")
+    End Sequence
+
+    // Passo 4: validacao — valor mensal invalido deve gerar excecao
+    Begin Sequence
+        MontarContratoServicoCompleto(0, 12, "EMP-001", "Objeto")
+        ConOut("FALHOU: deveria rejeitar valor_mensal <= 0")
+    Recover
+        ConOut("OK: Passo 4 — rejeita valor_mensal invalido")
     End Sequence
 Return
+
+// Montador auxiliar para o tipo novo (registrado no Passo 3)
+Static Function MontarObrasCivil(nValorMensal, nVigenciaMeses, cContratante, aExtra)
+    Local aContrato := {}
+    aAdd(aContrato, "obras_civil")
+    aAdd(aContrato, nValorMensal)
+    aAdd(aContrato, nVigenciaMeses)
+    aAdd(aContrato, cContratante)
+    aAdd(aContrato, If(Len(aExtra) > 0, aExtra[1], ""))  // cResponsavelTecnico
+Return aContrato

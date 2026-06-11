@@ -1,6 +1,12 @@
 """
 GABARITO 18 — Padrões Estruturais: Adapter + Facade
 Execute: python3 gabarito.py
+
+Passos aplicados:
+  Passo 1 — Identificar: comentários # ACOPLAMENTO: nas funções emitir/verificar/estornar_cobranca
+  Passo 2 — Modelo de domínio: dataclass Boleto com id, codigo_barras, status, valor
+  Passo 3 — Adapter: LegadoCobrancaAdapter isola a API legada (nId*, cCodigo*, cStatus*)
+  Passo 4 — Facade: FachadaCobranca orquestra emitir + consultar + cancelar
 """
 from typing import Protocol, Optional
 from dataclasses import dataclass
@@ -26,7 +32,7 @@ def cancelar_boleto_legado(nIdBoleto: int, cMotivo: str) -> bool:
     return True
 
 
-# ─── Modelo de domínio moderno ────────────────────────────────────────────────
+# ─── Passo 2 — Modelo de domínio ─────────────────────────────────────────────
 
 @dataclass
 class Boleto:
@@ -36,7 +42,8 @@ class Boleto:
     valor:         float
 
 
-# ─── Contrato (Protocol) ─────────────────────────────────────────────────────
+# ─── Passo 3 — Adapter ───────────────────────────────────────────────────────
+# Contrato (Protocol)
 
 class IServicoCobranca(Protocol):
     def emitir(self, valor: float, vencimento: str, cliente_id: str) -> Boleto: ...
@@ -44,7 +51,7 @@ class IServicoCobranca(Protocol):
     def cancelar(self, boleto_id: int) -> bool: ...
 
 
-# ─── Adapter: isola a API legada do código de negócio ────────────────────────
+# ─── Adapter: isola a API legada do código de negócio ──────────────────────
 
 class LegadoCobrancaAdapter:
     """Traduz a API legada (nId*, cCodigo*, cStatus*) para o contrato IServicoCobranca."""
@@ -66,7 +73,7 @@ class LegadoCobrancaAdapter:
         return cancelar_boleto_legado(boleto_id, "SOLICITACAO_CLIENTE")
 
 
-# ─── Facade: orquestra o fluxo completo de cobrança ──────────────────────────
+# ─── Passo 4 — Facade ────────────────────────────────────────────────────────
 
 class FachadaCobranca:
     """Quem chama executa o fluxo completo passando apenas os dados essenciais."""

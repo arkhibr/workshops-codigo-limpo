@@ -1,6 +1,12 @@
 /*
  * GABARITO 18 ADVPL/TLPP — Padroes Estruturais: Adapter + Facade
  * Referencia: Design Patterns (GoF), Cap. 4
+ *
+ * Passos aplicados:
+ *   Passo 1 — Identificar: comentarios // ACOPLAMENTO: nas funcoes EmitirCobranca, VerificarCobranca, EstornarCobranca
+ *   Passo 2 — Modelo de dominio: struct Boleto como array posicional [1]=nId, [2]=cCodigo, [3]=cStatus, [4]=nValor
+ *   Passo 3 — Adapter: funcoes AdaptarEmitir, AdaptarConsultar, AdaptarCancelar
+ *   Passo 4 — Facade: ProcessarCobrancaCompleta orquestra os 3 adaptadores
  */
 
 // ─── API legada (User Functions — nao podem ser alteradas) ───────────────────
@@ -23,7 +29,8 @@ User Function CancelarBoletoLegado(nIdBoleto, cMotivo)
 Return .T.
 
 
-// ─── Adapter: isola User Functions do codigo de negocio ──────────────────────
+// ─── Passo 3 — Adapter ───────────────────────────────────────────────────────
+// Struct Boleto (array posicional): [1]=nId, [2]=cCodigo, [3]=cStatus normalizado, [4]=nValor
 
 Static Function AdaptarEmitir(nValor, cVencimento, cClienteId)
     // Chama a User Function legada e normaliza para struct local
@@ -44,7 +51,7 @@ Static Function AdaptarCancelar(nBoletoId)
 Return U_CancelarBoletoLegado(nBoletoId, "SOLICITACAO_CLIENTE")
 
 
-// ─── Facade: orquestra adapters em uma funcao de alto nivel ──────────────────
+// ─── Passo 4 — Facade ────────────────────────────────────────────────────────
 
 Static Function ProcessarCobrancaCompleta(nValor, cVencimento, cClienteId)
     Local aBoleto    := AdaptarEmitir(nValor, cVencimento, cClienteId)

@@ -2,13 +2,14 @@
  * GABARITO 16 — SOLID na Prática (ADVPL/TLPP)
  * Referência: Clean Code + SOLID papers
  *
- * Correções aplicadas:
- *   SRP — ValidarFatura, CalcularTotalFatura, SalvarFatura,
- *          NotificarClienteFatura como funções separadas
- *   DIP — simulação de inversão via codeblock (bNotificador)
+ * Quatro passos aplicados em sequência sobre o código original:
+ *   Passo 1: violações anotadas (// SRP: e // DIP:)
+ *   Passo 2: ValidarFatura + CalcularTotalFatura extraídas
+ *   Passo 3: SalvarFatura + NotificarClienteFatura extraídas
+ *   Passo 4: DIP via parâmetro bNotificador (codeblock)
  */
 
-// ─── SRP: funções com responsabilidade única ──────────────────────────────────
+// ── Passo 2 — ValidarFatura + CalcularTotalFatura (SRP) ──────────────────────
 
 Static Function ValidarFatura(aItens, cClienteId)
     Return Len(aItens) > 0 .And. !Empty(cClienteId)
@@ -21,6 +22,8 @@ Static Function CalcularTotalFatura(aItens)
     Next nI
 Return Round(nTotal, 2)
 
+// ── Passo 3 — SalvarFatura + NotificarClienteFatura (SRP) ────────────────────
+
 Static Function SalvarFatura(cFaturaId, cStatus)
     ConOut("BD: fatura " + cFaturaId + " salva (" + cStatus + ")")
 Return .T.
@@ -29,33 +32,34 @@ Static Function NotificarClienteFatura(cClienteId, cMensagem)
     ConOut("Email para " + cClienteId + ": " + cMensagem)
 Return .T.
 
-// ─── DIP: orquestrador recebe codeblock de notificação ───────────────────────
-
+// ── Passo 4 — DIP: orquestrador recebe codeblock de notificação ──────────────
 /*
  * Limitação ADVPL: sem injeção de dependência nativa.
  * Simulação com codeblock:
  *   bNotificador := {|cId, cMsg| NotificarClienteFatura(cId, cMsg)}
  *   Eval(bNotificador, "CLI-200", "Fatura FAT-001 processada")
  * Vantagem: bNotificador pode ser trocado (ex: log, webhook) sem
- * alterar ProcessarFaturaSolid().
+ * alterar ProcessarFatura().
  *
  * Nota ISP/DIP: interfaces não existem em AdvPL clássico.
  * TLPP 4.0+ tem classes e herança, mas sem interfaces formais —
  * use protocolos implícitos por convenção de nomenclatura.
  */
 
-Static Function ProcessarFaturaSolid(cFaturaId, aItens, cClienteId, bNotificador)
-    Local nTotal := 0
+Static Function ProcessarFatura(cFaturaId, aItens, cClienteId, bNotificador)
+    Local nTotal   := 0
+    Local cMensagem := ""
     If !ValidarFatura(aItens, cClienteId)
         ConOut("Erro: fatura invalida")
         Return 0
     EndIf
-    nTotal := CalcularTotalFatura(aItens)
+    nTotal    := CalcularTotalFatura(aItens)
     SalvarFatura(cFaturaId, "confirmado")
-    Eval(bNotificador, cClienteId, "Fatura " + cFaturaId + ": R$ " + cValToChar(nTotal))
+    cMensagem := "Fatura " + cFaturaId + ": R$ " + cValToChar(nTotal)
+    Eval(bNotificador, cClienteId, cMensagem)
 Return nTotal
 
-// ─── Demo ─────────────────────────────────────────────────────────────────────
+// ── Demo ──────────────────────────────────────────────────────────────────────
 
 Static Function DemoFatura()
     Local aItens       := {}
@@ -63,9 +67,9 @@ Static Function DemoFatura()
     Local bNotificador := Nil
     aAdd(aItens, {"Consultoria", 1500.00})
     aAdd(aItens, {"Suporte",      300.00})
-    // DIP: injeta codeblock de notificação
+    // Passo 4: injeta codeblock de notificação
     bNotificador := {|cId, cMsg| NotificarClienteFatura(cId, cMsg)}
-    nTotal := ProcessarFaturaSolid("FAT-001", aItens, "CLI-200", bNotificador)
+    nTotal := ProcessarFatura("FAT-001", aItens, "CLI-200", bNotificador)
     ConOut("Total: " + cValToChar(nTotal))
     ConOut("OK: SRP — ValidarFatura, CalcularTotalFatura, SalvarFatura separados")
     ConOut("OK: DIP — bNotificador injetado via codeblock")

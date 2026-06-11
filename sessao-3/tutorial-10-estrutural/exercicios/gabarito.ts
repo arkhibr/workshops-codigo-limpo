@@ -1,5 +1,11 @@
 // GABARITO 18 TypeScript — Padrões Estruturais: Adapter + Facade
 // Execute: npx ts-node gabarito.ts
+//
+// Passos aplicados:
+//   Passo 1 — Identificar: comentários // ACOPLAMENTO: nas funções emitirCobranca, verificarCobranca, estornarCobranca
+//   Passo 2 — Modelo de domínio: interface Boleto com id, codigoBarras, status, valor
+//   Passo 3 — Adapter: LegadoCobrancaAdapter isola a API legada (nId*, cCodigo*, cStatus*)
+//   Passo 4 — Facade: FachadaCobranca orquestra emitir + consultar + cancelar
 
 // ─── API legada (não pode ser alterada) ───────────────────────────────────────
 
@@ -24,7 +30,7 @@ function cancelar_boleto_legado(nIdBoleto: number, cMotivo: string): boolean {
 }
 
 
-// ─── Modelo de domínio moderno ────────────────────────────────────────────────
+// ─── Passo 2 — Modelo de domínio ─────────────────────────────────────────────
 
 interface Boleto {
     id:           number;
@@ -34,7 +40,8 @@ interface Boleto {
 }
 
 
-// ─── Contrato (interface) ────────────────────────────────────────────────────
+// ─── Passo 3 — Adapter ───────────────────────────────────────────────────────
+// Contrato (interface)
 
 interface IServicoCobranca {
     emitir(valor: number, vencimento: string, clienteId: string): Boleto;
@@ -43,7 +50,7 @@ interface IServicoCobranca {
 }
 
 
-// ─── Adapter: isola a API legada do código de negócio ────────────────────────
+// ─── Adapter: isola a API legada do código de negócio ──────────────────────
 
 class LegadoCobrancaAdapter implements IServicoCobranca {
     /** Traduz a API legada (nId*, cCodigo*, cStatus*) para o contrato IServicoCobranca. */
@@ -69,7 +76,7 @@ class LegadoCobrancaAdapter implements IServicoCobranca {
 }
 
 
-// ─── Facade: orquestra o fluxo completo de cobrança ──────────────────────────
+// ─── Passo 4 — Facade ────────────────────────────────────────────────────────
 
 class FachadaCobranca {
     /** Quem chama executa o fluxo completo passando apenas os dados essenciais. */

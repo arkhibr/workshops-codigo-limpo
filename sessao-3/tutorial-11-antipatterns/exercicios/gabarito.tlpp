@@ -3,32 +3,28 @@
  * Referência: Clean Code Cap. 17 + Fowler Refactoring Cap. 3
  */
 
-// ─── Correção: Magic Strings/Numbers → #define com nomes claros ───────────────
+// ─── Passo 1: Magic Strings/Numbers → #define com nomes claros ───────────────
 
 #define CATEGORIA_CLT          "C"
 #define CATEGORIA_PJ           "P"
 #define CATEGORIA_ESTAGIARIO   "E"
 
 #define SALARIO_MINIMO_2026    1412.00
-#define LIMITE_FAIXA_INSS_1   2666.68
+#define LIMITE_FAIXA_INSS_2   2666.68
 #define ALIQUOTA_INSS_FAIXA_1  0.075
 #define ALIQUOTA_INSS_FAIXA_2  0.09
 #define ALIQUOTA_INSS_FAIXA_3  0.12
 #define ALIQUOTA_INSS_ESTAG    0.03
 #define ALIQUOTA_FGTS          0.08
 
-// ─── Correção: God Object → funções separadas por responsabilidade ─────────────
-
-// ✅ Cada função tem uma responsabilidade
-Static Function ValidarFuncionario(cFuncId)
-    Return Len(cFuncId) >= 5
+// ─── Passo 2: Feature Envy → CalcularInss() separada ─────────────────────────
 
 Static Function CalcularInss(nSalario, cCategoria)
     Local nInss := 0
     If cCategoria == CATEGORIA_CLT
         If nSalario <= SALARIO_MINIMO_2026
             nInss := Round(nSalario * ALIQUOTA_INSS_FAIXA_1, 2)
-        ElseIf nSalario <= LIMITE_FAIXA_INSS_1
+        ElseIf nSalario <= LIMITE_FAIXA_INSS_2
             nInss := Round(nSalario * ALIQUOTA_INSS_FAIXA_2, 2)
         Else
             nInss := Round(nSalario * ALIQUOTA_INSS_FAIXA_3, 2)
@@ -39,11 +35,18 @@ Static Function CalcularInss(nSalario, cCategoria)
     EndIf
 Return nInss
 
+// ─── Passo 3: Copy-Paste → CalcularFgts() separada ───────────────────────────
+
 Static Function CalcularFgts(nSalario, cCategoria)
     If cCategoria == CATEGORIA_CLT
         Return Round(nSalario * ALIQUOTA_FGTS, 2)
     EndIf
 Return 0
+
+// ─── Passo 4: God Object → funções separadas por responsabilidade ─────────────
+
+Static Function ValidarFuncionario(cFuncId)
+    Return Len(cFuncId) >= 5
 
 Static Function NotificarFuncionario(cFuncId, nValorLiquido)
     ConOut("Email para " + cFuncId + ": contracheque R$ " + cValToChar(nValorLiquido))
@@ -60,9 +63,9 @@ Return .T.
 // ─── Função orquestradora (mínima) ────────────────────────────────────────────
 
 Static Function ProcessarFolha(cFuncId, cCategoria, nSalario, nMes, nAno)
-    Local nInss       := 0
-    Local nFgts       := 0
-    Local nLiquido    := 0
+    Local nInss    := 0
+    Local nFgts    := 0
+    Local nLiquido := 0
 
     If !ValidarFuncionario(cFuncId)
         ConOut("Erro: funcionario invalido - " + cFuncId)
@@ -80,8 +83,25 @@ Static Function ProcessarFolha(cFuncId, cCategoria, nSalario, nMes, nAno)
 Return nInss + nFgts
 
 /*
- * // Limitação ADVPL: sem enum nativo — #define é a alternativa mais legível.
- * // TLPP 4.0+ permite classes e métodos, mas a convenção #define ainda é
- * // amplamente usada para constantes de domínio em código Protheus legado.
- * // Convenção recomendada: prefixo CATEGORIA_*, LIMITE_*, ALIQUOTA_*
+ * Verificações equivalentes às dos outros gabaritos:
+ *
+ *   // Passo 1 — constantes substituem magic strings/numbers
+ *   // (verificação implícita: código compila e usa CATEGORIA_CLT, SALARIO_MINIMO_2026)
+ *
+ *   // Passo 2
+ *   Local nInssTest := CalcularInss(3500, CATEGORIA_CLT)
+ *   ConOut("PASSO 2: INSS CLT 3500 = " + cValToChar(nInssTest))   // esperado: 420.00
+ *   Local nInssPJ := CalcularInss(8000, CATEGORIA_PJ)
+ *   ConOut("PASSO 2: INSS PJ = " + cValToChar(nInssPJ))           // esperado: 0
+ *
+ *   // Passo 3
+ *   Local nFgtsTest := CalcularFgts(3500, CATEGORIA_CLT)
+ *   ConOut("PASSO 3: FGTS CLT 3500 = " + cValToChar(nFgtsTest))   // esperado: 280.00
+ *
+ *   // Passo 4
+ *   Local nRes := ProcessarFolha("FUNC1", CATEGORIA_CLT, 3500, 6, 2026)
+ *   ConOut("PASSO 4: INSS+FGTS = " + cValToChar(nRes))            // esperado: 700.00
+ *
+ * Nota: sem enum nativo em ADVPL — #define é a alternativa mais legível.
+ * Convenção recomendada: prefixo CATEGORIA_*, LIMITE_*, ALIQUOTA_*
  */

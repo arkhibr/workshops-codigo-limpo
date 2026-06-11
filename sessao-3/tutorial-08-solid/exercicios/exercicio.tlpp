@@ -2,14 +2,39 @@
  * EXERCÍCIO 16 — SOLID na Prática (ADVPL/TLPP)
  * Referência: Clean Code + SOLID papers
  *
- * INSTRUÇÕES:
- *   A função ProcessarFatura abaixo viola SRP (valida, calcula, persiste e
- *   envia email em um único lugar) e DIP (sem abstração de notificação).
+ * PASSOS (faça um de cada vez, em ordem):
  *
- *   1. Separe em funções com responsabilidade única: ValidarFatura,
- *      CalcularTotalFatura, SalvarFatura, NotificarClienteFatura.
- *   2. Simule inversão de dependência usando codeblock para o notificador.
- *   3. Compile no Totvs IDE e execute DemoFatura() como ponto de entrada.
+ *   PASSO 1 — IDENTIFICAR (5 min)
+ *     Leia ProcessarFatura e adicione comentários // SRP: e // DIP: antes de
+ *     cada trecho problemático.
+ *     Meta: encontrar pelo menos 4 violações antes de alterar código.
+ *
+ *   PASSO 2 — EXTRAIR ValidarFatura + CalcularTotalFatura (8 min)
+ *     Mova o bloco de validação para:
+ *       Static Function ValidarFatura(aItens, cClienteId) -> lLogico
+ *     Mova o loop de cálculo para:
+ *       Static Function CalcularTotalFatura(aItens) -> nNumerico
+ *     ProcessarFatura chama as duas funções.
+ *     Verifique que DemoFatura() ainda roda.
+ *
+ *   PASSO 3 — EXTRAIR SalvarFatura + NotificarClienteFatura (8 min)
+ *     Mova o ConOut de persistência para:
+ *       Static Function SalvarFatura(cFaturaId) -> lLogico
+ *     Mova o ConOut de notificação para:
+ *       Static Function NotificarClienteFatura(cClienteId, cMensagem) -> lLogico
+ *     ProcessarFatura chama as quatro funções separadas.
+ *     Verifique que DemoFatura() ainda roda.
+ *
+ *   PASSO 4 — INVERTER DEPENDÊNCIA DE NOTIFICAÇÃO (8 min)
+ *     Acrescente parâmetro bNotificador em ProcessarFatura.
+ *     No corpo, substitua a chamada direta a NotificarClienteFatura por:
+ *       Eval(bNotificador, cClienteId, cMensagem)
+ *     Em DemoFatura(), passe o codeblock:
+ *       bNotificador := {|cId, cMsg| NotificarClienteFatura(cId, cMsg)}
+ *     Vantagem: bNotificador pode ser trocado sem alterar ProcessarFatura.
+ *     Verifique que DemoFatura() ainda roda.
+ *
+ * Compile no Totvs IDE e execute DemoFatura() como ponto de entrada.
  */
 
 // ❌ Ruim — SRP+DIP: validação, cálculo, persistência e email juntos
@@ -31,26 +56,16 @@ Static Function ProcessarFatura(cFaturaId, aItens, cClienteId)
     ConOut("Email para " + cClienteId + ": Fatura " + cFaturaId + " R$ " + cValToChar(nTotal))
 Return nTotal
 
-/*
- * TODO — Refatore separando em:
- *   Static Function ValidarFatura(aItens, cClienteId)    -> lLogico
- *   Static Function CalcularTotalFatura(aItens)          -> nNumerico
- *   Static Function SalvarFatura(cFaturaId)              -> lLogico
- *   Static Function NotificarClienteFatura(cClienteId, cMensagem) -> lLogico
- *
- * Para simular DIP com codeblock:
- *   bNotificador := {|cId, cMsg| NotificarClienteFatura(cId, cMsg)}
- *   Eval(bNotificador, cClienteId, "Fatura processada")
- * Vantagem: bNotificador pode ser substituído por outro codeblock
- * sem alterar o chamador.
- */
-
 // Demo — ponto de entrada
 Static Function DemoFatura()
-    Local aItens := {}
-    Local nTotal := 0
+    Local aItens       := {}
+    Local nTotal       := 0
+    // PASSO 4 — stub: declare bNotificador e passe ao processar após refatorar.
+    // Local bNotificador := {|cId, cMsg| NotificarClienteFatura(cId, cMsg)}
     aAdd(aItens, {"Consultoria", 1500.00})
     aAdd(aItens, {"Suporte",      300.00})
     nTotal := ProcessarFatura("FAT-001", aItens, "CLI-200")
+    // Após o Passo 4, substitua a linha acima por:
+    // nTotal := ProcessarFatura("FAT-001", aItens, "CLI-200", bNotificador)
     ConOut("Total: " + cValToChar(nTotal))
 Return

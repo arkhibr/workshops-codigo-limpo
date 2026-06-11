@@ -2,95 +2,25 @@
  * GABARITO 17 TypeScript — Padrões de Criação
  * Referência: Design Patterns (GoF), Cap. 3
  *
- * SOLUÇÃO:
- *   1. Factory Method: FabricaContrato com Map de registros.
- *   2. Builder: ConstruirContratoServico com interface fluente.
- *
  * Execute: npx ts-node gabarito.ts
  */
 
-// ─── Factory Method ───────────────────────────────────────────────────────────
+// ─── Interface (mesma do exercício) ───────────────────────────────────────────
 
 interface Contrato {
-    readonly tipo:          string;
-    readonly valorMensal:   number;
-    readonly vigenciaMeses: number;
-    readonly contratante:   string;
-    descricao(): string;
-    valorTotal(): number;
+    tipo:           string;
+    valorMensal:    number;
+    vigenciaMeses:  number;
+    contratante:    string;
+    objeto?:        string;
+    endereco?:      string;
+    fornecedorId?:  string;
+    prazoEntrega?:  number;
+    observacoes?:   string;
 }
 
-abstract class ContratoBase implements Contrato {
-    abstract readonly tipo: string;
 
-    constructor(
-        readonly valorMensal:   number,
-        readonly vigenciaMeses: number,
-        readonly contratante:   string,
-    ) {
-        if (valorMensal <= 0)   throw new Error(`Valor mensal deve ser positivo, recebido: ${valorMensal}`);
-        if (vigenciaMeses <= 0) throw new Error(`Vigência deve ser positiva, recebida: ${vigenciaMeses}`);
-    }
-
-    abstract descricao(): string;
-
-    valorTotal(): number {
-        return this.valorMensal * this.vigenciaMeses;
-    }
-}
-
-class ContratoServico extends ContratoBase {
-    readonly tipo = "servico";
-
-    constructor(
-        valorMensal:   number,
-        vigenciaMeses: number,
-        contratante:   string,
-        readonly objeto: string,
-    ) {
-        super(valorMensal, vigenciaMeses, contratante);
-    }
-
-    descricao(): string {
-        return `Serviço: ${this.objeto} | ${this.contratante} | R$${this.valorMensal.toFixed(2)}/mês × ${this.vigenciaMeses} meses`;
-    }
-}
-
-class ContratoLocacao extends ContratoBase {
-    readonly tipo = "locacao";
-
-    constructor(
-        valorMensal:   number,
-        vigenciaMeses: number,
-        contratante:   string,
-        readonly objeto:    string,
-        readonly endereco:  string,
-    ) {
-        super(valorMensal, vigenciaMeses, contratante);
-    }
-
-    descricao(): string {
-        return `Locação: ${this.objeto} | ${this.endereco} | ${this.contratante} | R$${this.valorMensal.toFixed(2)}/mês × ${this.vigenciaMeses} meses`;
-    }
-}
-
-class ContratoFornecimento extends ContratoBase {
-    readonly tipo = "fornecimento";
-
-    constructor(
-        valorMensal:   number,
-        vigenciaMeses: number,
-        contratante:   string,
-        readonly fornecedorId:  string,
-        readonly prazoEntrega:  number,
-    ) {
-        super(valorMensal, vigenciaMeses, contratante);
-    }
-
-    descricao(): string {
-        return `Fornecimento: ${this.fornecedorId} | prazo ${this.prazoEntrega}d | R$${this.valorMensal.toFixed(2)}/mês × ${this.vigenciaMeses} meses`;
-    }
-}
+// ─── Passo 3: Factory registrável ────────────────────────────────────────────
 
 type FabricaFn = (dados: Record<string, unknown>) => Contrato;
 
@@ -111,21 +41,32 @@ class FabricaContrato {
     }
 }
 
-FabricaContrato.registrar("servico", (d) => new ContratoServico(
-    d["valorMensal"] as number, d["vigenciaMeses"] as number, d["contratante"] as string,
-    (d["objeto"] as string) ?? "Serviços gerais"
-));
-FabricaContrato.registrar("locacao", (d) => new ContratoLocacao(
-    d["valorMensal"] as number, d["vigenciaMeses"] as number, d["contratante"] as string,
-    (d["objeto"] as string) ?? "", (d["endereco"] as string) ?? ""
-));
-FabricaContrato.registrar("fornecimento", (d) => new ContratoFornecimento(
-    d["valorMensal"] as number, d["vigenciaMeses"] as number, d["contratante"] as string,
-    (d["fornecedorId"] as string) ?? "", (d["prazoEntrega"] as number) ?? 30
-));
+FabricaContrato.registrar("servico", (d) => ({
+    tipo:          "servico",
+    valorMensal:   d["valorMensal"] as number,
+    vigenciaMeses: d["vigenciaMeses"] as number,
+    contratante:   d["contratante"] as string,
+    objeto:        (d["objeto"] as string) ?? "Serviços gerais",
+}));
+FabricaContrato.registrar("locacao", (d) => ({
+    tipo:          "locacao",
+    valorMensal:   d["valorMensal"] as number,
+    vigenciaMeses: d["vigenciaMeses"] as number,
+    contratante:   d["contratante"] as string,
+    objeto:        d["objeto"] as string | undefined,
+    endereco:      d["endereco"] as string | undefined,
+}));
+FabricaContrato.registrar("fornecimento", (d) => ({
+    tipo:          "fornecimento",
+    valorMensal:   d["valorMensal"] as number,
+    vigenciaMeses: d["vigenciaMeses"] as number,
+    contratante:   d["contratante"] as string,
+    fornecedorId:  d["fornecedorId"] as string | undefined,
+    prazoEntrega:  d["prazoEntrega"] as number | undefined,
+}));
 
 
-// ─── Builder ──────────────────────────────────────────────────────────────────
+// ─── Passo 4: Builder ─────────────────────────────────────────────────────────
 
 class ConstruirContratoServico {
     private _valorMensal?:   number;
@@ -148,16 +89,17 @@ class ConstruirContratoServico {
         return this;
     }
 
-    comObjeto(objeto: string): this {
-        this._objeto = objeto;
-        return this;
-    }
-
-    construir(): ContratoServico {
+    construir(): Contrato {
         if (this._valorMensal === undefined) throw new Error("valor_mensal é obrigatório");
         if (!this._vigenciaMeses)            throw new Error("vigencia_meses é obrigatório");
         if (!this._contratante)              throw new Error("contratante é obrigatório");
-        return new ContratoServico(this._valorMensal, this._vigenciaMeses, this._contratante, this._objeto);
+        return {
+            tipo:          "servico",
+            valorMensal:   this._valorMensal,
+            vigenciaMeses: this._vigenciaMeses,
+            contratante:   this._contratante,
+            objeto:        this._objeto,
+        };
     }
 }
 
@@ -166,55 +108,65 @@ class ConstruirContratoServico {
 
 console.log("=== Gabarito 17 TypeScript — Factory Method + Builder ===\n");
 
-// Factory
+// Passo 3: factory registrável
 const servico = FabricaContrato.criar("servico", {
-    valorMensal: 5000.0, vigenciaMeses: 12,
-    contratante: "EMP-001", objeto: "Consultoria em TI"
+    valorMensal: 5000.0, vigenciaMeses: 12, contratante: "EMP-001"
 });
-console.assert(servico instanceof ContratoServico);
-console.assert(servico.valorTotal() === 60000.0);
-console.log("OK: Factory — ContratoServico criado via FabricaContrato");
-console.log("  " + servico.descricao());
-
-const locacao = FabricaContrato.criar("locacao", {
-    valorMensal: 3500.0, vigenciaMeses: 24,
-    contratante: "EMP-002", objeto: "Sala comercial 40m²",
-    endereco: "Av. Paulista, 1000 — SP"
-});
-console.assert(locacao instanceof ContratoLocacao);
-console.log("OK: Factory — ContratoLocacao criado via FabricaContrato");
+console.assert(servico.tipo === "servico");
+console.assert(servico.valorMensal * servico.vigenciaMeses === 60000.0);
+console.log(`OK: Passo 3 — FabricaContrato.criar: ${servico.tipo} R$${servico.valorMensal.toFixed(2)}/mês`);
 
 try {
-    FabricaContrato.criar("obras_civil", { valorMensal: 1000.0, vigenciaMeses: 6, contratante: "X" });
-    console.log("FALHOU: Factory — deveria rejeitar tipo não registrado");
+    FabricaContrato.criar("desconhecido", { valorMensal: 1.0, vigenciaMeses: 1, contratante: "X" });
+    console.log("FALHOU: deveria rejeitar tipo não registrado");
 } catch (e) {
-    console.log(`OK: Factory — tipo desconhecido rejeitado — ${(e as Error).message}`);
+    console.log(`OK: Passo 3 — tipo desconhecido rejeitado — ${(e as Error).message}`);
 }
+
+// Passo 3: novo tipo sem alterar FabricaContrato
+FabricaContrato.registrar("obras_civil", (d) => ({
+    tipo:          "obras_civil",
+    valorMensal:   d["valorMensal"] as number,
+    vigenciaMeses: d["vigenciaMeses"] as number,
+    contratante:   d["contratante"] as string,
+    observacoes:   d["responsavelTecnico"] as string | undefined,
+}));
+const obras = FabricaContrato.criar("obras_civil", {
+    valorMensal: 25000.0, vigenciaMeses: 8,
+    contratante: "EMP-004", responsavelTecnico: "Eng. Silva CREA-12345"
+});
+console.assert(obras.tipo === "obras_civil");
+console.log(`OK: Passo 3 — novo tipo registrado sem alterar FabricaContrato: ${obras.tipo}`);
 
 console.log();
 
-// Builder
-const contrato = new ConstruirContratoServico()
+// Passo 4: builder
+const c = new ConstruirContratoServico()
     .comValorMensal(5000.0)
     .comVigencia(12)
     .comContratante("EMP-001")
-    .comObjeto("Desenvolvimento de software")
     .construir();
-console.assert(contrato instanceof ContratoServico);
-console.assert(contrato.valorTotal() === 60000.0);
-console.log("OK: Builder — ContratoServico construído com encadeamento fluente");
-console.log("  " + contrato.descricao());
+console.assert(c.tipo === "servico");
+console.assert(c.valorMensal * c.vigenciaMeses === 60000.0);
+console.log(`OK: Passo 4 — builder fluente: ${c.tipo} R$${c.valorMensal.toFixed(2)}/mês × ${c.vigenciaMeses} meses`);
 
 try {
     new ConstruirContratoServico().comValorMensal(5000.0).construir();
-    console.log("FALHOU: Builder — deveria rejeitar contrato sem vigencia_meses");
+    console.log("FALHOU: deveria rejeitar sem vigencia_meses");
 } catch (e) {
-    console.log(`OK: Builder — rejeita contrato incompleto — ${(e as Error).message}`);
+    console.log(`OK: Passo 4 — rejeita construir() sem vigencia_meses`);
 }
 
 try {
     new ConstruirContratoServico().comVigencia(12).construir();
-    console.log("FALHOU: Builder — deveria rejeitar contrato sem valor_mensal");
+    console.log("FALHOU: deveria rejeitar sem valor_mensal");
 } catch (e) {
-    console.log(`OK: Builder — rejeita contrato incompleto — ${(e as Error).message}`);
+    console.log(`OK: Passo 4 — rejeita construir() sem valor_mensal`);
+}
+
+try {
+    new ConstruirContratoServico().comValorMensal(5000.0).comVigencia(12).construir();
+    console.log("FALHOU: deveria rejeitar sem contratante");
+} catch (e) {
+    console.log(`OK: Passo 4 — rejeita construir() sem contratante`);
 }

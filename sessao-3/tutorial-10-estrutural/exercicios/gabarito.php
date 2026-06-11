@@ -1,6 +1,12 @@
 <?php
 // GABARITO 18 PHP — Padrões Estruturais: Adapter + Facade
 // Execute: php gabarito.php
+//
+// Passos aplicados:
+//   Passo 1 — Identificar: comentários // ACOPLAMENTO: nas funções emitir/verificar/estornar_cobranca
+//   Passo 2 — Modelo de domínio: readonly class Boleto com id, codigoBarras, status, valor
+//   Passo 3 — Adapter: LegadoCobrancaAdapter isola a API legada (nId*, cCodigo*, cStatus*)
+//   Passo 4 — Facade: FachadaCobranca orquestra emitir + consultar + cancelar
 
 // ─── API legada (não pode ser alterada) ───────────────────────────────────────
 
@@ -25,7 +31,7 @@ function cancelar_boleto_legado(int $nIdBoleto, string $cMotivo): bool {
 }
 
 
-// ─── Modelo de domínio moderno ────────────────────────────────────────────────
+// ─── Passo 2 — Modelo de domínio ─────────────────────────────────────────────
 
 readonly class Boleto {
     public function __construct(
@@ -37,7 +43,8 @@ readonly class Boleto {
 }
 
 
-// ─── Contrato (interface) ────────────────────────────────────────────────────
+// ─── Passo 3 — Adapter ───────────────────────────────────────────────────────
+// Contrato (interface)
 
 interface ServicoCobranca {
     public function emitir(float $valor, string $vencimento, string $clienteId): Boleto;
@@ -46,7 +53,7 @@ interface ServicoCobranca {
 }
 
 
-// ─── Adapter: isola a API legada do código de negócio ────────────────────────
+// ─── Adapter: isola a API legada do código de negócio ──────────────────────
 
 class LegadoCobrancaAdapter implements ServicoCobranca {
     /**
@@ -73,7 +80,7 @@ class LegadoCobrancaAdapter implements ServicoCobranca {
 }
 
 
-// ─── Facade: orquestra o fluxo completo de cobrança ──────────────────────────
+// ─── Passo 4 — Facade ────────────────────────────────────────────────────────
 
 class FachadaCobranca {
     /**
