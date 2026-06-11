@@ -16,7 +16,8 @@ Código que cresce sem princípios acumula dívida técnica ao longo do tempo: c
 
 O SOLID é um conjunto de princípios de design de código que busca endereçar esses e outros pontos e garantir a você um código robusto e manutenível ao longo do tempo.
 
-<img width="1254" height="1254" alt="image" src="https://github.com/user-attachments/assets/8d7b0d1c-954d-4d53-b2e4-df7d22b7eea6" />
+<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/334edf0c-bb1a-4689-ba05-27056360c24d" />
+
 
 
 ---
