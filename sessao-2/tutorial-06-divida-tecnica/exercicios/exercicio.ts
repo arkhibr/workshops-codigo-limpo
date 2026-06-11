@@ -4,27 +4,39 @@
  * Execute: npx ts-node exercicio.ts
  *
  * Este módulo calcula fretes para uma transportadora fictícia.
- * Ele está funcional, mas tem pelo menos 4 tipos de dívida técnica.
+ * Ele está funcional, mas carrega 4 tipos de dívida técnica.
  *
- * TAREFA:
- *   Parte 1 — IDENTIFICAR: leia o código abaixo e adicione um comentário
- *   antes de cada dívida encontrada no formato:
- *       // DÍVIDA [TIPO]: <descrição do problema>
- *   Onde TIPO pode ser: NOMES, FUNÇÕES, DUPLICAÇÃO, MAGIC_NUMBER
+ * PASSOS (faça um de cada vez, em ordem):
  *
- *   Parte 2 — REFATORAR: implemente a versão refatorada na seção
- *   marcada ao final deste arquivo. A saída do bloco de verificação
- *   deve ser idêntica antes e depois da refatoração.
+ *   PASSO 1 — IDENTIFICAR (5 min)
+ *     Leia o código abaixo. Antes de cada dívida, adicione um comentário:
+ *         // DÍVIDA [TIPO]: <descrição>
+ *     Tipos: MAGIC_NUMBER, NOMES, DUPLICAÇÃO, FUNÇÕES
+ *     Meta: encontrar pelo menos 3 das 4 antes de avançar.
  *
- * Tipos de dívida para encontrar (pelo menos 3 dos 4):
- *   - Magic numbers (valores sem constante nomeada)
- *   - Duplicação (lógica repetida em dois ou mais lugares)
- *   - Funções longas (função que faz mais de uma coisa)
- *   - Nomes obscuros (variáveis/funções que não revelam intenção)
+ *   PASSO 2 — CONSTANTES (5 min)
+ *     Extraia os magic numbers para constantes nomeadas acima das funções.
+ *     Substitua os literais numéricos pelas constantes no corpo das funções.
+ *     Verifique: npx ts-node exercicio.ts deve imprimir os mesmos valores.
+ *
+ *   PASSO 3 — NOMES (5 min)
+ *     Renomeie os parâmetros obscuros em calcFrete e estimar:
+ *       tp  → modalidade
+ *       kg  → pesoKg
+ *       km  → distanciaKm
+ *       urg → urgente
+ *     Renomeie estimar para estimarFrete.
+ *     Verifique que o arquivo ainda executa sem erros.
+ *
+ *   PASSO 4 — ELIMINAR DUPLICAÇÃO (10 min)
+ *     calcFrete e estimar têm exatamente o mesmo corpo de cálculo.
+ *     Extraia a lógica compartilhada para _calcularPorModalidade.
+ *     Faça calcularFrete e estimarFrete chamarem essa função.
+ *     Verifique que a saída continua idêntica.
  */
 
 // ════════════════════════════════════════════════════════════════════════════════
-// CÓDIGO COM DÍVIDA TÉCNICA — identifique e anote as dívidas
+// CÓDIGO COM DÍVIDA TÉCNICA — trabalhe aqui nos Passos 1, 2 e 3
 // ════════════════════════════════════════════════════════════════════════════════
 
 function calcFrete(tp: string, kg: number, km: number, urg: boolean = false): number {
@@ -99,14 +111,22 @@ function estimar(tp: string, kg: number, km: number): number {
 
 
 // ════════════════════════════════════════════════════════════════════════════════
-// IMPLEMENTE AQUI A VERSÃO REFATORADA
+// PASSO 2 — adicione as constantes nomeadas aqui
 // ════════════════════════════════════════════════════════════════════════════════
 
-// Dica: comece pelas constantes, depois extraia funções pequenas.
+// const LIMITE_FAIXA_1_KG = 5;
+// const LIMITE_FAIXA_2_KG = 20;
+// const FATOR_URGENCIA    = 1.3;
+// const TARIFAS: Record<string, {taxaBase: number; custoFaixa2: number; custoFaixa3: number; custoKm: number}> = { ... };
 
-// function calcularFretePorModalidade(...): number { ... }
-// function calcularFrete(...): number { ... }
-// function estimarFrete(...): number { ... }
+
+// ════════════════════════════════════════════════════════════════════════════════
+// PASSO 4 — extraia aqui a função auxiliar e redefina as funções públicas
+// ════════════════════════════════════════════════════════════════════════════════
+
+// function _calcularPorModalidade(modalidade: string, pesoKg: number, distanciaKm: number): number { ... }
+// function calcularFrete(modalidade: string, pesoKg: number, distanciaKm: number, urgente: boolean = false): number { ... }
+// function estimarFrete(modalidade: string, pesoKg: number, distanciaKm: number): number { ... }
 
 
 // ════════════════════════════════════════════════════════════════════════════════
@@ -115,21 +135,20 @@ function estimar(tp: string, kg: number, km: number): number {
 
 console.log('=== Verificação: Cálculo de Frete ===\n');
 
-// Usando funções originais (com dívida)
-console.log('Frete A, 3kg, 100km:', calcFrete('A', 3, 100));
-console.log('Frete A, 15kg, 200km:', calcFrete('A', 15, 200));
-console.log('Frete A, 30kg, 300km:', calcFrete('A', 30, 300));
-console.log('Frete B, 10kg, 150km:', calcFrete('B', 10, 150));
-console.log('Frete C, 25kg, 400km:', calcFrete('C', 25, 400));
-console.log('Frete A urgente, 5kg, 100km:', calcFrete('A', 5, 100, true));
-console.log('Estimativa A, 3kg, 100km:', estimar('A', 3, 100));
+console.log('Frete A, 3kg, 100km:',          calcFrete('A',  3, 100));        // 27
+console.log('Frete A, 15kg, 200km:',         calcFrete('A', 15, 200));        // 64
+console.log('Frete A, 30kg, 300km:',         calcFrete('A', 30, 300));        // 106.5
+console.log('Frete B, 10kg, 150km:',         calcFrete('B', 10, 150));        // 68
+console.log('Frete C, 25kg, 400km:',         calcFrete('C', 25, 400));        // 214
+console.log('Frete A urgente, 5kg, 100km:',  calcFrete('A',  5, 100, true));  // 35.1
+console.log('Estimativa A, 3kg, 100km:',     estimar('A', 3, 100));           // 27
 
-// Após implementar, descomente e verifique que os valores batem:
-// console.log('\n--- Versão Refatorada ---');
-// console.log('Frete A, 3kg, 100km:', calcularFrete('A', 3, 100));
-// console.log('Frete A, 15kg, 200km:', calcularFrete('A', 15, 200));
-// console.log('Frete A, 30kg, 300km:', calcularFrete('A', 30, 300));
-// console.log('Frete B, 10kg, 150km:', calcularFrete('B', 10, 150));
-// console.log('Frete C, 25kg, 400km:', calcularFrete('C', 25, 400));
-// console.log('Frete A urgente, 5kg, 100km:', calcularFrete('A', 5, 100, true));
-// console.log('Estimativa A, 3kg, 100km:', estimarFrete('A', 3, 100));
+// Após o Passo 4, descomente e verifique que os valores batem:
+// console.log('\n--- Versão refatorada (Passo 4) ---');
+// console.log('Frete A, 3kg, 100km:',         calcularFrete('A',  3, 100));
+// console.log('Frete A, 15kg, 200km:',        calcularFrete('A', 15, 200));
+// console.log('Frete A, 30kg, 300km:',        calcularFrete('A', 30, 300));
+// console.log('Frete B, 10kg, 150km:',        calcularFrete('B', 10, 150));
+// console.log('Frete C, 25kg, 400km:',        calcularFrete('C', 25, 400));
+// console.log('Frete A urgente, 5kg, 100km:', calcularFrete('A',  5, 100, true));
+// console.log('Estimativa A, 3kg, 100km:',    estimarFrete('A', 3, 100));

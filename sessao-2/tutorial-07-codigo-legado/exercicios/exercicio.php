@@ -1,37 +1,42 @@
 <?php
 /**
- * EXERCÍCIO — Tutorial 07: Gestão de Código Legado
+ * EXERCÍCIO — Tutorial 07: Código Legado
  *
  * Módulo de cálculo de comissões de vendedores.
  * Status: em produção desde 2020, nunca teve testes, nunca foi refatorado.
  *
- * INSTRUÇÕES:
- *   1. Escreva "testes de caracterização" para o método calcComm abaixo:
- *      testes que documentam o comportamento ATUAL antes de qualquer mudança.
- *      Use asserts simples no bloco de execução ao final.
- *      Dica: passe valores conhecidos e verifique o retorno. Se o resultado
- *      parecer errado, documente-o assim mesmo — o objetivo é capturar o
- *      comportamento existente, não corrigi-lo ainda.
+ * PASSOS (faça um de cada vez, em ordem):
  *
- *   2. Identifique e anote com "// SMELL:" cada problema que você encontrar
- *      no código. Exemplos de smells: magic number, nome obscuro, estado
- *      global modificado, lógica duplicada, comentário que mente.
+ *   PASSO 1 — TESTES DE CARACTERIZAÇÃO (10 min)
+ *     No bloco de execução ao final, escreva asserts para documentar
+ *     o comportamento atual. Rode o arquivo para ver os valores, então
+ *     substitua os ??? pelos valores observados.
+ *     Meta: cobrir pelo menos 5 casos distintos antes de tocar no código.
+ *     Importante: use instâncias novas de CommissionCalc por assert —
+ *     o cache da instância mascara resultados de chamadas anteriores.
  *
- *   3. Refatore o código aplicando as técnicas do tutorial:
- *      - Constantes nomeadas para os magic numbers
- *      - Classes com responsabilidade única
- *      - Eliminar modificação de estado global dentro de método
- *      - Nomes descritivos para parâmetros e variáveis
- *      - Eliminar lógica duplicada
+ *   PASSO 2 — MAPEAR SMELLS (5 min)
+ *     Leia CommissionCalc e adicione um comentário // SMELL: antes de
+ *     cada problema encontrado.
+ *     Exemplos: magic number, nome obscuro, estado global, duplicação,
+ *     comentário desatualizado.
  *
- *   4. Execute seus testes de caracterização na versão refatorada.
- *      Se algum assert falhar, você mudou o comportamento — investigue.
+ *   PASSO 3 — CONSTANTES + NOMES (8 min)
+ *     a) Extraia os magic numbers para constantes nomeadas acima da classe:
+ *        0.08, 0.05, 0.03, 0.02, 1.1, 1.2, 0.8, 5000
+ *     b) Renomeie os parâmetros em calcComm:
+ *        $s → $vendedorId   $r → $receita   $t → $tipoMeta   $m → $meta
+ *     Verifique que seus testes do Passo 1 ainda passam.
+ *
+ *   PASSO 4 — ELIMINAR DUPLICAÇÃO (10 min)
+ *     batchCalc duplica toda a lógica de calcComm em vez de chamá-lo.
+ *     Altere batchCalc para chamar $this->calcComm em vez de repetir.
+ *     Mova também o cache de variável de instância para o construtor,
+ *     para que cada instância tenha seu próprio estado isolado.
+ *     Verifique que seus testes continuam passando.
  *
  * Para rodar: php exercicio.php
  */
-
-// Estado global modificado por método — dificulta paralelismo e testes
-$cache = [];
 
 // Tabela de vendedores (simulando banco de dados)
 $vendedores = [
@@ -46,13 +51,15 @@ class CommissionCalc
     // Calcula comissao mensal — atualizado em jan/2020
     // (comentario desatualizado: a logica foi alterada em 2022 sem atualizar o comentario)
 
+    private array $cache = [];
+
     public function calcComm($s, $r, $t, $m)
     {
         // s = vendedor id, r = receita total, t = tipo de meta, m = meta
-        global $cache, $vendedores;
+        global $vendedores;
 
-        if (isset($cache[$s])) {
-            return $cache[$s];
+        if (isset($this->cache[$s])) {
+            return $this->cache[$s];
         }
 
         $v = $vendedores[$s] ?? null;
@@ -103,8 +110,8 @@ class CommissionCalc
             }
         }
 
-        $cache[$s] = round($c, 2);
-        return $cache[$s];
+        $this->cache[$s] = round($c, 2);
+        return $this->cache[$s];
     }
 
     public function batchCalc(array $vendas): array
@@ -137,12 +144,8 @@ class CommissionCalc
                         $c = $r * 0.03;
                     }
                 }
-                if ($t === 'AGR') {
-                    $c = $c * 1.1;
-                }
-                if ($r < 5000) {
-                    $c = 0;
-                }
+                if ($t === 'AGR') { $c = $c * 1.1; }
+                if ($r < 5000)    { $c = 0; }
             } else {
                 if ($r >= $m) {
                     $c = $r * 0.05;
@@ -156,12 +159,8 @@ class CommissionCalc
                         $c = $r * 0.03;
                     }
                 }
-                if ($t === 'AGR') {
-                    $c = $c * 1.1;
-                }
-                if ($r < 5000) {
-                    $c = 0;
-                }
+                if ($t === 'AGR') { $c = $c * 1.1; }
+                if ($r < 5000)    { $c = 0; }
             }
 
             $resultados[$s] = round($c, 2);
@@ -173,31 +172,36 @@ class CommissionCalc
 
 // ── Execução principal ──────────────────────────────────────────────────────────
 
-$calc = new CommissionCalc();
-
 // -----------------------------------------------------------------------
-// ETAPA 1: Escreva aqui seus testes de caracterização
-// Documente o comportamento atual ANTES de refatorar.
-// Exemplo de estrutura (substitua pelos valores corretos):
-//
-//   $resultado = $calc->calcComm("V001", 10000, "STD", 8000);
-//   assert($resultado === ???, "Esperado ???, obtido {$resultado}");
-//
-// Rode o arquivo, veja o que retorna, e use esse valor no assert.
+// PASSO 1: escreva seus testes de caracterização aqui.
+// Rode o arquivo para ver os valores, depois substitua ??? pelo resultado.
+// Use new CommissionCalc() por assert para evitar que o cache mascare.
 // -----------------------------------------------------------------------
 
-echo "=== Testes de caracterização ===" . PHP_EOL;
-echo "(implemente seus asserts aqui antes de refatorar)" . PHP_EOL . PHP_EOL;
+echo "=== Explorando o comportamento atual ===" . PHP_EOL;
+echo "SR, receita=10000, meta=8000, tipo=STD: " . (new CommissionCalc())->calcComm('V001', 10000, 'STD', 8000) . PHP_EOL;
+echo "SR, receita=4000,  meta=8000, tipo=STD: " . (new CommissionCalc())->calcComm('V003', 4000,  'STD', 8000) . PHP_EOL;
+echo "SR, receita=7000,  meta=8000, tipo=STD: " . (new CommissionCalc())->calcComm('V003', 7000,  'STD', 8000) . PHP_EOL;
+echo "JR, receita=6000,  meta=5000, tipo=STD: " . (new CommissionCalc())->calcComm('V002', 6000,  'STD', 5000) . PHP_EOL;
+echo "JR, receita=6000,  meta=5000, tipo=AGR: " . (new CommissionCalc())->calcComm('V002', 6000,  'AGR', 5000) . PHP_EOL;
+echo "JR, receita=4000,  meta=5000, tipo=STD: " . (new CommissionCalc())->calcComm('V002', 4000,  'STD', 5000) . PHP_EOL;
+echo "Inexistente V999: "                        . (new CommissionCalc())->calcComm('V999', 10000, 'STD', 8000) . PHP_EOL;
 
-// Exemplos de chamadas para explorar o comportamento:
-echo "SR, receita=10000, meta=8000, tipo=STD: " . $calc->calcComm('V001', 10000, 'STD', 8000) . PHP_EOL;
-echo "SR, receita=4000,  meta=8000, tipo=STD: " . $calc->calcComm('V003', 4000,  'STD', 8000) . PHP_EOL;
-echo "JR, receita=6000,  meta=5000, tipo=AGR: " . $calc->calcComm('V002', 6000,  'AGR', 5000) . PHP_EOL;
-echo PHP_EOL;
-
-echo "=== Batch ===" . PHP_EOL;
+echo PHP_EOL . "=== Batch ===" . PHP_EOL;
 $vendas = [
     ['id' => 'V001', 'receita' => 10000, 'tipo_meta' => 'STD', 'meta' => 8000],
     ['id' => 'V002', 'receita' => 6000,  'tipo_meta' => 'AGR', 'meta' => 5000],
 ];
-echo json_encode($calc->batchCalc($vendas)) . PHP_EOL;
+echo json_encode((new CommissionCalc())->batchCalc($vendas)) . PHP_EOL;
+
+// -----------------------------------------------------------------------
+// Substitua os ??? e descomente os asserts após anotar os valores acima:
+// -----------------------------------------------------------------------
+// assert((new CommissionCalc())->calcComm('V001', 10000, 'STD', 8000) === ???);
+// assert((new CommissionCalc())->calcComm('V003', 4000,  'STD', 8000) === ???);
+// assert((new CommissionCalc())->calcComm('V003', 7000,  'STD', 8000) === ???);
+// assert((new CommissionCalc())->calcComm('V002', 6000,  'STD', 5000) === ???);
+// assert((new CommissionCalc())->calcComm('V002', 6000,  'AGR', 5000) === ???);
+// assert((new CommissionCalc())->calcComm('V002', 4000,  'STD', 5000) === ???);
+// assert((new CommissionCalc())->calcComm('V999', 10000, 'STD', 8000) === ???);
+// echo "[OK] testes de caracterização passando" . PHP_EOL;

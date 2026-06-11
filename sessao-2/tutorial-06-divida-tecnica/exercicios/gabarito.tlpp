@@ -2,127 +2,119 @@
 // gabarito.tlpp — Cálculo de fretes refatorado
 // GABARITO — Tutorial 06: Dívida Técnica
 //
-// Dívidas identificadas e pagas:
-//   1. MAGIC_NUMBER — 15.0, 25.0, 40.0, 2.5, 3.2, 4.0, 1.8, 2.1, 2.8, 0.12, 0.18, 0.25, 1.3
-//   2. DUPLICACAO   — lógica de cálculo por faixa de peso copiada em CalcFrete e Estimar
-//   3. FUNCOES      — CalcFrete faz validação de modalidade, cálculo por faixa, km e urgência
-//   4. NOMES        — tp, kg, km, t, urg não revelam intenção; Estimar é ambíguo
+// Quatro passos aplicados em sequência:
+//   Passo 1 — Dívidas identificadas:
+//     MAGIC_NUMBER  15/25/40 (taxa_base), 2.5/3.2/4.0 (faixa 2),
+//                   1.8/2.1/2.8 (faixa 3), 0.12/0.18/0.25 (km), 1.3 (urgencia), 5 e 20
+//     NOMES         tp, kg, km, t, urg obscuros; Estimar é ambíguo
+//     DUPLICACAO    corpo idêntico em CalcFrete e Estimar
+//     FUNCOES       CalcFrete faz: validar + calcular por faixa + km + urgencia
+//   Passo 2 — constantes extraídas (#define)
+//   Passo 3 — parâmetros renomeados
+//   Passo 4 — CalcPorModalidade extraída; EstimarFrete chama CalcularFrete
 
 #include "totvs.ch"
 
-// ── Constantes ──────────────────────────────────────────────────────────────────
-// Dívida 1 paga: todos os magic numbers têm nome e estão agrupados por modalidade
+// ── Passo 2: constantes nomeadas ─────────────────────────────────────────────
 
-// Limites das faixas de peso
 #define LIMITE_FAIXA_1_KG   5
 #define LIMITE_FAIXA_2_KG   20
-
-// Fator de acréscimo para entrega urgente
 #define FATOR_URGENCIA      1.3
 
-// Tarifas — Modalidade A (Econômica)
-#define TAXA_BASE_A         15.0
-#define CUSTO_FAIXA2_KG_A    2.5
-#define CUSTO_FAIXA3_KG_A    1.8
-#define CUSTO_KM_A           0.12
-
-// Tarifas — Modalidade B (Padrão)
-#define TAXA_BASE_B         25.0
-#define CUSTO_FAIXA2_KG_B    3.2
-#define CUSTO_FAIXA3_KG_B    2.1
-#define CUSTO_KM_B           0.18
-
-// Tarifas — Modalidade C (Expressa)
-#define TAXA_BASE_C         40.0
-#define CUSTO_FAIXA2_KG_C    4.0
-#define CUSTO_FAIXA3_KG_C    2.8
-#define CUSTO_KM_C           0.25
+// Tarifas por modalidade: {taxa_base, custo_faixa2, custo_faixa3, custo_km}
+// Índices: [1]=taxa_base [2]=custo_faixa2 [3]=custo_faixa3 [4]=custo_km
+Static asTarifas := { ;
+    {"A", 15.0, 2.5, 1.8, 0.12}, ;
+    {"B", 25.0, 3.2, 2.1, 0.18}, ;
+    {"C", 40.0, 4.0, 2.8, 0.25}  ;
+}
 
 
-// ── Funções auxiliares ──────────────────────────────────────────────────────────
-// Dívida 3 paga: cada função faz uma única coisa
+// ── Passo 4: lógica extraída — zero duplicação ────────────────────────────────
 
-Static Function CalcCustoPeloPeso( nPesoKg, nTaxaBase, nCustoFaixa2, nCustoFaixa3 )
+Static Function BuscarTarifa( cModalidade )
+    Local nI   := 0
+    Local aRet := {}
+    For nI := 1 To Len( asTarifas )
+        If asTarifas[nI][1] == cModalidade
+            aRet := asTarifas[nI]
+            Exit
+        EndIf
+    Next nI
+Return aRet
+
+Static Function CalcPorModalidade( cModalidade, nPesoKg, nDistanciaKm )
+    Local aTar  := BuscarTarifa( cModalidade )
     Local nCusto := 0.0
-    If nPesoKg <= LIMITE_FAIXA_1_KG
-        nCusto := nTaxaBase
-    ElseIf nPesoKg <= LIMITE_FAIXA_2_KG
-        nCusto := nTaxaBase + ( nPesoKg - LIMITE_FAIXA_1_KG ) * nCustoFaixa2
-    Else
-        // Faixa 3: acima de 20 kg
-        nCusto := nTaxaBase + ;
-                  ( LIMITE_FAIXA_2_KG - LIMITE_FAIXA_1_KG ) * nCustoFaixa2 + ;
-                  ( nPesoKg - LIMITE_FAIXA_2_KG ) * nCustoFaixa3
+    If Len( aTar ) == 0
+        ConOut( "Modalidade inválida: " + cModalidade )
+        Return 0.0
     EndIf
+    If nPesoKg <= LIMITE_FAIXA_1_KG
+        nCusto := aTar[2]  // taxa_base
+    ElseIf nPesoKg <= LIMITE_FAIXA_2_KG
+        nCusto := aTar[2] + ( nPesoKg - LIMITE_FAIXA_1_KG ) * aTar[3]
+    Else
+        nCusto := aTar[2] ;
+               + ( LIMITE_FAIXA_2_KG - LIMITE_FAIXA_1_KG ) * aTar[3] ;
+               + ( nPesoKg - LIMITE_FAIXA_2_KG ) * aTar[4]
+    EndIf
+    nCusto += nDistanciaKm * aTar[5]
 Return nCusto
 
 
-// ── Função central ──────────────────────────────────────────────────────────────
-// Dívida 2 paga: lógica centralizada em CalcFretePorModalidade;
-//               CalcularFrete e EstimarFrete chamam a mesma base
-
-Static Function CalcFretePorModalidade( cModalidade, nPesoKg, nDistanciaKm )
-    Local nValorBase    := 0.0
-    Local nTaxaBase     := 0.0
-    Local nCustoFaixa2  := 0.0
-    Local nCustoFaixa3  := 0.0
-    Local nCustoKm      := 0.0
-
-    // Dívida 4 paga: parâmetros com prefixo e nomes descritivos
-    If cModalidade == "A"
-        nTaxaBase    := TAXA_BASE_A
-        nCustoFaixa2 := CUSTO_FAIXA2_KG_A
-        nCustoFaixa3 := CUSTO_FAIXA3_KG_A
-        nCustoKm     := CUSTO_KM_A
-    ElseIf cModalidade == "B"
-        nTaxaBase    := TAXA_BASE_B
-        nCustoFaixa2 := CUSTO_FAIXA2_KG_B
-        nCustoFaixa3 := CUSTO_FAIXA3_KG_B
-        nCustoKm     := CUSTO_KM_B
-    ElseIf cModalidade == "C"
-        nTaxaBase    := TAXA_BASE_C
-        nCustoFaixa2 := CUSTO_FAIXA2_KG_C
-        nCustoFaixa3 := CUSTO_FAIXA3_KG_C
-        nCustoKm     := CUSTO_KM_C
-    Else
-        ConOut( "Modalidade inválida: " + cModalidade + ". Use A, B ou C." )
-        Return 0.0
-    EndIf
-
-    nValorBase := CalcCustoPeloPeso( nPesoKg, nTaxaBase, nCustoFaixa2, nCustoFaixa3 )
-    nValorBase += nDistanciaKm * nCustoKm
-Return nValorBase
-
+// ── Passos 3+4: funções públicas com nomes descritivos ───────────────────────
 
 Static Function CalcularFrete( cModalidade, nPesoKg, nDistanciaKm, lUrgente )
-    Local nValorBase := 0.0
+    Local nValor := 0.0
     If lUrgente == Nil
         lUrgente := .F.
     EndIf
-    nValorBase := CalcFretePorModalidade( cModalidade, nPesoKg, nDistanciaKm )
+    nValor := CalcPorModalidade( cModalidade, nPesoKg, nDistanciaKm )
     If lUrgente
-        // Taxa de urgência: 30% de acréscimo — definido em contrato comercial
-        nValorBase := nValorBase * FATOR_URGENCIA
+        nValor := nValor * FATOR_URGENCIA
     EndIf
-Return Round( nValorBase, 2 )
-
+Return Round( nValor, 2 )
 
 Static Function EstimarFrete( cModalidade, nPesoKg, nDistanciaKm )
-    // Estimativa sem urgência — delega para CalcularFrete sem flag de urgência
 Return CalcularFrete( cModalidade, nPesoKg, nDistanciaKm, .F. )
 
 
-// ── Execução de demonstração ────────────────────────────────────────────────────
+// ── Verificação ──────────────────────────────────────────────────────────────
 
 User Function GabaritoFrete()
-    ConOut( "=== Gabarito: Cálculo de Frete Refatorado ===" )
+    Local lOk := .T.
+
+    ConOut( "=== Gabarito T06 — valores esperados ===" )
     ConOut( "" )
 
-    ConOut( "Frete A, 3kg, 100km: "          + cValToChar( CalcularFrete( "A",  3, 100 ) ) )
-    ConOut( "Frete A, 15kg, 200km: "         + cValToChar( CalcularFrete( "A", 15, 200 ) ) )
-    ConOut( "Frete A, 30kg, 300km: "         + cValToChar( CalcularFrete( "A", 30, 300 ) ) )
-    ConOut( "Frete B, 10kg, 150km: "         + cValToChar( CalcularFrete( "B", 10, 150 ) ) )
-    ConOut( "Frete C, 25kg, 400km: "         + cValToChar( CalcularFrete( "C", 25, 400 ) ) )
-    ConOut( "Frete A urgente, 5kg, 100km: "  + cValToChar( CalcularFrete( "A",  5, 100, .T. ) ) )
-    ConOut( "Estimativa A, 3kg, 100km: "     + cValToChar( EstimarFrete( "A", 3, 100 ) ) )
+    // {modalidade, peso, dist, urgente, esperado}
+    Local aCasos := { ;
+        {"A",  3, 100, .F.,  27.0}, ;
+        {"A", 15, 200, .F.,  64.0}, ;
+        {"A", 30, 300, .F., 106.5}, ;
+        {"B", 10, 150, .F.,  68.0}, ;
+        {"C", 25, 400, .F., 214.0}, ;
+        {"A",  5, 100, .T.,  35.1}  ;
+    }
+
+    Local nI      := 0
+    Local nRes    := 0.0
+    Local cStatus := ""
+    For nI := 1 To Len( aCasos )
+        nRes := CalcularFrete( aCasos[nI][1], aCasos[nI][2], aCasos[nI][3], aCasos[nI][4] )
+        If nRes == aCasos[nI][5]
+            cStatus := "OK"
+        Else
+            cStatus := "ERRO — esperado " + cValToChar( aCasos[nI][5] )
+            lOk := .F.
+        EndIf
+        ConOut( "  " + aCasos[nI][1] + " " + cValToChar(aCasos[nI][2]) + "kg " ;
+              + cValToChar(aCasos[nI][3]) + "km: " + cValToChar(nRes) + " [" + cStatus + "]" )
+    Next nI
+
+    ConOut( "" )
+    ConOut( "Estimativa A, 3kg, 100km: " + cValToChar( EstimarFrete( "A", 3, 100 ) ) )
+    ConOut( "" )
+    ConOut( "Todos corretos: " + If( lOk, "SIM", "NÃO" ) )
 Return Nil

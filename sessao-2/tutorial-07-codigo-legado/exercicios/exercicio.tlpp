@@ -1,29 +1,36 @@
 /*
- * EXERCICIO - Tutorial 07: Gestao de Codigo Legado
+ * EXERCICIO - Tutorial 07: Codigo Legado
  *
  * Modulo de calculo de comissoes de vendedores.
  * Status: em producao desde 2020, nunca teve testes, nunca foi refatorado.
  *
- * INSTRUCOES:
- *   1. Escreva "testes de caracterizacao" para a funcao CalcComm abaixo:
- *      testes que documentam o comportamento ATUAL antes de qualquer mudanca.
- *      Use asserts no bloco de execucao ao final do fonte.
- *      Dica: passe valores conhecidos e verifique o retorno. Se o resultado
- *      parecer errado, documente-o assim mesmo.
+ * PASSOS (faça um de cada vez, em ordem):
  *
- *   2. Identifique e anote com "// SMELL:" cada problema que voce encontrar.
- *      Exemplos: magic number, nome obscuro, estado global, logica duplicada,
- *      comentario que mente.
+ *   PASSO 1 — TESTES DE CARACTERIZACAO (10 min)
+ *     No bloco de execucao ao final, escreva testes If/Then para documentar
+ *     o comportamento atual. Rode o arquivo para ver os valores, então
+ *     substitua os ??? pelos valores observados.
+ *     Meta: cobrir pelo menos 5 casos distintos antes de tocar no codigo.
+ *     Importante: chame InicializarDados() antes de cada teste para limpar
+ *     o cache e evitar que resultados anteriores mascarem o comportamento.
  *
- *   3. Refatore o codigo aplicando as tecnicas do tutorial:
- *      - Constantes nomeadas para os magic numbers
- *      - Funcoes com responsabilidade unica
- *      - Eliminar modificacao de estado global dentro de funcao
- *      - Nomes descritivos para parametros e variaveis
- *      - Eliminar logica duplicada
+ *   PASSO 2 — MAPEAR SMELLS (5 min)
+ *     Leia CalcComm e BatchCalc e adicione um comentario // SMELL: antes de
+ *     cada problema encontrado.
+ *     Exemplos: magic number, nome obscuro, estado global, duplicacao,
+ *     comentario desatualizado.
  *
- *   4. Execute seus testes de caracterizacao na versao refatorada.
- *      Se algum assert falhar, voce mudou o comportamento — investigue.
+ *   PASSO 3 — CONSTANTES + NOMES (8 min)
+ *     a) Extraia os magic numbers para #define no topo:
+ *        0.08, 0.05, 0.03, 0.02, 1.1, 1.2, 0.8, 5000
+ *     b) Renomeie os parametros em CalcComm:
+ *        cS → cVendedorId   nR → nReceita   cT → cTipoMeta   nM → nMeta
+ *     Verifique que seus testes do Passo 1 ainda passam.
+ *
+ *   PASSO 4 — ELIMINAR DUPLICACAO (10 min)
+ *     BatchCalc duplica toda a logica de CalcComm em vez de chama-la.
+ *     Altere BatchCalc para chamar CalcComm em vez de repetir o calculo.
+ *     Verifique que seus testes continuam passando.
  *
  * Para compilar/rodar: compile no IDE Totvs ou copie para um fonte ADVPL existente.
  *
@@ -35,11 +42,10 @@
 
 // ── Estado e dados globais ────────────────────────────────────────────────────
 
-Static aCache      := {}  // cache de resultados — modificado dentro de funcao
-Static aVendedores := {}  // simulando tabela de banco
+Static aCache      := {}
+Static aVendedores := {}
 
 Procedure InicializarDados()
-    // Tabela de vendedores (simulando banco de dados)
     aVendedores := { ;
         {"V001", "Ana Paula",   "SR", "SP"}, ;
         {"V002", "Carlos Lima", "JR", "RJ"}, ;
@@ -111,7 +117,6 @@ Function CalcComm( cS, nR, cT, nM )
         EndIf
     EndIf
 
-    // Armazena no cache e retorna
     AAdd( aCache, {cS, Round(nC, 2)} )
     Return Round(nC, 2)
 
@@ -190,33 +195,41 @@ User Function ExercicioT07()
     Local aRes  := {}
     Local nI    := 0
 
+    // -----------------------------------------------------------------------
+    // PASSO 1: escreva seus testes de caracterizacao aqui.
+    // Use InicializarDados() antes de cada teste para limpar o cache.
+    // Rode o arquivo, veja os valores, e substitua ??? pelo resultado.
+    // -----------------------------------------------------------------------
+
+    ConOut("=== Explorando o comportamento atual ===")
+
     InicializarDados()
-
-    // -----------------------------------------------------------------------
-    // ETAPA 1: Escreva aqui seus testes de caracterizacao
-    // Documente o comportamento atual ANTES de refatorar.
-    // Exemplo:
-    //   nRes := CalcComm("V001", 10000, "STD", 8000)
-    //   If nRes <> ???
-    //       ConOut("FALHOU: esperado ???, obtido " + cValToChar(nRes))
-    //   EndIf
-    // -----------------------------------------------------------------------
-
-    ConOut("=== Testes de caracterizacao ===")
-    ConOut("(implemente seus asserts aqui antes de refatorar)")
-    ConOut("")
-
-    // Exemplos de chamadas para explorar o comportamento:
     nRes := CalcComm("V001", 10000, "STD", 8000)
     ConOut("SR, receita=10000, meta=8000, tipo=STD: " + cValToChar(nRes))
 
-    InicializarDados()  // limpa cache antes de nova chamada
+    InicializarDados()
     nRes := CalcComm("V003", 4000, "STD", 8000)
     ConOut("SR, receita=4000,  meta=8000, tipo=STD: " + cValToChar(nRes))
 
     InicializarDados()
+    nRes := CalcComm("V003", 7000, "STD", 8000)
+    ConOut("SR, receita=7000,  meta=8000, tipo=STD: " + cValToChar(nRes))
+
+    InicializarDados()
+    nRes := CalcComm("V002", 6000, "STD", 5000)
+    ConOut("JR, receita=6000,  meta=5000, tipo=STD: " + cValToChar(nRes))
+
+    InicializarDados()
     nRes := CalcComm("V002", 6000, "AGR", 5000)
     ConOut("JR, receita=6000,  meta=5000, tipo=AGR: " + cValToChar(nRes))
+
+    InicializarDados()
+    nRes := CalcComm("V002", 4000, "STD", 5000)
+    ConOut("JR, receita=4000,  meta=5000, tipo=STD: " + cValToChar(nRes))
+
+    InicializarDados()
+    nRes := CalcComm("V999", 10000, "STD", 8000)
+    ConOut("Inexistente V999: " + cValToChar(nRes))
 
     ConOut("")
     ConOut("=== Batch ===")
@@ -229,5 +242,19 @@ User Function ExercicioT07()
     For nI := 1 To Len(aRes)
         ConOut("  " + aRes[nI][1] + ": " + cValToChar(aRes[nI][2]))
     Next nI
+
+    // -----------------------------------------------------------------------
+    // Substitua os ??? e descomente os testes após anotar os valores acima:
+    // -----------------------------------------------------------------------
+    // InicializarDados()
+    // If CalcComm("V001", 10000, "STD", 8000) <> ???
+    //     ConOut("FALHOU: SR >120% da meta")
+    // EndIf
+    // InicializarDados()
+    // If CalcComm("V003", 4000, "STD", 8000) <> ???
+    //     ConOut("FALHOU: SR abaixo do minimo")
+    // EndIf
+    // // ... (repita para os demais casos)
+    // ConOut("[OK] testes de caracterizacao passando")
 
 Return

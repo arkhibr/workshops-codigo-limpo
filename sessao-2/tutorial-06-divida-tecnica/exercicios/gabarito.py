@@ -1,154 +1,91 @@
 """
 GABARITO — Tutorial 06: Dívida Técnica
-Referência: Clean Code, Cap. 17
-Execute: python gabarito.py
+Execute: python3 gabarito.py
 
-Dívidas identificadas e pagas:
-  1. MAGIC_NUMBER — 15.0, 25.0, 40.0, 2.5, 3.2, 4.0, 1.8, 2.1, 2.8, 0.12, 0.18, 0.25, 1.3
-  2. DUPLICAÇÃO   — lógica de cálculo por faixa de peso copiada em calc_frete e estimar
-  3. FUNÇÕES      — calc_frete faz validação de modalidade, cálculo por faixa, soma de km e taxa de urgência
-  4. NOMES        — tp, kg, km, t, urg não revelam intenção; estimar é ambíguo
+Quatro passos aplicados em sequência sobre o código original:
+
+  Passo 1 — Dívidas identificadas:
+    MAGIC_NUMBER  15.0/25.0/40.0 (taxa_base), 2.5/3.2/4.0 (faixa 2),
+                  1.8/2.1/2.8 (faixa 3), 0.12/0.18/0.25 (km), 1.3 (urgência),
+                  5 e 20 (limites de faixa)
+    NOMES         tp, kg, km, t, urg não revelam intenção; estimar é ambíguo
+    DUPLICAÇÃO    corpo idêntico em calc_frete e estimar
+    FUNÇÕES       calc_frete faz: validar modalidade + calcular por faixa de peso
+                  + acrescentar custo de km + aplicar urgência (quatro coisas)
+
+  Passo 2 — constantes extraídas
+  Passo 3 — parâmetros renomeados
+  Passo 4 — _calcular_por_modalidade extraída; estimar_frete chama calcular_frete
 """
 
-# ── Constantes ─────────────────────────────────────────────────────────────────
-# Dívida 1 paga: todos os magic numbers têm nome e estão agrupados por modalidade
-
-# Estrutura de tarifas por modalidade: (taxa_base, custo_por_kg_faixa_1, custo_por_kg_faixa_2, custo_por_km)
-# Faixa 1: 0-5 kg (cobrada pela taxa base)
-# Faixa 2: 5-20 kg (custo adicional por kg)
-# Faixa 3: acima de 20 kg (custo adicional por kg, mais barato por volume)
-
-MODALIDADE_ECONOMICA = "A"
-MODALIDADE_PADRAO = "B"
-MODALIDADE_EXPRESSA = "C"
+# ── Passo 2: constantes nomeadas ─────────────────────────────────────────────
 
 LIMITE_FAIXA_1_KG = 5
 LIMITE_FAIXA_2_KG = 20
+FATOR_URGENCIA    = 1.3
 
-TARIFAS_POR_MODALIDADE = {
-    MODALIDADE_ECONOMICA: {
-        "taxa_base": 15.0,
-        "custo_faixa_2_por_kg": 2.5,
-        "custo_faixa_3_por_kg": 1.8,
-        "custo_por_km": 0.12,
-    },
-    MODALIDADE_PADRAO: {
-        "taxa_base": 25.0,
-        "custo_faixa_2_por_kg": 3.2,
-        "custo_faixa_3_por_kg": 2.1,
-        "custo_por_km": 0.18,
-    },
-    MODALIDADE_EXPRESSA: {
-        "taxa_base": 40.0,
-        "custo_faixa_2_por_kg": 4.0,
-        "custo_faixa_3_por_kg": 2.8,
-        "custo_por_km": 0.25,
-    },
+TARIFAS = {
+    "A": {"taxa_base": 15.0, "custo_faixa_2": 2.5, "custo_faixa_3": 1.8, "custo_km": 0.12},
+    "B": {"taxa_base": 25.0, "custo_faixa_2": 3.2, "custo_faixa_3": 2.1, "custo_km": 0.18},
+    "C": {"taxa_base": 40.0, "custo_faixa_2": 4.0, "custo_faixa_3": 2.8, "custo_km": 0.25},
 }
 
-FATOR_URGENCIA = 1.3  # acréscimo de 30% para entregas urgentes
 
+# ── Passo 4: lógica extraída — zero duplicação ────────────────────────────────
 
-# ── Funções auxiliares ─────────────────────────────────────────────────────────
-# Dívida 3 paga: cada função faz uma única coisa
-
-def _calcular_custo_pelo_peso(peso_kg: float, tarifas: dict) -> float:
-    """Calcula o custo do frete considerando as faixas de peso."""
-    if peso_kg <= LIMITE_FAIXA_1_KG:
-        return tarifas["taxa_base"]
-
-    if peso_kg <= LIMITE_FAIXA_2_KG:
-        excedente_faixa_2 = peso_kg - LIMITE_FAIXA_1_KG
-        return tarifas["taxa_base"] + excedente_faixa_2 * tarifas["custo_faixa_2_por_kg"]
-
-    # Faixa 3: acima de 20 kg
-    custo_faixa_2_completa = (LIMITE_FAIXA_2_KG - LIMITE_FAIXA_1_KG) * tarifas["custo_faixa_2_por_kg"]
-    excedente_faixa_3 = peso_kg - LIMITE_FAIXA_2_KG
-    return (
-        tarifas["taxa_base"]
-        + custo_faixa_2_completa
-        + excedente_faixa_3 * tarifas["custo_faixa_3_por_kg"]
-    )
-
-
-def _calcular_custo_pela_distancia(distancia_km: float, tarifas: dict) -> float:
-    return distancia_km * tarifas["custo_por_km"]
-
-
-# ── Funções públicas ───────────────────────────────────────────────────────────
-# Dívida 2 paga: lógica centralizada em uma única função; calc_frete e estimar_frete
-#               chamam a mesma lógica de cálculo por modalidade
-
-def _calcular_frete_por_modalidade(
-    modalidade: str,
-    peso_kg: float,
-    distancia_km: float,
-) -> float:
-    """Calcula o frete base (sem urgência) para uma modalidade específica."""
-    if modalidade not in TARIFAS_POR_MODALIDADE:
+def _calcular_por_modalidade(modalidade: str, peso_kg: float, distancia_km: float) -> float:
+    if modalidade not in TARIFAS:
         raise ValueError(f"Modalidade inválida: {modalidade}. Use A, B ou C.")
+    t = TARIFAS[modalidade]
+    if peso_kg <= LIMITE_FAIXA_1_KG:
+        custo = t["taxa_base"]
+    elif peso_kg <= LIMITE_FAIXA_2_KG:
+        custo = t["taxa_base"] + (peso_kg - LIMITE_FAIXA_1_KG) * t["custo_faixa_2"]
+    else:
+        custo = (
+            t["taxa_base"]
+            + (LIMITE_FAIXA_2_KG - LIMITE_FAIXA_1_KG) * t["custo_faixa_2"]
+            + (peso_kg - LIMITE_FAIXA_2_KG) * t["custo_faixa_3"]
+        )
+    custo += distancia_km * t["custo_km"]
+    return custo
 
-    tarifas = TARIFAS_POR_MODALIDADE[modalidade]
-    custo_peso = _calcular_custo_pelo_peso(peso_kg, tarifas)
-    custo_distancia = _calcular_custo_pela_distancia(distancia_km, tarifas)
-    return custo_peso + custo_distancia
 
+# ── Passos 3+4: funções públicas com nomes descritivos ───────────────────────
 
-def calcular_frete(
-    modalidade: str,
-    peso_kg: float,
-    distancia_km: float,
-    urgente: bool = False,
-) -> float:
-    """Calcula o valor final do frete, aplicando acréscimo de urgência se solicitado."""
-    # Dívida 4 paga: parâmetros com nomes descritivos (modalidade, peso_kg, distancia_km, urgente)
-    valor_base = _calcular_frete_por_modalidade(modalidade, peso_kg, distancia_km)
-
+def calcular_frete(modalidade: str, peso_kg: float, distancia_km: float, urgente: bool = False) -> float:
+    valor = _calcular_por_modalidade(modalidade, peso_kg, distancia_km)
     if urgente:
-        # Taxa de urgência: 30% de acréscimo — definido em contrato comercial
-        valor_base *= FATOR_URGENCIA
-
-    return round(valor_base, 2)
+        valor *= FATOR_URGENCIA
+    return round(valor, 2)
 
 
 def estimar_frete(modalidade: str, peso_kg: float, distancia_km: float) -> float:
-    """Estimativa de frete sem urgência — alias para calcular_frete sem flag de urgência."""
     return calcular_frete(modalidade, peso_kg, distancia_km, urgente=False)
 
 
-# ── Execução de demonstração ───────────────────────────────────────────────────
+# ── Verificação ──────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
-    print("=== Gabarito: Cálculo de Frete Refatorado ===\n")
-
-    print("Frete A, 3kg, 100km:", calcular_frete("A", 3, 100))
-    print("Frete A, 15kg, 200km:", calcular_frete("A", 15, 200))
-    print("Frete A, 30kg, 300km:", calcular_frete("A", 30, 300))
-    print("Frete B, 10kg, 150km:", calcular_frete("B", 10, 150))
-    print("Frete C, 25kg, 400km:", calcular_frete("C", 25, 400))
-    print("Frete A urgente, 5kg, 100km:", calcular_frete("A", 5, 100, urgente=True))
-    print("Estimativa A, 3kg, 100km:", estimar_frete("A", 3, 100))
-
-    print("\n=== Comparação com versão original (valores devem ser iguais) ===\n")
-    from exercicio import calc_frete, estimar
+    print("=== Gabarito T06 — valores esperados ===\n")
 
     casos = [
-        ("A", 3, 100, False),
-        ("A", 15, 200, False),
-        ("A", 30, 300, False),
-        ("B", 10, 150, False),
-        ("C", 25, 400, False),
-        ("A", 5, 100, True),
+        ("A",  3, 100, False,  27.0),
+        ("A", 15, 200, False,  64.0),
+        ("A", 30, 300, False, 106.5),
+        ("B", 10, 150, False,  68.0),
+        ("C", 25, 400, False, 214.0),
+        ("A",  5, 100, True,   35.1),
     ]
 
-    todos_iguais = True
-    for modalidade, peso, distancia, urgente in casos:
-        original = calc_frete(modalidade, peso, distancia, urg=urgente)
-        refatorado = calcular_frete(modalidade, peso, distancia, urgente=urgente)
-        status = "OK" if original == refatorado else "DIVERGÊNCIA"
-        if status == "DIVERGÊNCIA":
-            todos_iguais = False
-        print(f"  {modalidade} {peso}kg {distancia}km {'urgente' if urgente else '       '}: "
-              f"original={original} refatorado={refatorado} [{status}]")
+    ok = True
+    for modalidade, peso, dist, urgente, esperado in casos:
+        resultado = calcular_frete(modalidade, peso, dist, urgente)
+        status = "OK" if resultado == esperado else f"ERRO — esperado {esperado}"
+        if resultado != esperado:
+            ok = False
+        label = "urgente" if urgente else "       "
+        print(f"  {modalidade} {peso:2}kg {dist:3}km {label}: {resultado} [{status}]")
 
-    print(f"\nTodos os valores batem: {'SIM' if todos_iguais else 'NÃO — verifique a refatoração'}")
+    print(f"\nEstimativa A, 3kg, 100km: {estimar_frete('A', 3, 100)}")
+    print(f"\nTodos corretos: {'SIM' if ok else 'NÃO'}")
