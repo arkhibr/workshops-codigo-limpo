@@ -8,6 +8,9 @@ Todo sistema de médio porte integra APIs que não controlamos: ERPs, gateways d
 
 Padrões estruturais organizam como classes e objetos se compõem. **Adapter** e **Facade** resolvem dois problemas distintos de integração: incompatibilidade de interfaces e complexidade de subsistemas.
 
+<img width="1536" height="1024" alt="image" src="https://github.com/user-attachments/assets/42e99a38-5654-4758-8dea-96796d3a8d26" />
+
+
 ## 2. Conceito Central
 
 ### Adapter — quando a API não pode mudar
