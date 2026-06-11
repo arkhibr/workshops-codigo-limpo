@@ -1,26 +1,63 @@
 /*
  * EQUIVALENTE ADVPL/TLPP — SOLID na Prática
  * Referência: Clean Code + SOLID papers
+ * Ponto de entrada: User Function DemoSOLID
+ *
+ * Limitações da linguagem documentadas abaixo:
+ *   - AdvPL clássico: sem classes, sem interfaces — use funções separadas (SRP)
+ *   - TLPP 4.0+: classes com herança, mas sem interfaces formais — use protocolos
+ *     por convenção de nomenclatura (prefixo 'I')
+ *   - DIP: simule injeção de dependência com codeblocks
+ *   - ISP: segregue via múltiplos codeblocks ou grupos de funções
  */
 
-// ❌ Ruim — SRP+DIP: tudo em uma função
-Static Function ProcessarPedido(cPedidoId, aItens, cClienteId)
+// ============================================================
+// S — SRP: UMA FUNÇÃO, UMA RESPONSABILIDADE
+// ❌ Ruim: ProcessarPedido faz tudo
+// ============================================================
+
+Static Function ProcessarPedidoRuim(cPedidoId, aItens, cClienteId)
     Local nTotal  := 0
     Local nI      := 0
-    Local cEmail  := ""
-    // valida, calcula, envia email e salva — tudo aqui
+    // valida, calcula, salva e envia email — 4 razões para mudar
+    If Empty(cClienteId) .Or. Len(aItens) == 0
+        ConOut("[ERRO] Pedido inválido: " + cPedidoId)
+        Return 0
+    EndIf
     For nI := 1 To Len(aItens)
-        nTotal += aItens[nI][3] * aItens[nI][4]
+        nTotal += aItens[nI][3] * aItens[nI][4]   // preco * quantidade
     Next nI
-    ConOut("Email para " + cClienteId + ": pedido " + cPedidoId)
-    ConOut("BD: salvo pedido " + cPedidoId)
+    nTotal := Round(nTotal * 1.10, 2)              // taxa de imposto embutida
+    ConOut("BD: salvo pedido " + cPedidoId + " total " + cValToChar(nTotal))
+    ConOut("Email para " + cClienteId + ": pedido " + cPedidoId + " confirmado")
 Return nTotal
 
-// ✅ Bom — SRP: funções separadas por responsabilidade
-Static Function ValidarPedido(aItens, cClienteId)
-    Return Len(aItens) > 0 .And. !Empty(cClienteId)
+// ============================================================
+// S — SRP: ✅ Bom — funções separadas por responsabilidade
+// Cada função tem exatamente um motivo para mudar.
+// ============================================================
 
-Static Function CalcularTotalPedido(aItens)
+Static Function ValidarPedido(aItens, cClienteId)
+    // Responsabilidade: apenas regras de negócio
+    Local nI := 0
+    If Empty(cClienteId)
+        ConOut("  [Validação] cliente ausente")
+        Return .F.
+    EndIf
+    If Len(aItens) == 0
+        ConOut("  [Validação] pedido sem itens")
+        Return .F.
+    EndIf
+    For nI := 1 To Len(aItens)
+        If aItens[nI][3] <= 0 .Or. aItens[nI][4] <= 0
+            ConOut("  [Validação] item inválido: " + aItens[nI][2])
+            Return .F.
+        EndIf
+    Next nI
+Return .T.
+
+Static Function CalcularSubtotal(aItens)
+    // Responsabilidade: apenas aritmética
     Local nTotal := 0
     Local nI     := 0
     For nI := 1 To Len(aItens)
@@ -28,35 +65,193 @@ Static Function CalcularTotalPedido(aItens)
     Next nI
 Return Round(nTotal, 2)
 
+Static Function CalcularImposto(aItens)
+    Local nSubtotal := CalcularSubtotal(aItens)
+Return Round(nSubtotal * 0.10, 2)
+
+Static Function CalcularTotal(aItens)
+    // Subtotal + imposto de 10%
+Return Round(CalcularSubtotal(aItens) * 1.10, 2)
+
+Static Function SalvarPedido(cPedidoId, cStatus, cClienteId)
+    // Responsabilidade: apenas persistência
+    ConOut("  [BD] salvo: " + cPedidoId + " → " + cStatus + " (cliente: " + cClienteId + ")")
+Return .T.
+
 Static Function NotificarCliente(cClienteId, cMensagem)
-    ConOut("Email para " + cClienteId + ": " + cMensagem)
+    // Responsabilidade: apenas comunicação
+    ConOut("  [Email] → " + cClienteId + ": " + cMensagem)
 Return .T.
 
-Static Function SalvarPedido(cPedidoId, cStatus)
-    ConOut("BD: salvo " + cPedidoId + " (" + cStatus + ")")
+Static Function NotificarLog(cClienteId, cMensagem)
+    // Alternativa a NotificarCliente — sem SMTP
+    ConOut("  [Log] " + cClienteId + ": " + cMensagem)
 Return .T.
 
-/*
- * Limitação ADVPL: sem injeção de dependência nativa.
- * Simulação com codeblock:
- *   bNotificador := {|cId, cMsg| NotificarCliente(cId, cMsg)}
- *   Eval(bNotificador, "CLI-100", "pedido confirmado")
- * Vantagem: bNotificador pode ser trocado sem alterar o chamador.
- *
- * Nota ISP: interfaces não existem em AdvPL clássico.
- * TLPP 4.0+ tem classes e herança, mas sem interfaces formais —
- * use protocolos implícitos por convenção de nomenclatura.
- */
+// ============================================================
+// O — OCP: ABERTO PARA EXTENSÃO, FECHADO PARA MODIFICAÇÃO
+// Novos formatadores como funções separadas — sem alterar
+// a função de processamento central.
+// ============================================================
 
-// Demo
-Static Function DemoSOLID()
-    Local aItens := {}
-    Local nTotal := 0
-    aAdd(aItens, {"P001", "Webcam HD", 299.90, 1})
-    If ValidarPedido(aItens, "CLI-100")
-        nTotal := CalcularTotalPedido(aItens)
-        SalvarPedido("PED-001", "confirmado")
-        NotificarCliente("CLI-100", "Pedido PED-001 salvo. Total: " + cValToChar(nTotal))
-        ConOut("Total: " + cValToChar(nTotal))
+Static Function FormatarVendas(cPedidoId, cClienteId, nTotal)
+Return "[Vendas] Pedido " + cPedidoId + " | Cliente: " + cClienteId + " | Total: R$" + cValToChar(nTotal)
+
+Static Function FormatarFinanceiro(cPedidoId, aItens, nTotal)
+    Local nSubtotal := CalcularSubtotal(aItens)
+    Local nImposto  := CalcularImposto(aItens)
+Return "[Financeiro] Pedido " + cPedidoId + " | Subtotal: R$" + cValToChar(nSubtotal) + " | Imposto: R$" + cValToChar(nImposto) + " | Total: R$" + cValToChar(nTotal)
+
+Static Function FormatarEstoque(cPedidoId, aItens)
+    Local nI     := 0
+    Local cLinhas := ""
+    For nI := 1 To Len(aItens)
+        cLinhas += "  • " + aItens[nI][2] + " (ref: " + aItens[nI][1] + "): " + cValToChar(aItens[nI][4]) + " un" + Chr(10)
+    Next nI
+Return "[Estoque] Pedido " + cPedidoId + " — movimentação:" + Chr(10) + cLinhas
+
+// ============================================================
+// O — OCP: ProcessarComFormatador usa codeblock para formatar
+// Adicionar novo formatador = novo codeblock, sem alterar esta função.
+// ============================================================
+
+Static Function ProcessarComFormatador(cPedidoId, aItens, cClienteId, bFormatador, bNotificador, bRepositorio)
+    Local nTotal   := 0
+    Local cRelatorio := ""
+    If !ValidarPedido(aItens, cClienteId)
+        Return ""
     EndIf
+    nTotal    := CalcularTotal(aItens)
+    cRelatorio := Eval(bFormatador, cPedidoId, aItens, nTotal, cClienteId)
+    Eval(bRepositorio, cPedidoId, "confirmado", cClienteId)
+    Eval(bNotificador, cClienteId, "Pedido " + cPedidoId + " processado. Total: R$" + cValToChar(nTotal))
+Return cRelatorio
+
+// ============================================================
+// L — LSP: FUNÇÕES QUE ACEITAM QUALQUER "SUBTIPO" DE PEDIDO
+// Em AdvPL, o "subtipo" é um array com o mesmo layout.
+// A função ConfirmarEExibir deve funcionar para todos.
+// ============================================================
+
+Static Function ConfirmarEExibir(aPedido)
+    // aPedido = {cId, cClienteId, cStatus, nPrioridade (opcional)}
+    // Contrato: após a chamada, aPedido[3] deve ser "confirmado"
+    aPedido[3] := "confirmado"
+    If Len(aPedido) >= 4 .And. aPedido[4] > 0
+        ConOut("  [Fila] Pedido " + aPedido[1] + " inserido com prioridade " + cValToChar(aPedido[4]))
+    EndIf
+    ConOut("  Pedido " + aPedido[1] + " → status: " + aPedido[3])
+Return .T.
+
+// ============================================================
+// I — ISP: SEGREGAÇÃO VIA GRUPOS DE CODEBLOCKS
+// Em vez de uma interface gorda, use grupos de codeblocks
+// independentes. ProcessadorSimples recebe apenas os dois
+// que precisa — sem código morto.
+// ============================================================
+
+Static Function CriarProcessadorSimples(aItens, cClienteId)
+    // Retorna apenas os codeblocks necessários — sem exportar_csv, exportar_pdf
+    Local oSimples := {}
+    aAdd(oSimples, {|| ValidarPedido(aItens, cClienteId) })     // IValidavel
+    aAdd(oSimples, {|| CalcularSubtotal(aItens)          })     // ICalculavel
+Return oSimples
+
+Static Function ExportarCsv(aItens)
+    // IArquivavel — só disponível para ProcessadorCompleto
+    Local nI     := 0
+    Local cCsv   := "produto_id,descricao,preco,quantidade" + Chr(10)
+    For nI := 1 To Len(aItens)
+        cCsv += aItens[nI][1] + "," + aItens[nI][2] + ","
+             + cValToChar(aItens[nI][3]) + "," + cValToChar(aItens[nI][4]) + Chr(10)
+    Next nI
+Return cCsv
+
+Static Function ArquivarPedido(cPedidoId)
+    // IArquivavel
+    ConOut("  [Arquivo] Pedido " + cPedidoId + " arquivado em storage frio")
+Return .T.
+
+// ============================================================
+// D — DIP: INJEÇÃO DE DEPENDÊNCIA VIA CODEBLOCKS
+// bNotificador pode ser trocado sem alterar ProcessarComFormatador.
+// ============================================================
+
+Static Function DemoSOLID_DIP(aItens, cClienteId, cPedidoId)
+    Local bEmail     := {|cId, cMsg| NotificarCliente(cId, cMsg) }
+    Local bLog       := {|cId, cMsg| NotificarLog(cId, cMsg)     }
+    Local bRepoBD    := {|cId, cSt, cCli| SalvarPedido(cId, cSt, cCli) }
+    Local bFmtVendas := {|cId, aIt, nTot, cCli| FormatarVendas(cId, cCli, nTot) }
+
+    ConOut("  [Produção - Email]:")
+    ConOut("  " + ProcessarComFormatador(cPedidoId, aItens, cClienteId, bFmtVendas, bEmail, bRepoBD))
+    ConOut("  [Teste - Log]:")
+    ConOut("  " + ProcessarComFormatador(cPedidoId + "-T", aItens, cClienteId, bFmtVendas, bLog, bRepoBD))
+Return
+
+// ============================================================
+// DEMONSTRAÇÃO — ponto de entrada
+// ============================================================
+
+User Function DemoSOLID()
+    Local aItens  := {}
+    Local cPedId  := "PED-001"
+    Local cCliId  := "CLI-100"
+
+    aAdd(aItens, {"P001", "Webcam HD",  299.90, 1})
+    aAdd(aItens, {"P002", "Cabo USB-C",  49.90, 2})
+
+    ConOut("=== ADVPL/TLPP — SOLID na Prática ===")
+    ConOut("")
+
+    // ── S — SRP ──────────────────────────────────────────────
+    ConOut("── S — SRP: cada função tem uma responsabilidade ──────")
+    If ValidarPedido(aItens, cCliId)
+        ConOut("  Subtotal: R$" + cValToChar(CalcularSubtotal(aItens)))
+        ConOut("  Imposto:  R$" + cValToChar(CalcularImposto(aItens)))
+        ConOut("  Total:    R$" + cValToChar(CalcularTotal(aItens)))
+        SalvarPedido(cPedId, "confirmado", cCliId)
+        NotificarCliente(cCliId, "Pedido " + cPedId + " registrado")
+    EndIf
+
+    // ── O — OCP ──────────────────────────────────────────────
+    ConOut("")
+    ConOut("── O — OCP: novos formatadores sem alterar ProcessarComFormatador ──")
+    Local bRepoBD := {|cId, cSt, cCli| SalvarPedido(cId, cSt, cCli) }
+    Local bLog    := {|cId, cMsg| NotificarLog(cId, cMsg) }
+    Local aFmts   := {}
+    aAdd(aFmts, {"vendas",      {|cId, aIt, nTot, cCli| FormatarVendas(cId, cCli, nTot)       }})
+    aAdd(aFmts, {"financeiro",  {|cId, aIt, nTot, cCli| FormatarFinanceiro(cId, aIt, nTot)    }})
+    aAdd(aFmts, {"estoque",     {|cId, aIt, nTot, cCli| FormatarEstoque(cId, aIt)             }})
+    Local nF := 0
+    For nF := 1 To Len(aFmts)
+        ConOut("")
+        ConOut("  [" + aFmts[nF][1] + "] " + ProcessarComFormatador(cPedId, aItens, cCliId, aFmts[nF][2], bLog, bRepoBD))
+    Next nF
+
+    // ── L — LSP ──────────────────────────────────────────────
+    ConOut("")
+    ConOut("── L — LSP: todos os 'subtipos' de pedido são confirmáveis ──")
+    Local aPedBase     := {cPedId,      cCliId,   "pendente", 0}
+    Local aPedAmostra  := {cPedId+"-A", cCliId,   "pendente", 0}
+    Local aPedPriority := {cPedId+"-P", cCliId,   "pendente", 3}
+    ConfirmarEExibir(aPedBase)
+    ConfirmarEExibir(aPedAmostra)
+    ConfirmarEExibir(aPedPriority)
+
+    // ── I — ISP ──────────────────────────────────────────────
+    ConOut("")
+    ConOut("── I — ISP: ProcessadorSimples usa 2 codeblocks, sem código morto ──")
+    Local oSimples := CriarProcessadorSimples(aItens, cCliId)
+    ConOut("  validar=" + IIF(Eval(oSimples[1]), "true", "false") + ", calcular=R$" + cValToChar(Eval(oSimples[2])))
+    // ProcessadorSimples não tem ExportarCsv nem ArquivarPedido — zero código morto
+    ConOut("  [Completo] CSV:")
+    ConOut(ExportarCsv(aItens))
+    ArquivarPedido(cPedId)
+
+    // ── D — DIP ──────────────────────────────────────────────
+    ConOut("")
+    ConOut("── D — DIP: trocar Email por Log via codeblock ──")
+    DemoSOLID_DIP(aItens, cCliId, cPedId)
+
 Return
