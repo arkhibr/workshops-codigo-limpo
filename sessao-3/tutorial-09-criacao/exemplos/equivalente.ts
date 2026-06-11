@@ -186,6 +186,65 @@ class ConstruirBoleto {
 }
 
 
+// ─────────────────────────────────────────────────────────────────────────────
+// SINGLETON — registro central, instância única
+// ─────────────────────────────────────────────────────────────────────────────
+
+type FabricaFnTS = (dados: Record<string, unknown>) => DocumentoCobranca;
+
+class RegistroDocumentos {
+    private static instancia: RegistroDocumentos | null = null;
+    private registro: Map<string, FabricaFnTS> = new Map();
+
+    private constructor() {}
+
+    static getInstance(): RegistroDocumentos {
+        if (!RegistroDocumentos.instancia) {
+            RegistroDocumentos.instancia = new RegistroDocumentos();
+        }
+        return RegistroDocumentos.instancia;
+    }
+
+    registrar(tipo: string, fabrica: FabricaFnTS): void {
+        this.registro.set(tipo, fabrica);
+    }
+
+    criar(tipo: string, dados: Record<string, unknown>): DocumentoCobranca {
+        const fabrica = this.registro.get(tipo);
+        if (!fabrica) {
+            const disponiveis = [...this.registro.keys()].sort().join(", ");
+            throw new Error(`Tipo '${tipo}' não registrado. Disponíveis: ${disponiveis}`);
+        }
+        return fabrica(dados);
+    }
+
+    tiposRegistrados(): string[] {
+        return [...this.registro.keys()].sort();
+    }
+
+    static resetar(): void {
+        RegistroDocumentos.instancia = null;
+    }
+}
+
+class ProcessadorDocumento {
+    // DIP: recebe RegistroDocumentos via construtor
+    // — não chama RegistroDocumentos.getInstance() internamente
+    constructor(private readonly registro: RegistroDocumentos) {}
+
+    processar(tipo: string, dados: Record<string, unknown>): string {
+        const doc = this.registro.criar(tipo, dados);
+        const resultado = doc.descricao();
+        console.log(`  [Processado] ${resultado}`);
+        return resultado;
+    }
+
+    listarTipos(): string[] {
+        return this.registro.tiposRegistrados();
+    }
+}
+
+
 // ─── Demo ─────────────────────────────────────────────────────────────────────
 
 console.log("=== Equivalente TypeScript — Padrões de Criação ===\n");
@@ -230,4 +289,40 @@ try {
     console.log("FALHOU: deveria rejeitar boleto sem vencimento");
 } catch (e) {
     console.log(`OK: Builder rejeita boleto incompleto — ${(e as Error).message}`);
+}
+
+console.log("\n--- ✅ Bom — Singleton + SOLID ---");
+
+const reg1 = RegistroDocumentos.getInstance();
+const reg2 = RegistroDocumentos.getInstance();
+console.log(reg1 === reg2 ? "OK: Singleton — mesma instância" : "FALHOU: instâncias diferentes");
+
+reg1.registrar("boleto", (d) => new Boleto(
+    d["valor"] as number, d["vencimento"] as string, d["beneficiario"] as string,
+    (d["codigoBarras"] as string) ?? "0000.00000 00000.000000"
+));
+reg1.registrar("pix", (d) => new Pix(
+    d["valor"] as number, d["vencimento"] as string, d["beneficiario"] as string,
+    (d["chavePix"] as string) ?? "chave@exemplo.com.br"
+));
+
+// DIP: processador recebe o registro via construtor — não chama getInstance()
+const processador = new ProcessadorDocumento(reg1);
+console.log(`Tipos: ${processador.listarTipos().join(", ")}`);
+processador.processar("boleto", {
+    valor: 500.0, vencimento: "2026-09-01",
+    beneficiario: "CLI-500", codigoBarras: "5555.55555 55555.555555"
+});
+
+// Teste: registro isolado
+RegistroDocumentos.resetar();
+const registroTeste = RegistroDocumentos.getInstance();
+registroTeste.registrar("boleto", (d) => new Boleto(
+    d["valor"] as number, d["vencimento"] as string, d["beneficiario"] as string, ""
+));
+const processadorTeste = new ProcessadorDocumento(registroTeste);
+try {
+    processadorTeste.processar("pix", { valor: 10.0, vencimento: "2026-09-01", beneficiario: "X", chavePix: "x" });
+} catch (e) {
+    console.log(`OK: processador de teste isolado — ${(e as Error).message}`);
 }

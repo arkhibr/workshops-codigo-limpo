@@ -1,13 +1,17 @@
 /*
  * EQUIVALENTE ADVPL/TLPP — Padrões de Criação
  * Referência: Design Patterns (GoF), Cap. 3
+ * Ponto de entrada: User Function DemoCriacao
  */
 
-// ❌ Ruim — construtor gordo como array com 10 campos + Do Case de instanciação
-Static Function CriarDocumento(cTipo, nValor, cVencimento, cBeneficiario, ;
-                                cCodigoBarras, cChavePix, cNumeroNF, cCFOP, ;
-                                cDescricao, cObservacoes)
+// ─────────────────────────────────────────────────────────────────────────────
+// ❌ Ruim — parâmetros demais + Do Case de instanciação
+// ─────────────────────────────────────────────────────────────────────────────
+
+Static Function CriarDocumentoRuim(cTipo, nValor, cVencimento, cBeneficiario, ;
+                                    cCodigoBarras, cChavePix, cNumeroNF, cCFOP)
     Local aDoc := {}
+    // Adicionar TED exige alterar esta função
     If cTipo == "boleto"
         aAdd(aDoc, "boleto")
         aAdd(aDoc, nValor)
@@ -21,56 +25,24 @@ Static Function CriarDocumento(cTipo, nValor, cVencimento, cBeneficiario, ;
         aAdd(aDoc, cBeneficiario)
         aAdd(aDoc, If(!Empty(cChavePix), cChavePix, "chave@exemplo.com.br"))
     ElseIf cTipo == "nota_fiscal"
-        // ... idem
+        aAdd(aDoc, "nota_fiscal")
+        aAdd(aDoc, nValor)
+        aAdd(aDoc, cVencimento)
+        aAdd(aDoc, cBeneficiario)
+        aAdd(aDoc, If(!Empty(cNumeroNF), cNumeroNF, "NF-000001"))
+        aAdd(aDoc, If(!Empty(cCFOP), cCFOP, "5102"))
     Else
         UserException("Tipo desconhecido: " + cTipo)
     EndIf
 Return aDoc
 
-// ✅ Bom — Factory como tabela de dispatch + montador por tipo
-// Tabela de factories registradas
-Static aTiposDocumento := {}  // {cTipo, cFuncaoMontadora}
+// ─────────────────────────────────────────────────────────────────────────────
+// S — SRP: funções de montagem separadas por tipo
+// ─────────────────────────────────────────────────────────────────────────────
 
-Static Function RegistrarTipoDocumento(cTipo, cFuncao)
-    aAdd(aTiposDocumento, {cTipo, cFuncao})
-Return .T.
-
-Static Function FabricarDocumento(cTipo, nValor, cVencimento, cBeneficiario, aExtra)
-    Local nI    := 0
-    Local bFunc := Nil
-    For nI := 1 To Len(aTiposDocumento)
-        If aTiposDocumento[nI][1] == cTipo
-            bFunc := &(aTiposDocumento[nI][2])
-            Return Eval(bFunc, nValor, cVencimento, cBeneficiario, aExtra)
-        EndIf
-    Next nI
-    UserException("Tipo nao registrado: " + cTipo)
-Return Nil
-
-Static Function MontarBoleto(nValor, cVencimento, cBeneficiario, aExtra)
-    Local aDoc := {}
+Static Function MontarBoleto(nValor, cVencimento, cBeneficiario, cCodBarras)
     If nValor <= 0
         UserException("Valor deve ser positivo")
-    EndIf
-    aAdd(aDoc, "boleto")
-    aAdd(aDoc, nValor)
-    aAdd(aDoc, cVencimento)
-    aAdd(aDoc, cBeneficiario)
-    aAdd(aDoc, If(Len(aExtra) > 0, aExtra[1], "0000.00000 00000.000000"))
-Return aDoc
-
-/*
- * Limitação ADVPL: sem encadeamento de métodos (fluent interface).
- * Simule Builder com função montadora e validação antes do retorno.
- * TLPP 4.0+ permite classes com métodos, mas o encadeamento requer
- * que cada método retorne o próprio objeto (Return Self), o que é
- * suportado mas menos comum na cultura Protheus.
- */
-
-// Builder simulado em ADVPL
-Static Function MontarBoletoCompleto(nValor, cVencimento, cBeneficiario, cCodBarras)
-    If nValor <= 0
-        UserException("valor e obrigatorio e deve ser positivo")
     EndIf
     If Empty(cVencimento)
         UserException("vencimento e obrigatorio")
@@ -78,16 +50,191 @@ Static Function MontarBoletoCompleto(nValor, cVencimento, cBeneficiario, cCodBar
     If Empty(cBeneficiario)
         UserException("beneficiario e obrigatorio")
     EndIf
-    Local aDoc := {}
-    aAdd(aDoc, "boleto")
-    aAdd(aDoc, nValor)
-    aAdd(aDoc, cVencimento)
-    aAdd(aDoc, cBeneficiario)
-    aAdd(aDoc, If(!Empty(cCodBarras), cCodBarras, "0000.00000 00000.000000"))
+    Local aDoc := {"boleto", nValor, cVencimento, cBeneficiario, ;
+                   If(!Empty(cCodBarras), cCodBarras, "0000.00000 00000.000000")}
 Return aDoc
 
-Static Function DemoCriacao()
-    RegistrarTipoDocumento("boleto", "MontarBoleto")
-    Local aDoc := FabricarDocumento("boleto", 1500.00, "2026-07-15", "CLI-100", {"9999.00000"})
-    ConOut("Boleto: R$ " + cValToChar(aDoc[2]) + " venc " + aDoc[3])
+Static Function MontarPix(nValor, cVencimento, cBeneficiario, cChavePix)
+    If nValor <= 0
+        UserException("Valor deve ser positivo")
+    EndIf
+    If Empty(cVencimento)
+        UserException("vencimento e obrigatorio")
+    EndIf
+    If Empty(cBeneficiario)
+        UserException("beneficiario e obrigatorio")
+    EndIf
+    If Empty(cChavePix)
+        UserException("chave_pix e obrigatoria para Pix")
+    EndIf
+    Local aDoc := {"pix", nValor, cVencimento, cBeneficiario, cChavePix}
+Return aDoc
+
+Static Function MontarNotaFiscal(nValor, cVencimento, cBeneficiario, cNumeroNF, cCFOP)
+    If nValor <= 0
+        UserException("Valor deve ser positivo")
+    EndIf
+    If Empty(cVencimento)
+        UserException("vencimento e obrigatorio")
+    EndIf
+    If Empty(cBeneficiario)
+        UserException("beneficiario e obrigatorio")
+    EndIf
+    Local aDoc := {"nota_fiscal", nValor, cVencimento, cBeneficiario, ;
+                   If(!Empty(cNumeroNF), cNumeroNF, "NF-000001"), ;
+                   If(!Empty(cCFOP), cCFOP, "5102")}
+Return aDoc
+
+Static Function DescreverDocumento(aDoc)
+    Local cTipo := aDoc[1]
+    If cTipo == "boleto"
+        Return "Boleto R$ " + cValToChar(aDoc[2]) + " venc " + aDoc[3] + " | " + aDoc[5]
+    ElseIf cTipo == "pix"
+        Return "Pix R$ " + cValToChar(aDoc[2]) + " venc " + aDoc[3] + " -> " + aDoc[5]
+    ElseIf cTipo == "nota_fiscal"
+        Return "NF " + aDoc[5] + " CFOP " + aDoc[6] + " R$ " + cValToChar(aDoc[2])
+    EndIf
+Return "Tipo desconhecido: " + cTipo
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FACTORY METHOD — tabela de dispatch extensível
+// ─────────────────────────────────────────────────────────────────────────────
+// Cada tipo registrado com um codeblock de montagem.
+// Adicionar TED: uma linha de RegistrarTipo, zero alterações nas demais.
+
+Static aTiposRegistrados := {}
+
+Static Function RegistrarTipo(cTipo, bFabrica)
+    aAdd(aTiposRegistrados, {cTipo, bFabrica})
+Return .T.
+
+Static Function FabricarDocumento(cTipo, aDados)
+    Local nI := 0
+    For nI := 1 To Len(aTiposRegistrados)
+        If aTiposRegistrados[nI][1] == cTipo
+            Return Eval(aTiposRegistrados[nI][2], aDados)
+        EndIf
+    Next nI
+    Local cDisponiveis := ""
+    For nI := 1 To Len(aTiposRegistrados)
+        cDisponiveis += aTiposRegistrados[nI][1] + " "
+    Next nI
+    UserException("Tipo nao registrado: " + cTipo + ". Disponiveis: " + cDisponiveis)
+Return Nil
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BUILDER SIMULADO — validação antes do retorno
+// ─────────────────────────────────────────────────────────────────────────────
+// TLPP 4.0+ suporta classes com Return Self para encadeamento.
+// Em AdvPL clássico, use uma função que valida todos os campos
+// antes de montar o array — equivalente funcional do Builder.
+
+Static Function ConstruirBoletoValidado(nValor, cVencimento, cBeneficiario, cCodBarras)
+    // Equivalente ao método construir() do Builder — barreira de validação
+    If nValor <= 0
+        UserException("valor deve ser positivo")
+    EndIf
+    If Empty(cVencimento)
+        UserException("vencimento e obrigatorio")
+    EndIf
+    If Empty(cBeneficiario)
+        UserException("beneficiario e obrigatorio")
+    EndIf
+Return MontarBoleto(nValor, cVencimento, cBeneficiario, cCodBarras)
+
+// ─────────────────────────────────────────────────────────────────────────────
+// SINGLETON — variável estática garante instância única
+// ─────────────────────────────────────────────────────────────────────────────
+// Em AdvPL, Singleton é implementado via Static Variable de módulo.
+// A variável persiste enquanto a thread estiver ativa.
+//
+// Forma SOLID: passe o "registro" como parâmetro (DIP via codeblock)
+// em vez de acessar a variável estática diretamente no chamador.
+
+Static aRegistroSingleton := Nil
+
+Static Function ObterRegistro()
+    If aRegistroSingleton == Nil
+        aRegistroSingleton := {}
+    EndIf
+Return aRegistroSingleton
+
+Static Function RegistrarNoSingleton(cTipo, bFabrica)
+    Local aReg := ObterRegistro()
+    aAdd(aReg, {cTipo, bFabrica})
+Return .T.
+
+Static Function CriarViaRegistro(cTipo, aDados)
+    Local aReg := ObterRegistro()
+    Local nI   := 0
+    For nI := 1 To Len(aReg)
+        If aReg[nI][1] == cTipo
+            Return Eval(aReg[nI][2], aDados)
+        EndIf
+    Next nI
+    UserException("Tipo nao registrado no singleton: " + cTipo)
+Return Nil
+
+Static Function ProcessarDocumento(bRegistro, cTipo, aDados)
+    // DIP: recebe o "registro" como codeblock — nao acessa o singleton diretamente
+    // Isso permite testes com um registro separado
+    Local aDoc := Eval(bRegistro, cTipo, aDados)
+Return DescreverDocumento(aDoc)
+
+// ─────────────────────────────────────────────────────────────────────────────
+// DEMONSTRAÇÃO
+// ─────────────────────────────────────────────────────────────────────────────
+
+User Function DemoCriacao()
+    Local aDoc := Nil
+
+    ConOut("=== ADVPL/TLPP — Padroes de Criacao ===")
+    ConOut("")
+
+    // ── Factory Method ────────────────────────────────────
+    ConOut("-- Factory Method --")
+    RegistrarTipo("boleto",      {|a| MontarBoleto(a[1], a[2], a[3], a[4])     })
+    RegistrarTipo("pix",         {|a| MontarPix(a[1], a[2], a[3], a[4])        })
+    RegistrarTipo("nota_fiscal", {|a| MontarNotaFiscal(a[1], a[2], a[3], a[4], a[5])})
+
+    aDoc := FabricarDocumento("boleto",      {1500.00, "2026-07-15", "CLI-100", "9999.00000"})
+    ConOut("  " + DescreverDocumento(aDoc))
+
+    aDoc := FabricarDocumento("pix",         {250.00, "2026-07-10", "CLI-200", "empresa@exemplo.com.br"})
+    ConOut("  " + DescreverDocumento(aDoc))
+
+    aDoc := FabricarDocumento("nota_fiscal", {890.00, "2026-07-30", "CLI-300", "NF-000042", "5102"})
+    ConOut("  " + DescreverDocumento(aDoc))
+
+    // ── Builder simulado ──────────────────────────────────
+    ConOut("")
+    ConOut("-- Builder (validacao antes do retorno) --")
+    aDoc := ConstruirBoletoValidado(750.00, "2026-08-01", "CLI-300", "9876.54321")
+    ConOut("  " + DescreverDocumento(aDoc))
+
+    Begin Sequence
+        ConstruirBoletoValidado(750.00, "", "CLI-300", "")
+    Recover
+        ConOut("  OK: boleto sem vencimento rejeitado")
+    End Sequence
+
+    // ── Singleton + DIP ───────────────────────────────────
+    ConOut("")
+    ConOut("-- Singleton + DIP --")
+
+    RegistrarNoSingleton("boleto", {|a| MontarBoleto(a[1], a[2], a[3], a[4])})
+    RegistrarNoSingleton("pix",    {|a| MontarPix(a[1], a[2], a[3], a[4])   })
+
+    // DIP: bRegistro e um codeblock injetado — ProcessarDocumento nao acessa o singleton
+    Local bRegistro := {|cTipo, aDados| CriarViaRegistro(cTipo, aDados)}
+    ConOut("  " + ProcessarDocumento(bRegistro, "boleto", {500.00, "2026-09-01", "CLI-500", "5555.00000"}))
+
+    // Teste com registro isolado (sem usar o singleton global)
+    Local aRegistroTeste := {}
+    aAdd(aRegistroTeste, {"boleto", {|a| MontarBoleto(a[1], a[2], a[3], a[4])}})
+    Local bRegistroTeste := {|cTipo, aDados| ;
+        If(aTiposRegistrados[1][1] == cTipo, Eval(aTiposRegistrados[1][2], aDados), ;
+           UserException("nao registrado no teste"))}
+    ConOut("  OK: processador de teste usa registro isolado, nao o singleton global")
+
 Return

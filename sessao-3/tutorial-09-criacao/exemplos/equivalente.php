@@ -229,6 +229,80 @@ class ConstruirBoleto
 }
 
 
+// ─────────────────────────────────────────────────────────────────────────────
+// SINGLETON — registro central, instância única
+// ─────────────────────────────────────────────────────────────────────────────
+//
+// Singleton controla QUANTAS instâncias existem (uma).
+// SOLID controla O QUE cada classe faz e como se relaciona com outras.
+// A forma SOLID de usar Singleton é injetá-lo via DIP — o consumidor
+// não chama getInstance() internamente; recebe via construtor.
+
+class RegistroDocumentos
+{
+    private static ?self $instancia = null;
+
+    /** @var array<string, callable> */
+    private array $registro = [];
+
+    private function __construct() {}
+
+    public static function getInstance(): static
+    {
+        if (static::$instancia === null) {
+            static::$instancia = new static();
+        }
+        return static::$instancia;
+    }
+
+    public function registrar(string $tipo, callable $fabrica): void
+    {
+        $this->registro[$tipo] = $fabrica;
+    }
+
+    public function criar(string $tipo, array $dados): DocumentoCobranca
+    {
+        if (!isset($this->registro[$tipo])) {
+            $disponiveis = implode(', ', array_keys($this->registro));
+            throw new \InvalidArgumentException(
+                "Tipo '$tipo' não registrado. Disponíveis: $disponiveis"
+            );
+        }
+        return ($this->registro[$tipo])($dados);
+    }
+
+    public function tiposRegistrados(): array
+    {
+        return array_keys($this->registro);
+    }
+
+    public static function resetar(): void
+    {
+        static::$instancia = null;
+    }
+}
+
+class ProcessadorDocumento
+{
+    // DIP: recebe RegistroDocumentos via construtor
+    // — não chama RegistroDocumentos::getInstance() internamente
+    public function __construct(private readonly RegistroDocumentos $registro) {}
+
+    public function processar(string $tipo, array $dados): string
+    {
+        $doc = $this->registro->criar($tipo, $dados);
+        $resultado = $doc->descricao();
+        echo "  [Processado] {$resultado}" . PHP_EOL;
+        return $resultado;
+    }
+
+    public function listarTipos(): array
+    {
+        return $this->registro->tiposRegistrados();
+    }
+}
+
+
 // ─── Demo ─────────────────────────────────────────────────────────────────────
 
 echo "=== Equivalente PHP 8.1+ — Padrões de Criação ===" . PHP_EOL . PHP_EOL;
@@ -273,4 +347,40 @@ try {
     echo "FALHOU: deveria rejeitar boleto sem vencimento" . PHP_EOL;
 } catch (\RuntimeException $e) {
     echo "OK: Builder rejeita boleto incompleto — {$e->getMessage()}" . PHP_EOL;
+}
+
+echo PHP_EOL . "--- ✅ Bom — Singleton + SOLID ---" . PHP_EOL;
+
+$registro1 = RegistroDocumentos::getInstance();
+$registro2 = RegistroDocumentos::getInstance();
+echo ($registro1 === $registro2 ? "OK: Singleton — mesma instância" : "FALHOU: instâncias diferentes") . PHP_EOL;
+
+$registro1->registrar('boleto', fn(array $d) => new Boleto(
+    $d['valor'], $d['vencimento'], $d['beneficiario'],
+    $d['codigo_barras'] ?? '0000.00000 00000.000000'
+));
+$registro1->registrar('pix', fn(array $d) => new Pix(
+    $d['valor'], $d['vencimento'], $d['beneficiario'],
+    $d['chave_pix'] ?? 'chave@exemplo.com.br'
+));
+
+// DIP: processador recebe o registro via construtor — não chama getInstance()
+$processador = new ProcessadorDocumento($registro1);
+echo implode(', ', $processador->listarTipos()) . PHP_EOL;
+$processador->processar('boleto', [
+    'valor' => 500.00, 'vencimento' => '2026-09-01',
+    'beneficiario' => 'CLI-500', 'codigo_barras' => '5555.55555 55555.555555'
+]);
+
+// Teste: registro isolado — ProcessadorDocumento não sabe que o global é Singleton
+RegistroDocumentos::resetar();
+$registroTeste = RegistroDocumentos::getInstance();
+$registroTeste->registrar('boleto', fn(array $d) => new Boleto(
+    $d['valor'], $d['vencimento'], $d['beneficiario'], ''
+));
+$processadorTeste = new ProcessadorDocumento($registroTeste);
+try {
+    $processadorTeste->processar('pix', ['valor' => 10.0, 'vencimento' => '2026-09-01', 'beneficiario' => 'X', 'chave_pix' => 'x']);
+} catch (\InvalidArgumentException $e) {
+    echo "OK: processador de teste isolado — {$e->getMessage()}" . PHP_EOL;
 }
