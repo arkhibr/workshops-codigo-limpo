@@ -2,6 +2,9 @@
 
 > Referência: Gang of Four, *Design Patterns*, Cap. 5 — Behavioral Patterns
 
+<img width="1672" height="941" alt="image" src="https://github.com/user-attachments/assets/bf78ed13-c75a-4d51-ae04-aa05095ee7a8" />
+
+
 ## 1. Contexto e Motivação
 
 Dois padrões para eliminar duplicação e tornar o código extensível sem alterar o que já funciona.
