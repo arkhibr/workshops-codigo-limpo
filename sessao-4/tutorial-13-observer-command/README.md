@@ -2,7 +2,7 @@
 
 > Referência: Gang of Four, *Design Patterns*, Cap. 5 — Behavioral Patterns
 
-<img width="1672" height="941" alt="image" src="https://github.com/user-attachments/assets/bf78ed13-c75a-4d51-ae04-aa05095ee7a8" />
+<img width="1672" height="941" alt="image" src="https://github.com/user-attachments/assets/5b0a2113-6bdd-4c91-8873-7ab9bb7501bd" />
 
 ## 1. Contexto e Motivação
 
