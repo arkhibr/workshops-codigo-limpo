@@ -2,6 +2,9 @@
 
 > Referência: spec-first / plan-first na geração de código com modelos de fronteira
 
+<img width="1448" height="1086" alt="image" src="https://github.com/user-attachments/assets/9bd1af2e-f6f9-40ce-9d5b-12e936021d04" />
+
+
 ---
 
 ## 1. Contexto e Motivação
