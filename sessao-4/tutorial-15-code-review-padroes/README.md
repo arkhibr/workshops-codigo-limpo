@@ -1,6 +1,9 @@
 # Tutorial 15 — Code Review Orientado a Padrões (Âncora)
 
-> Este é o tutorial de encerramento do Tema 2. Integra os conceitos de T16–T22.
+> Este é o tutorial de encerramento do Tema 2. (SOLID e Design Patterns)
+
+<img width="1055" height="1491" alt="image" src="https://github.com/user-attachments/assets/ba979ec6-c9d5-43aa-b00a-1d17a6520d58" />
+
 
 ## Objetivo
 
