@@ -4,6 +4,9 @@
 
 ---
 
+<img width="1448" height="1086" alt="image" src="https://github.com/user-attachments/assets/94e77b4b-6e45-47e6-b1fd-1b7e0157a88d" />
+
+
 ## 1. Contexto e Motivação
 
 Em 2026, os modelos de fronteira — Claude Opus 4.8, OpenAI Codex, Gemini — geram código
