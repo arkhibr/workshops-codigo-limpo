@@ -143,7 +143,7 @@ Use estas perguntas ao revisar qualquer código gerado por IA:
 - [ ] Todos os identificadores estão em português (variáveis, funções, classes, parâmetros)?
 - [ ] A estrutura de erro segue o padrão do repositório (exceções, não dicionários de resultado)?
 - [ ] Entidades usam `@dataclass` e limites de negócio têm constantes nomeadas?
-- [ ] A estrutura do módulo (plana vs. layered) é consistente com as sessões anteriores?
+
 
 ---
 
