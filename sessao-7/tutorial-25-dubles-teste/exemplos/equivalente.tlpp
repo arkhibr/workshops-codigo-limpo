@@ -1,0 +1,97 @@
+// equivalente.tlpp — Dublês de Teste em PROBAT
+// Limitação ADVPL: sem framework de mocking — o double é sempre uma classe/
+// estrutura escrita manualmente que implementa o mesmo "contrato" por convenção.
+#include 'tlpp-core.th'
+#include 'tlpp-probat.th'
+
+namespace test.pagamento
+using namespace tlpp.probat
+
+// "Contrato" por convenção: qualquer classe usada como gateway precisa
+// implementar Cobrar(nValor) retornando um objeto com :cStatus e :nValor.
+class ResultadoPagamento
+    public data cStatus as character
+    public data nValor as numeric
+
+    public method new(cStatus as character, nValor as numeric) as object
+        ::cStatus := cStatus
+        ::nValor := nValor
+    return self
+endclass
+
+// Gateway real: instanciado via User Function do ERP (chamada de rede real).
+class GatewayPagamentoReal
+    public method new() as object
+    return self
+
+    public method cobrar(nValor as numeric) as object
+        // em produção, chamaria U_ConectaGatewayReal() — rede real, lento
+        return ResultadoPagamento():new("aprovado", nValor)
+endclass
+
+// Sem seam: ProcessarPagamento cria o gateway real internamente — impossível
+// substituir por um double sem editar a função.
+function ProcessarPagamentoSemSeam(nValor as numeric) as object
+    local oGateway := GatewayPagamentoReal():new()
+return oGateway:cobrar(nValor)
+
+// Ruim: teste depende da implementação real do gateway (viola isolamento).
+@TestFixture()
+class ProcessarPagamentoTestRuim
+    @Test('Processa pagamento sem nenhum seam')
+    method testProcessaPagamentoSemSeam() as logical
+        local oResultado := ProcessarPagamentoSemSeam(100)
+        ::assertEquals( oResultado:cStatus, "aprovado" )
+    return .T.
+endclass
+
+// Bom: seam via parâmetro de classe no construtor — o gateway é recebido,
+// não instanciado internamente. O double é uma classe manual que segue o
+// mesmo contrato (método Cobrar retornando ResultadoPagamento).
+class GatewayPagamentoStub
+    public data cStatusConfigurado as character
+
+    public method new(cStatus as character) as object
+        ::cStatusConfigurado := cStatus
+    return self
+
+    public method cobrar(nValor as numeric) as object
+    return ResultadoPagamento():new(::cStatusConfigurado, nValor)
+endclass
+
+class ProcessadorPagamento
+    public data oGateway as object
+
+    public method new(oGateway as object) as object
+        ::oGateway := oGateway
+    return self
+
+    public method processar(nValor as numeric) as object
+    return ::oGateway:cobrar(nValor)
+endclass
+
+@TestFixture()
+class ProcessadorPagamentoTest
+    @Test('Processa pagamento aprovado usando stub do gateway')
+    method testProcessaPagamentoAprovado() as logical
+        // Arrange — seam: stub escrito à mão passado via construtor
+        local oGateway := GatewayPagamentoStub():new("aprovado")
+        local oProcessador := ProcessadorPagamento():new(oGateway)
+
+        // Act
+        local oResultado := oProcessador:processar(100)
+
+        // Assert
+        ::assertEquals( oResultado:cStatus, "aprovado" )
+    return .T.
+
+    @Test('Processa pagamento recusado usando stub do gateway')
+    method testProcessaPagamentoRecusado() as logical
+        local oGateway := GatewayPagamentoStub():new("recusado")
+        local oProcessador := ProcessadorPagamento():new(oGateway)
+
+        local oResultado := oProcessador:processar(100)
+
+        ::assertEquals( oResultado:cStatus, "recusado" )
+    return .T.
+endclass

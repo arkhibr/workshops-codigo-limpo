@@ -1,0 +1,68 @@
+// EXERCÍCIO 25 — Dublês de Teste (PROBAT)
+// Tempo estimado: 15 minutos
+//
+// INSTRUÇÕES:
+//   ServicoEntrega abaixo depende de ApiCepReal (chamada de rede real, lenta)
+//   e RepositorioEnderecoReal (banco real), ambos instanciados internamente —
+//   não há seam. O teste fornecido depende de infraestrutura real.
+//
+//   Limitação ADVPL: sem framework de mocking — o double precisa ser uma
+//   classe escrita manualmente que implementa o mesmo "contrato" por convenção.
+//
+//   1. Introduza um seam: receba api_cep e repositorio via construtor.
+//   2. Crie um ApiCepStub (resposta fixa) e um RepositorioEnderecoFake (em memória).
+//   3. Reescreva o teste para não depender de infraestrutura real.
+//   Execute no PROBAT.
+#include 'tlpp-core.th'
+#include 'tlpp-probat.th'
+
+namespace test.entrega
+using namespace tlpp.probat
+
+class ApiCepReal
+    public method new() as object
+    return self
+
+    public method consultar(cCep as character) as object
+        // em produção, chamaria um webservice real — rede real, lento
+        local oEndereco := JsonObject():new()
+        oEndereco['cep'] := cCep
+        oEndereco['cidade'] := "São Paulo"
+        oEndereco['uf'] := "SP"
+    return oEndereco
+endclass
+
+class RepositorioEnderecoReal
+    public method new() as object
+    return self
+
+    public method salvar(cPedidoId as character, oEndereco as object) as logical
+        // em produção, gravaria em tabela real (SX2/DBF) — banco real, lento
+    return .T.
+endclass
+
+// Sem seam: ServicoEntrega cria as dependências reais internamente.
+class ServicoEntrega
+    public data oApiCep as object
+    public data oRepositorio as object
+
+    public method new() as object
+        ::oApiCep := ApiCepReal():new()
+        ::oRepositorio := RepositorioEnderecoReal():new()
+    return self
+
+    public method confirmarEndereco(cPedidoId as character, cCep as character) as object
+        local oEndereco := ::oApiCep:consultar(cCep)
+        ::oRepositorio:salvar(cPedidoId, oEndereco)
+    return oEndereco
+endclass
+
+@TestFixture()
+class ServicoEntregaTestRuim
+    @Test('Confirma endereco sem nenhum seam')
+    method testConfirmaEnderecoSemSeam() as logical
+        local oServico := ServicoEntrega():new()
+        local oResultado := oServico:confirmarEndereco("P001", "01000-000")
+        ::assertEquals( oResultado['uf'], "SP" )
+    return .T.
+endclass

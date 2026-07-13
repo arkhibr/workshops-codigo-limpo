@@ -1,0 +1,108 @@
+// GABARITO 25 — Dublês de Teste (PROBAT)
+// Seam via construtor: ServicoEntrega(oApiCep, oRepositorio). ApiCepStub
+// devolve cidade/uf fixos; RepositorioEnderecoFake guarda em memória (array)
+// e expõe FoiSalvo(cPedidoId) para inspeção.
+//
+// Limitação ADVPL: sem framework de mocking — o double é sempre uma classe/
+// estrutura escrita manualmente que implementa o mesmo "contrato" por convenção.
+#include 'tlpp-core.th'
+#include 'tlpp-probat.th'
+
+namespace test.entrega
+using namespace tlpp.probat
+
+// Seam via construtor: as dependências são recebidas, não instanciadas
+// internamente — qualquer classe que implemente Consultar()/Salvar() serve.
+class ServicoEntrega
+    public data oApiCep as object
+    public data oRepositorio as object
+
+    public method new(oApiCep as object, oRepositorio as object) as object
+        ::oApiCep := oApiCep
+        ::oRepositorio := oRepositorio
+    return self
+
+    public method confirmarEndereco(cPedidoId as character, cCep as character) as object
+        local oEndereco := ::oApiCep:consultar(cCep)
+        ::oRepositorio:salvar(cPedidoId, oEndereco)
+    return oEndereco
+endclass
+
+// Stub: devolve resposta fixa e pré-programada, sem chamada de rede real.
+class ApiCepStub
+    public data cCidadeConfigurada as character
+    public data cUfConfigurada as character
+
+    public method new(cCidade as character, cUf as character) as object
+        ::cCidadeConfigurada := cCidade
+        ::cUfConfigurada := cUf
+    return self
+
+    public method consultar(cCep as character) as object
+        local oEndereco := JsonObject():new()
+        oEndereco['cep'] := cCep
+        oEndereco['cidade'] := ::cCidadeConfigurada
+        oEndereco['uf'] := ::cUfConfigurada
+    return oEndereco
+endclass
+
+// Fake: implementação funcional leve, em memória — sem banco real.
+class RepositorioEnderecoFake
+    public data aEnderecos as array
+
+    public method new() as object
+        ::aEnderecos := {}
+    return self
+
+    public method salvar(cPedidoId as character, oEndereco as object) as logical
+        aadd(::aEnderecos, {cPedidoId, oEndereco})
+    return .T.
+
+    public method foiSalvo(cPedidoId as character) as logical
+        local nI
+        for nI := 1 to len(::aEnderecos)
+            if ::aEnderecos[nI][1] == cPedidoId
+                return .T.
+            endif
+        next nI
+    return .F.
+endclass
+
+@TestFixture()
+class ServicoEntregaTest
+    @Test('Confirma endereco retorna uf do cep consultado')
+    method testConfirmaEnderecoRetornaUfDoCepConsultado() as logical
+        // Arrange
+        local oApiCep := ApiCepStub():new("São Paulo", "SP")
+        local oRepositorio := RepositorioEnderecoFake():new()
+        local oServico := ServicoEntrega():new(oApiCep, oRepositorio)
+
+        // Act
+        local oResultado := oServico:confirmarEndereco("P001", "01000-000")
+
+        // Assert
+        ::assertEquals( oResultado['uf'], "SP" )
+    return .T.
+
+    @Test('Confirma endereco salva endereco no repositorio')
+    method testConfirmaEnderecoSalvaEnderecoNoRepositorio() as logical
+        local oApiCep := ApiCepStub():new("São Paulo", "SP")
+        local oRepositorio := RepositorioEnderecoFake():new()
+        local oServico := ServicoEntrega():new(oApiCep, oRepositorio)
+
+        oServico:confirmarEndereco("P002", "20000-000")
+
+        ::assertTrue( oRepositorio:foiSalvo("P002") )
+    return .T.
+
+    @Test('Confirma endereco usa cidade configurada no stub')
+    method testConfirmaEnderecoUsaCidadeConfiguradaNoStub() as logical
+        local oApiCep := ApiCepStub():new("Rio de Janeiro", "RJ")
+        local oRepositorio := RepositorioEnderecoFake():new()
+        local oServico := ServicoEntrega():new(oApiCep, oRepositorio)
+
+        local oResultado := oServico:confirmarEndereco("P003", "20000-000")
+
+        ::assertEquals( oResultado['cidade'], "Rio de Janeiro" )
+    return .T.
+endclass
