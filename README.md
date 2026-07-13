@@ -5,9 +5,10 @@ Workshop organizado em temas, baseado em **Clean Code** de Robert C. Martin e **
 - **Tema 1 (Sessões 1–2):** Fundamentos de Clean Code — 4 horas
 - **Tema 2 (Sessões 3–4):** Design Patterns e Idiom Patterns Aplicados — 4 horas
 - **Tema 3 (Sessões 5–6):** Clean Code e uso consciente de IA — 4 horas
+- **Tema 4 (Sessão 7):** Testes de Unidade: Fundamentos, Dublês e Código Legado — 2 horas
 
 **Público:** Times mistos (Júnior + Pleno + Sênior).
-**Linguagem principal:** Python. Sessões 1–2 incluem equivalentes em **PHP**, **TypeScript** e **ADVPL/TLPP**. Sessões 5–6 cobrem apenas **Python** e **TypeScript**.
+**Linguagem principal:** Python. Sessões 1–2 e 7 incluem equivalentes em **PHP**, **TypeScript** e **ADVPL/TLPP**. Sessões 5–6 cobrem apenas **Python** e **TypeScript**.
 
 ---
 
@@ -77,6 +78,16 @@ Workshop organizado em temas, baseado em **Clean Code** de Robert C. Martin e **
 | 23 | Testes como guard-rails e manutenibilidade | 12 min | 13 min | 25 min |
 | | **Total** | | | **120 min** |
 
+### Sessão 7 — Testes de Unidade: Fundamentos, Dublês e Código Legado · 2 horas
+
+| # | Tutorial | Teoria | Prática | Total |
+|---|---|---|---|---|
+| 24 | Fundamentos de Testes de Unidade | 20 min | 20 min | 40 min |
+| 25 | Dublês de Teste | 15 min | 15 min | 30 min |
+| 26 | Massa de Dados para Testes | 15 min | 15 min | 30 min |
+| 27 | Testes de Unidade em Código Legado ⭐ | 10 min | 10 min | 20 min |
+| | **Total** | | | **120 min** |
+
 ---
 
 ## Sessão 1 — Os Fundamentos da Escrita Limpa (2 horas)
@@ -131,6 +142,15 @@ Workshop organizado em temas, baseado em **Clean Code** de Robert C. Martin e **
 | 21 | [Refatoração assistida avançada](sessao-6/tutorial-21-refatoracao-avancada/) | Migração de API/padrão preservando comportamento; verificação de equivalência | Feathers + *Clean Code*, Cap. 9 |
 | 22 | [Segurança em código gerado (2026)](sessao-6/tutorial-22-seguranca-ia/) | Brechas sutis (ORDER BY interpolado, regex bypass) em código que parece seguro | Complementa T20 |
 | 23 | [Testes como guard-rails e manutenibilidade](sessao-6/tutorial-23-testes-manutenibilidade/) | Caracterização antes de deixar o agente mudar; testes que confirmam o bug; revisar o diff | Feathers + *Clean Code*, Cap. 9; Regra do Escoteiro |
+
+## Sessão 7 — Testes de Unidade: Fundamentos, Dublês e Código Legado (2 horas)
+
+| # | Tutorial | Conceito central | Referência |
+|---|---|---|---|
+| 24 | [Fundamentos de Testes de Unidade](sessao-7/tutorial-24-fundamentos-testes/) | Unidade e isolamento, AAA, FIRST, pirâmide de testes, nomenclatura comportamental | Beck (*TDD*) + Osherove + Fowler ("TestPyramid") |
+| 25 | [Dublês de Teste](sessao-7/tutorial-25-dubles-teste/) | Taxonomia Dummy/Stub/Fake/Spy/Mock; anti-patterns de over-mocking e mockar o que não é seu | Fowler ("Mocks Aren't Stubs") + Meszaros (*xUnit Test Patterns*) |
+| 26 | [Massa de Dados para Testes](sessao-7/tutorial-26-massa-dados/) | Object Mother vs. Test Data Builder, Factories, testes baseados em propriedade | Meszaros (*xUnit Test Patterns*); `factory_boy`, `Hypothesis`, `fast-check` |
+| 27 | [Testes de Unidade em Código Legado ⭐](sessao-7/tutorial-27-testes-legado/) | Âncora: ciclo seam → double → caracterização → suíte de regressão, síntese de T07+T25+T26 | Feathers (*Legacy Code*) + Fowler |
 
 ---
 
