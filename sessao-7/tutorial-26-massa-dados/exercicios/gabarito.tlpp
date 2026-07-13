@@ -1,0 +1,67 @@
+// GABARITO 26 — Massa de Dados para Testes (PROBAT)
+// MontarNotaFiscalPadrao(aOverrides) centraliza valores padrão sensatos
+// (emitente, destinatario, item e aliquota fixos) e aplica só as chaves
+// passadas em aOverrides. Os dois testes ficam reduzidos a poucas linhas,
+// declarando apenas a alíquota que varia entre eles.
+//
+// Limitação ADVPL: sem lib de dados fake — builder é uma função/classe
+// escrita à mão que centraliza os valores padrão.
+#include 'tlpp-core.th'
+#include 'tlpp-probat.th'
+
+namespace test.massadados
+using namespace tlpp.probat
+
+function MontarNotaFiscalPadrao(aOverrides as array) as object
+    local oEmitente := JsonObject():new()
+    local oDestinatario := JsonObject():new()
+    local oItem := JsonObject():new()
+    local oNota := JsonObject():new()
+    local nI
+
+    oEmitente['cnpj'] := "11.111.111/0001-11"
+    oEmitente['razaoSocial'] := "Empresa A"
+
+    oDestinatario['cpf'] := "111.111.111-11"
+    oDestinatario['nome'] := "Cliente A"
+
+    oItem['descricao'] := "Produto X"
+    oItem['valor'] := 1000.0
+
+    oNota['numero'] := "NF-000"
+    oNota['emitente'] := oEmitente
+    oNota['destinatario'] := oDestinatario
+    oNota['itens'] := { oItem }
+    oNota['aliquota'] := 0.18
+    oNota['chaveAcesso'] := "35260100000000000000000000000000000000000000"
+
+    if !empty(aOverrides)
+        for nI := 1 to len(aOverrides)
+            oNota[ aOverrides[nI][1] ] := aOverrides[nI][2]
+        next nI
+    endif
+
+return oNota
+
+function CalcularImposto(oNotaFiscal as object) as numeric
+    local nTotalItens := 0
+    local nI
+    for nI := 1 to len(oNotaFiscal['itens'])
+        nTotalItens += oNotaFiscal['itens'][nI]['valor']
+    next nI
+return nTotalItens * oNotaFiscal['aliquota']
+
+@TestFixture()
+class CalcularImpostoTest
+    @Test('Calcula imposto com aliquota padrao')
+    method testCalculaImpostoComAliquotaPadrao() as logical
+        local oNota := MontarNotaFiscalPadrao( {} )
+        ::assertEquals( CalcularImposto(oNota), 180.0 )
+    return .T.
+
+    @Test('Calcula imposto com aliquota reduzida')
+    method testCalculaImpostoComAliquotaReduzida() as logical
+        local oNota := MontarNotaFiscalPadrao( { { "aliquota", 0.12 } } )
+        ::assertEquals( CalcularImposto(oNota), 120.0 )
+    return .T.
+endclass
