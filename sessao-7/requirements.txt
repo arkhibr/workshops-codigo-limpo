@@ -1,0 +1,5 @@
+pytest>=8.0
+pytest-mock>=3.14
+factory-boy>=3.3
+Faker>=26.0
+hypothesis>=6.100

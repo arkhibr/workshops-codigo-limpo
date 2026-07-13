@@ -1,0 +1,9 @@
+{
+  "name": "sessao-7-testes-unidade",
+  "private": true,
+  "devDependencies": {
+    "vitest": "^2.0.0",
+    "@faker-js/faker": "^8.4.0",
+    "fishery": "^2.2.2"
+  }
+}
