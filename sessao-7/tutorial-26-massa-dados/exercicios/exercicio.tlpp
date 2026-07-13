@@ -1,0 +1,82 @@
+// EXERCÍCIO 26 — Massa de Dados para Testes (PROBAT)
+// Tempo estimado: 15 minutos
+//
+// INSTRUÇÕES:
+//   Os testes abaixo montam um JsonObject gigante de nota fiscal em cada
+//   teste, mudando só um campo por vez.
+//
+//   Limitação ADVPL: sem lib de dados fake — o builder precisa ser uma
+//   função/classe escrita à mão que centraliza os valores padrão.
+//
+//   1. Escreva uma função MontarNotaFiscalPadrao(aOverrides) que aplique
+//      valores padrão sensatos e sobrescreva só as chaves passadas.
+//   2. Reescreva os testes para declarar apenas o que varia (a alíquota).
+//   Execute no PROBAT.
+#include 'tlpp-core.th'
+#include 'tlpp-probat.th'
+
+namespace test.massadados
+using namespace tlpp.probat
+
+function CalcularImposto(oNotaFiscal as object) as numeric
+    local nTotalItens := 0
+    local nI
+    for nI := 1 to len(oNotaFiscal['itens'])
+        nTotalItens += oNotaFiscal['itens'][nI]['valor']
+    next nI
+return nTotalItens * oNotaFiscal['aliquota']
+
+@TestFixture()
+class CalcularImpostoTestRuim
+    @Test('Calcula imposto com aliquota padrao')
+    method testCalculaImpostoComAliquotaPadrao() as logical
+        local oEmitente := JsonObject():new()
+        local oDestinatario := JsonObject():new()
+        local oItem := JsonObject():new()
+        local oNota := JsonObject():new()
+
+        oEmitente['cnpj'] := "11.111.111/0001-11"
+        oEmitente['razaoSocial'] := "Empresa A"
+
+        oDestinatario['cpf'] := "111.111.111-11"
+        oDestinatario['nome'] := "Cliente A"
+
+        oItem['descricao'] := "Produto X"
+        oItem['valor'] := 1000.0
+
+        oNota['numero'] := "NF-001"
+        oNota['emitente'] := oEmitente
+        oNota['destinatario'] := oDestinatario
+        oNota['itens'] := { oItem }
+        oNota['aliquota'] := 0.18
+        oNota['chaveAcesso'] := "35260100000000000000000000000000000000000000"
+
+        ::assertEquals( CalcularImposto(oNota), 180.0 )
+    return .T.
+
+    @Test('Calcula imposto com aliquota reduzida')
+    method testCalculaImpostoComAliquotaReduzida() as logical
+        local oEmitente := JsonObject():new()
+        local oDestinatario := JsonObject():new()
+        local oItem := JsonObject():new()
+        local oNota := JsonObject():new()
+
+        oEmitente['cnpj'] := "11.111.111/0001-11"
+        oEmitente['razaoSocial'] := "Empresa A"
+
+        oDestinatario['cpf'] := "111.111.111-11"
+        oDestinatario['nome'] := "Cliente A"
+
+        oItem['descricao'] := "Produto X"
+        oItem['valor'] := 1000.0
+
+        oNota['numero'] := "NF-002"
+        oNota['emitente'] := oEmitente
+        oNota['destinatario'] := oDestinatario
+        oNota['itens'] := { oItem }
+        oNota['aliquota'] := 0.12
+        oNota['chaveAcesso'] := "35260100000000000000000000000000000000000001"
+
+        ::assertEquals( CalcularImposto(oNota), 120.0 )
+    return .T.
+endclass

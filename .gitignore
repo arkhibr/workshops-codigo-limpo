@@ -1,2 +1,9 @@
 # Artefatos de planejamento/design do superpowers — locais apenas, não versionar
 docs/superpowers/
+
+# Dependências instaladas localmente (Sessão 7 — testes de unidade)
+sessao-7/node_modules/
+sessao-7/vendor/
+__pycache__/
+*.pyc
+.pytest_cache/

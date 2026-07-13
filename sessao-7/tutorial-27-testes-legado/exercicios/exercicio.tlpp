@@ -1,0 +1,57 @@
+// EXERCÍCIO 27 — Testes de Unidade em Código Legado (Âncora) (PROBAT)
+// Tempo estimado: 10 minutos
+//
+// INSTRUÇÕES:
+//   ProcessadorReembolso abaixo não tem seams nem testes: instancia
+//   GatewayPagamentoReal e ServicoAuditoriaReal diretamente.
+//
+//   Limitação ADVPL: sem framework de mocking — o double precisa ser uma
+//   classe escrita manualmente que implementa o mesmo "contrato" por convenção.
+//
+//   1. Introduza seams (injeção via construtor).
+//   2. Escreva um teste de CARACTERIZAÇÃO para o comportamento atual.
+//   3. Use doubles (Stub para o gateway, Fake para a auditoria).
+//   Execute no PROBAT.
+#include 'tlpp-core.th'
+#include 'tlpp-probat.th'
+
+namespace test.reembolso
+using namespace tlpp.probat
+
+class GatewayPagamentoReal
+    public method new() as object
+    return self
+
+    public method estornar(cTransacaoId as character, nValor as numeric) as object
+        // em produção, chamaria o gateway de pagamento real — rede real
+        UserException("Gateway real não disponível neste ambiente")
+    return nil
+endclass
+
+class ServicoAuditoriaReal
+    public method new() as object
+    return self
+
+    public method registrar(cEvento as character, oDetalhes as object) as logical
+        UserException("Serviço de auditoria real não disponível neste ambiente")
+    return .F.
+endclass
+
+// Sem seam: ProcessadorReembolso cria as dependências reais internamente.
+class ProcessadorReembolso
+    public data oGateway as object
+    public data oAuditoria as object
+
+    public method new() as object
+        ::oGateway := GatewayPagamentoReal():new()
+        ::oAuditoria := ServicoAuditoriaReal():new()
+    return self
+
+    public method processarReembolso(cTransacaoId as character, nValor as numeric) as object
+        local oResultado := ::oGateway:estornar(cTransacaoId, nValor)
+        local oDetalhes := JsonObject():new()
+        oDetalhes['transacao_id'] := cTransacaoId
+        oDetalhes['valor'] := nValor
+        ::oAuditoria:registrar("reembolso", oDetalhes)
+    return oResultado
+endclass

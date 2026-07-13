@@ -1,0 +1,46 @@
+// equivalente.tlpp — Fundamentos de Testes de Unidade em PROBAT
+#include 'tlpp-core.th'
+#include 'tlpp-probat.th'
+
+namespace test.desconto
+using namespace tlpp.probat
+
+function CalcularDesconto(nValor as numeric, lClienteVip as logical) as numeric
+    if lClienteVip
+        return nValor * 0.9
+    endif
+return nValor
+
+function CalcularFrete(nValor as numeric) as numeric
+    if nValor > 200
+        return 0
+    endif
+return 25
+
+// Ruim: nome não descreve comportamento, dois comportamentos no mesmo teste
+@TestFixture()
+class CalculoTestRuim
+    @Test()
+    method testCalculo() as logical
+        ::assertEquals( CalcularDesconto(100, .T.), 90 )
+        ::assertEquals( CalcularFrete(100), 25 )
+    return .T.
+endclass
+
+// Bom: nomes comportamentais, um comportamento por teste
+// PROBAT não tem parametrização nativa como pytest/PHPUnit — repita o
+// método com dados diferentes ou itere um array dentro do próprio teste.
+@TestFixture()
+class CalculoDescontoTest
+    @Test('Aplica 10% de desconto para cliente VIP')
+    method testAplicaDescontoParaClienteVip() as logical
+        local nResultado := CalcularDesconto(100, .T.)
+        ::assertEquals( nResultado, 90 )
+    return .T.
+
+    @Test('Nao aplica desconto para cliente comum')
+    method testNaoAplicaDescontoParaClienteComum() as logical
+        local nResultado := CalcularDesconto(100, .F.)
+        ::assertEquals( nResultado, 100 )
+    return .T.
+endclass

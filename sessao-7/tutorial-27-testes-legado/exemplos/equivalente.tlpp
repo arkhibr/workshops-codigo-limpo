@@ -1,0 +1,182 @@
+// equivalente.tlpp — Testes de Unidade em Código Legado em PROBAT
+// Limitação ADVPL: sem framework de mocking — o double é sempre uma classe/
+// estrutura escrita manualmente que implementa o mesmo "contrato" por convenção.
+#include 'tlpp-core.th'
+#include 'tlpp-probat.th'
+
+namespace test.estoque
+using namespace tlpp.probat
+
+// Conexão real com o banco Protheus (SX2/DBF) — chamada real, lenta.
+class ConexaoBancoReal
+    public method new() as object
+    return self
+
+    public method buscarEstoque(cProdutoId as character) as numeric
+        // em produção, consultaria a tabela real do estoque — banco real
+        UserException("Não há banco de dados real disponível neste ambiente")
+    return 0
+
+    public method atualizarEstoque(cProdutoId as character, nQuantidade as numeric, nValorTotal as numeric) as logical
+        UserException("Não há banco de dados real disponível neste ambiente")
+    return .F.
+endclass
+
+// Serviço externo de preços — webservice real, lento.
+class ServicoPrecoExternoReal
+    public method new() as object
+    return self
+
+    public method consultar(cProdutoId as character) as numeric
+        UserException("Não há serviço de preço real disponível neste ambiente")
+    return 0
+endclass
+
+// Sem seam: GerenciadorEstoqueLegado instancia as dependências reais
+// internamente — impossível testar em isolamento.
+class GerenciadorEstoqueLegado
+    public data oBanco as object
+    public data oServicoPrecos as object
+
+    public method new() as object
+        ::oBanco := ConexaoBancoReal():new()
+        ::oServicoPrecos := ServicoPrecoExternoReal():new()
+    return self
+
+    public method recalcularEstoque(cProdutoId as character, nQuantidadeVendida as numeric) as numeric
+        local nPreco := ::oServicoPrecos:consultar(cProdutoId)
+        local nEstoqueAtual := ::oBanco:buscarEstoque(cProdutoId)
+        local nNovoEstoque := nEstoqueAtual - nQuantidadeVendida
+        local nValorTotal := nNovoEstoque * nPreco
+        ::oBanco:atualizarEstoque(cProdutoId, nNovoEstoque, nValorTotal)
+    return nNovoEstoque
+endclass
+
+// Ruim: o único teste possível sem seam documenta a impossibilidade de
+// testar em isolamento — a exceção é capturada manualmente com
+// begin sequence/recover (não há assertError no PROBAT) e o teste só
+// passa se a exceção de fato ocorrer, nunca por sucesso da lógica.
+@TestFixture()
+class GerenciadorEstoqueLegadoTestRuim
+    @Test('E impossivel testar sem infraestrutura real')
+    method testImpossivelTestarSemInfraestruturaReal() as logical
+        local oGerenciador := GerenciadorEstoqueLegado():new()
+        local lLancouExcecao := .F.
+
+        begin sequence
+            oGerenciador:recalcularEstoque("PROD1", 10)
+        recover
+            lLancouExcecao := .T.
+        end sequence
+
+        ::assertTrue( lLancouExcecao )
+    return .T.
+endclass
+
+// Bom: seam via parâmetro de classe no construtor — banco e serviço de
+// preço são recebidos, não instanciados internamente. O double é uma
+// classe manual que segue o mesmo contrato por convenção.
+class GerenciadorEstoque
+    public data oBanco as object
+    public data oServicoPrecos as object
+    public data oCachePrecos as object
+
+    public method new(oBanco as object, oServicoPrecos as object, oCachePrecos as object) as object
+        ::oBanco := oBanco
+        ::oServicoPrecos := oServicoPrecos
+        ::oCachePrecos := if(oCachePrecos == nil, JsonObject():new(), oCachePrecos)
+    return self
+
+    public method recalcularEstoque(cProdutoId as character, nQuantidadeVendida as numeric) as numeric
+        local nPreco := ::oCachePrecos[cProdutoId]
+        if nPreco == nil
+            nPreco := ::oServicoPrecos:consultar(cProdutoId)
+            ::oCachePrecos[cProdutoId] := nPreco
+        endif
+        local nEstoqueAtual := ::oBanco:buscarEstoque(cProdutoId)
+        local nNovoEstoque := nEstoqueAtual - nQuantidadeVendida
+        local nValorTotal := nNovoEstoque * nPreco
+        ::oBanco:atualizarEstoque(cProdutoId, nNovoEstoque, nValorTotal)
+    return nNovoEstoque
+endclass
+
+// Fake em memória — também atua como builder do estado inicial (ComEstoque).
+class BancoEstoqueFake
+    public data oEstoques as object
+    public data nUltimoValorTotal as numeric
+
+    public method new() as object
+        ::oEstoques := JsonObject():new()
+        ::nUltimoValorTotal := 0
+    return self
+
+    public method comEstoque(cProdutoId as character, nQuantidade as numeric) as object
+        ::oEstoques[cProdutoId] := nQuantidade
+    return self
+
+    public method buscarEstoque(cProdutoId as character) as numeric
+        local nValor := ::oEstoques[cProdutoId]
+    return if(nValor == nil, 0, nValor)
+
+    public method atualizarEstoque(cProdutoId as character, nQuantidade as numeric, nValorTotal as numeric) as logical
+        ::oEstoques[cProdutoId] := nQuantidade
+        ::nUltimoValorTotal := nValorTotal
+    return .T.
+endclass
+
+class ServicoPrecoStub
+    public data nPrecoConfigurado as numeric
+    public data nChamadas as numeric
+
+    public method new(nPreco as numeric) as object
+        ::nPrecoConfigurado := nPreco
+        ::nChamadas := 0
+    return self
+
+    public method consultar(cProdutoId as character) as numeric
+        ::nChamadas++
+    return ::nPrecoConfigurado
+endclass
+
+@TestFixture()
+class GerenciadorEstoqueTest
+    @Test('Caracterizacao: recalculo com estoque suficiente')
+    method testCaracterizacaoRecalculoComEstoqueSuficiente() as logical
+        // Teste de caracterização: congela o comportamento atual do
+        // legado como oráculo, sem julgar se a regra de negócio está correta.
+        local oBanco := BancoEstoqueFake():new():comEstoque("PROD1", 100)
+        local oPrecos := ServicoPrecoStub():new(10)
+        local oGerenciador := GerenciadorEstoque():new(oBanco, oPrecos, nil)
+
+        local nNovoEstoque := oGerenciador:recalcularEstoque("PROD1", 30)
+
+        ::assertEquals( nNovoEstoque, 70 )
+        ::assertEquals( oBanco:nUltimoValorTotal, 700 )
+    return .T.
+
+    @Test('Recalculo com venda maior que estoque gera saldo negativo')
+    method testRecalculoComVendaMaiorQueEstoqueGeraSaldoNegativo() as logical
+        // Caso de borda descoberto durante a caracterização: o legado não
+        // valida estoque insuficiente. Documentamos o comportamento atual;
+        // decidir se corrige é uma decisão de produto, não deste teste.
+        local oBanco := BancoEstoqueFake():new():comEstoque("PROD1", 10)
+        local oPrecos := ServicoPrecoStub():new(5)
+        local oGerenciador := GerenciadorEstoque():new(oBanco, oPrecos, nil)
+
+        local nNovoEstoque := oGerenciador:recalcularEstoque("PROD1", 30)
+
+        ::assertEquals( nNovoEstoque, -20 )
+    return .T.
+
+    @Test('Recalculo reaproveita preco em cache na segunda chamada')
+    method testRecalculoReaproveitaPrecoEmCacheNaSegundaChamada() as logical
+        local oBanco := BancoEstoqueFake():new():comEstoque("PROD1", 100)
+        local oPrecos := ServicoPrecoStub():new(10)
+        local oGerenciador := GerenciadorEstoque():new(oBanco, oPrecos, nil)
+
+        oGerenciador:recalcularEstoque("PROD1", 10)
+        oGerenciador:recalcularEstoque("PROD1", 5)
+
+        ::assertEquals( oPrecos:nChamadas, 1 )
+    return .T.
+endclass

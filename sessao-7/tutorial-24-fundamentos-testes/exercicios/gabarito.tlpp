@@ -1,0 +1,53 @@
+// GABARITO 24 — Fundamentos de Testes de Unidade (PROBAT)
+// Suíte refatorada: AAA explícito, nomes comportamentais, sem estado
+// compartilhado, sem dependência do relógio real.
+// PROBAT não tem parametrização nativa — as variações de valor/meta são
+// cobertas repetindo o método com dados diferentes.
+#include 'tlpp-core.th'
+#include 'tlpp-probat.th'
+
+namespace test.comissao
+using namespace tlpp.probat
+
+function CalcularComissao(nValorVenda as numeric, lMetaBatida as logical) as numeric
+    if lMetaBatida
+        return nValorVenda * 0.08
+    endif
+return nValorVenda * 0.03
+
+@TestFixture()
+class CalculoComissaoTest
+    @Test('Paga 8% de comissao quando bate a meta')
+    method testPaga8PorcentoQuandoBateMeta() as logical
+        // Arrange
+        local nValorVenda := 1000
+        // Act
+        local nResultado := CalcularComissao(nValorVenda, .T.)
+        // Assert
+        ::assertEquals( nResultado, 80 )
+    return .T.
+
+    @Test('Paga 3% de comissao quando nao bate a meta')
+    method testPaga3PorcentoQuandoNaoBateMeta() as logical
+        local nResultado := CalcularComissao(1000, .F.)
+        ::assertEquals( nResultado, 30 )
+    return .T.
+
+    @Test('Comissao e zero quando valor de venda e zero, com meta batida')
+    method testComissaoZeradaParaValorZeroComMeta() as logical
+        local nResultado := CalcularComissao(0, .T.)
+        ::assertEquals( nResultado, 0 )
+    return .T.
+
+    @Test('Comissao e zero quando valor de venda e zero, sem meta batida')
+    method testComissaoZeradaParaValorZeroSemMeta() as logical
+        local nResultado := CalcularComissao(0, .F.)
+        ::assertEquals( nResultado, 0 )
+    return .T.
+
+    @Test('Calcula comissao de valor alto com meta batida')
+    method testCalculaComissaoParaValorAlto() as logical
+        local nResultado := CalcularComissao(10000, .T.)
+        ::assertEquals( nResultado, 800 )
+    return .T.
+endclass

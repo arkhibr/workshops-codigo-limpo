@@ -1,0 +1,136 @@
+// equivalente.tlpp — Massa de Dados para Testes em PROBAT
+// Limitação ADVPL: sem lib de dados fake — builder é uma função/classe
+// escrita à mão que centraliza os valores padrão.
+#include 'tlpp-core.th'
+#include 'tlpp-probat.th'
+
+namespace test.massadados
+using namespace tlpp.probat
+
+// MontarItemPedido: helper que monta um item de pedido como JsonObject.
+function MontarItemPedido(cProduto as character, nPreco as numeric, nQuantidade as numeric) as object
+    local oItem := JsonObject():new()
+    oItem['produto'] := cProduto
+    oItem['preco'] := nPreco
+    oItem['quantidade'] := nQuantidade
+return oItem
+
+// MontarPedidoPadrao(aOverrides): função builder que aplica valores padrão
+// sensatos e sobrescreve só as chaves passadas em aOverrides — um array de
+// pares {chave, valor}.
+function MontarPedidoPadrao(aOverrides as array) as object
+    local oPedido := JsonObject():new()
+    local nI
+
+    oPedido['id'] := "P000"
+    oPedido['itens'] := { MontarItemPedido("Item Padrão", 100.0, 1) }
+    oPedido['cupomDesconto'] := nil
+    oPedido['status'] := "pendente"
+
+    if !empty(aOverrides)
+        for nI := 1 to len(aOverrides)
+            oPedido[ aOverrides[nI][1] ] := aOverrides[nI][2]
+        next nI
+    endif
+
+return oPedido
+
+function AplicarCupom(oPedido as object, cCodigo as character) as object
+    local nI
+    if cCodigo == "PROMO10"
+        for nI := 1 to len(oPedido['itens'])
+            oPedido['itens'][nI]['preco'] := round(oPedido['itens'][nI]['preco'] * 0.9, 2)
+        next nI
+    endif
+return oPedido
+
+// Ruim: JsonObject montado por inteiro em cada teste — só o cupom importa
+// aqui, mas o teste repete cliente, endereço e forma de pagamento.
+@TestFixture()
+class AplicarCupomTestRuim
+    @Test('Cupom aplica desconto')
+    method testCupomAplicaDesconto() as logical
+        local oCliente := JsonObject():new()
+        local oEndereco := JsonObject():new()
+        local oPedido := JsonObject():new()
+
+        oCliente['id'] := "C1"
+        oCliente['nome'] := "Maria Silva"
+        oCliente['email'] := "maria@teste.com"
+        oCliente['cpf'] := "111.111.111-11"
+
+        oEndereco['rua'] := "Rua A"
+        oEndereco['numero'] := "100"
+        oEndereco['cidade'] := "SP"
+        oEndereco['cep'] := "01000-000"
+
+        oPedido['id'] := "P001"
+        oPedido['cliente'] := oCliente
+        oPedido['itens'] := { MontarItemPedido("Notebook", 3000.0, 1) }
+        oPedido['enderecoEntrega'] := oEndereco
+        oPedido['formaPagamento'] := "cartao"
+        oPedido['cupomDesconto'] := "PROMO10"
+        oPedido['dataCriacao'] := "2026-01-01"
+        oPedido['status'] := "pendente"
+
+        local oResultado := AplicarCupom(oPedido, "PROMO10")
+
+        ::assertEquals( oResultado['itens'][1]['preco'], 2700.0 )
+    return .T.
+
+    @Test('Pedido sem cupom mantem preco')
+    method testPedidoSemCupomMantemPreco() as logical
+        local oCliente := JsonObject():new()
+        local oEndereco := JsonObject():new()
+        local oPedido := JsonObject():new()
+
+        oCliente['id'] := "C1"
+        oCliente['nome'] := "Maria Silva"
+        oCliente['email'] := "maria@teste.com"
+        oCliente['cpf'] := "111.111.111-11"
+
+        oEndereco['rua'] := "Rua A"
+        oEndereco['numero'] := "100"
+        oEndereco['cidade'] := "SP"
+        oEndereco['cep'] := "01000-000"
+
+        oPedido['id'] := "P002"
+        oPedido['cliente'] := oCliente
+        oPedido['itens'] := { MontarItemPedido("Notebook", 3000.0, 1) }
+        oPedido['enderecoEntrega'] := oEndereco
+        oPedido['formaPagamento'] := "cartao"
+        oPedido['cupomDesconto'] := nil
+        oPedido['dataCriacao'] := "2026-01-01"
+        oPedido['status'] := "pendente"
+
+        local oResultado := AplicarCupom(oPedido, nil)
+
+        ::assertEquals( oResultado['itens'][1]['preco'], 3000.0 )
+    return .T.
+endclass
+
+// Bom: MontarPedidoPadrao (builder manual) — cada teste sobrescreve só o
+// que é relevante, sem repetir cliente, endereço ou forma de pagamento.
+@TestFixture()
+class AplicarCupomTest
+    @Test('Cupom aplica 10 por cento de desconto')
+    method testCupomAplica10PorCentoDeDesconto() as logical
+        local oPedido := MontarPedidoPadrao( { ;
+            { "itens", { MontarItemPedido("Notebook", 3000.0, 1) } }, ;
+            { "cupomDesconto", "PROMO10" } } )
+
+        local oResultado := AplicarCupom(oPedido, "PROMO10")
+
+        ::assertEquals( oResultado['itens'][1]['preco'], 2700.0 )
+    return .T.
+
+    @Test('Pedido sem cupom mantem preco original')
+    method testPedidoSemCupomMantemPrecoOriginal() as logical
+        local oPedido := MontarPedidoPadrao( { ;
+            { "itens", { MontarItemPedido("Notebook", 3000.0, 1) } } } )
+
+        local oResultado := AplicarCupom(oPedido, nil)
+
+        ::assertEquals( oResultado['itens'][1]['preco'], 3000.0 )
+    return .T.
+endclass

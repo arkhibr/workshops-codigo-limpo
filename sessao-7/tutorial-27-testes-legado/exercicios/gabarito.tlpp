@@ -1,0 +1,100 @@
+// GABARITO 27 — Testes de Unidade em Código Legado (Âncora) (PROBAT)
+// Seam via construtor: ProcessadorReembolso(oGateway, oAuditoria). GatewayPagamentoStub
+// devolve um objeto com cStatus/nValor; ServicoAuditoriaFake guarda os eventos
+// registrados em um array (aEventosRegistrados), para inspeção. O primeiro
+// teste é de caracterização — congela o comportamento atual antes de
+// qualquer melhoria.
+//
+// Limitação ADVPL: sem framework de mocking — o double é sempre uma classe/
+// estrutura escrita manualmente que implementa o mesmo "contrato" por convenção.
+#include 'tlpp-core.th'
+#include 'tlpp-probat.th'
+
+namespace test.reembolso
+using namespace tlpp.probat
+
+class ResultadoEstorno
+    public data cStatus as character
+    public data nValor as numeric
+
+    public method new(cStatus as character, nValor as numeric) as object
+        ::cStatus := cStatus
+        ::nValor := nValor
+    return self
+endclass
+
+// Seam via construtor: as dependências são recebidas, não instanciadas
+// internamente — qualquer classe que implemente Estornar()/Registrar() serve.
+class ProcessadorReembolso
+    public data oGateway as object
+    public data oAuditoria as object
+
+    public method new(oGateway as object, oAuditoria as object) as object
+        ::oGateway := oGateway
+        ::oAuditoria := oAuditoria
+    return self
+
+    public method processarReembolso(cTransacaoId as character, nValor as numeric) as object
+        local oResultado := ::oGateway:estornar(cTransacaoId, nValor)
+        local oDetalhes := JsonObject():new()
+        oDetalhes['transacao_id'] := cTransacaoId
+        oDetalhes['valor'] := nValor
+        ::oAuditoria:registrar("reembolso", oDetalhes)
+    return oResultado
+endclass
+
+// Stub: devolve resposta fixa e pré-programada, sem chamada de rede real.
+class GatewayPagamentoStub
+    public data cStatusConfigurado as character
+
+    public method new(cStatus as character) as object
+        ::cStatusConfigurado := cStatus
+    return self
+
+    public method estornar(cTransacaoId as character, nValor as numeric) as object
+    return ResultadoEstorno():new(::cStatusConfigurado, nValor)
+endclass
+
+// Fake: guarda os eventos registrados em memória, para inspeção posterior.
+class ServicoAuditoriaFake
+    public data aEventosRegistrados as array
+
+    public method new() as object
+        ::aEventosRegistrados := {}
+    return self
+
+    public method registrar(cEvento as character, oDetalhes as object) as logical
+        aadd(::aEventosRegistrados, {cEvento, oDetalhes})
+    return .T.
+endclass
+
+@TestFixture()
+class ProcessadorReembolsoTest
+    @Test('Caracterizacao: processa reembolso com sucesso')
+    method testCaracterizacaoProcessaReembolsoComSucesso() as logical
+        // Teste de caracterização: congela o comportamento atual do
+        // ProcessadorReembolso como oráculo, agora que o seam permite isolá-lo.
+        local oGateway := GatewayPagamentoStub():new("estornado")
+        local oAuditoria := ServicoAuditoriaFake():new()
+        local oProcessador := ProcessadorReembolso():new(oGateway, oAuditoria)
+
+        local oResultado := oProcessador:processarReembolso("TX001", 150)
+
+        ::assertEquals( oResultado:cStatus, "estornado" )
+        ::assertEquals( oResultado:nValor, 150 )
+    return .T.
+
+    @Test('Reembolso registra evento de auditoria')
+    method testReembolsoRegistraEventoDeAuditoria() as logical
+        local oGateway := GatewayPagamentoStub():new("estornado")
+        local oAuditoria := ServicoAuditoriaFake():new()
+        local oProcessador := ProcessadorReembolso():new(oGateway, oAuditoria)
+
+        oProcessador:processarReembolso("TX002", 80)
+
+        ::assertEquals( len(oAuditoria:aEventosRegistrados), 1 )
+        ::assertEquals( oAuditoria:aEventosRegistrados[1][1], "reembolso" )
+        ::assertEquals( oAuditoria:aEventosRegistrados[1][2]['transacao_id'], "TX002" )
+        ::assertEquals( oAuditoria:aEventosRegistrados[1][2]['valor'], 80 )
+    return .T.
+endclass

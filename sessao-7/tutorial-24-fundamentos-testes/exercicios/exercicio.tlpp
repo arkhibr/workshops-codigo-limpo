@@ -1,0 +1,52 @@
+// EXERCÍCIO 24 — Fundamentos de Testes de Unidade (PROBAT)
+// Tempo estimado: 15 minutos
+//
+// INSTRUÇÕES:
+//   A suíte abaixo testa CalcularComissao() mas tem 4 problemas:
+//     1. Nomes que não dizem o que é testado (testCalculo, testValor)
+//     2. Um teste verificando comportamentos não relacionados
+//     3. Estado compartilhado (STATIC) entre testes (ordem importa)
+//     4. Dependência do relógio real (não-determinístico)
+//
+//   Refatore aplicando AAA, FIRST e nomes comportamentais. PROBAT não tem
+//   parametrização nativa — repita o método com dados diferentes.
+//   Execute no PROBAT: deve passar antes e depois da refatoração.
+#include 'tlpp-core.th'
+#include 'tlpp-probat.th'
+
+namespace test.comissao
+using namespace tlpp.probat
+
+static nUltimaComissao := 0  // estado global mutável compartilhado entre testes
+
+function CalcularComissao(nValorVenda as numeric, lMetaBatida as logical) as numeric
+    if lMetaBatida
+        return nValorVenda * 0.08
+    endif
+return nValorVenda * 0.03
+
+@TestFixture()
+class ComissaoTestRuim
+    @Test()
+    method testCalculo() as logical
+        // dois comportamentos não relacionados no mesmo teste
+        ::assertEquals( CalcularComissao(1000, .T.), 80 )
+        ::assertEquals( CalcularComissao(1000, .F.), 30 )
+    return .T.
+
+    @Test()
+    method testValor() as logical
+        // depende de estado deixado por outro teste — ordem de execução importa
+        nUltimaComissao := CalcularComissao(500, .T.)
+        ::assertEquals( nUltimaComissao, 40 )
+    return .T.
+
+    @Test()
+    method testComissao() as logical
+        // nome genérico; não-determinístico: depende do dia real da execução
+        local dHoje := Date()
+        local lMetaBatida := (Dow(dHoje) == 2) // segunda-feira (Dow: 1=domingo)
+        local nResultado := CalcularComissao(1000, lMetaBatida)
+        ::assertTrue( nResultado >= 0 )
+    return .T.
+endclass
