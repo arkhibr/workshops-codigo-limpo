@@ -78,11 +78,20 @@ def test_fake_repositorio_guarda_e_recupera_pedido():
 
 
 def test_dummy_notificacao_nao_e_exercitada_quando_pagamento_recusado():
-    # Dummy: um objeto passado apenas para satisfazer uma assinatura,
-    # nunca de fato utilizado no caminho testado aqui.
+    # Dummy: passado para satisfazer o parâmetro `notificacao`, exigido
+    # pelo construtor de ProcessadorPagamento, mas nunca de fato invocado
+    # neste caminho — quando o pagamento é recusado, o `if` dentro de
+    # `processar()` pula a chamada a `self._notificacao.enviar(...)`.
+    # Um `object()` comum, sem nenhum método implementado, já basta: se
+    # o código de produção chamasse `.enviar()` nele por engano, o teste
+    # falharia na hora com AttributeError — a prova de que a notificação
+    # não foi de fato exercitada neste caminho.
     gateway = GatewayPagamentoStub(status="recusado")
-    _notificacao_dummy = object()  # nunca chamado neste teste
-    resultado = gateway.cobrar(50.0)
+    notificacao_dummy = object()
+    processador = ProcessadorPagamento(gateway, notificacao_dummy)
+
+    resultado = processador.processar(100.0, "cliente@teste.com")
+
     assert resultado.status == "recusado"
 
 

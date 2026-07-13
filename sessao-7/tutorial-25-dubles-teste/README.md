@@ -19,17 +19,24 @@ Este tutorial ensina a taxonomia completa (Dummy, Stub, Fake, Spy, Mock), quando
 
 Os cinco tipos de dublê, do mais simples ao mais sofisticado, todos ilustrados em `exemplos/dubles_bons.py`:
 
-**Dummy** — um objeto passado apenas para satisfazer uma assinatura de método, mas nunca de fato usado no caminho testado. Existe só para o código compilar/rodar.
+**Dummy** — um objeto passado apenas para satisfazer uma assinatura de método ou construtor, mas nunca de fato usado no caminho testado. Existe só para o código compilar/rodar — não precisa ter comportamento nenhum, porque nenhum método dele é chamado. Um Dummy é diferente de um Stub: o Stub *é* chamado e devolve algo; o Dummy nunca chega a ser chamado.
 
 ```python
 def test_dummy_notificacao_nao_e_exercitada_quando_pagamento_recusado():
-    # Dummy: um objeto passado apenas para satisfazer uma assinatura,
-    # nunca de fato utilizado no caminho testado aqui.
+    # Dummy: passado para satisfazer o parâmetro `notificacao`, exigido
+    # pelo construtor de ProcessadorPagamento, mas nunca de fato invocado
+    # neste caminho — quando o pagamento é recusado, o `if` dentro de
+    # `processar()` pula a chamada a `self._notificacao.enviar(...)`.
     gateway = GatewayPagamentoStub(status="recusado")
-    _notificacao_dummy = object()  # nunca chamado neste teste
-    resultado = gateway.cobrar(50.0)
+    notificacao_dummy = object()
+    processador = ProcessadorPagamento(gateway, notificacao_dummy)
+
+    resultado = processador.processar(100.0, "cliente@teste.com")
+
     assert resultado.status == "recusado"
 ```
+
+Repare no que prova que `notificacao_dummy` é mesmo um Dummy: é um `object()` puro, sem nenhum método implementado — nem `enviar()`. Se `ProcessadorPagamento.processar()` fosse alterado no futuro para notificar também em caso de recusa, este teste quebraria imediatamente com `AttributeError: 'object' object has no attribute 'enviar'`, e não silenciosamente. Esse é o valor prático do Dummy: ele documenta, pelo próprio tipo do objeto, que o caminho testado *não deveria* tocar essa dependência — qualquer chamada acidental vira um erro alto e claro, não um `Mock` que engoliria a chamada sem reclamar.
 
 **Stub** — devolve uma resposta fixa e pré-programada para uma chamada, sem lógica real por trás. Um Stub nunca é usado para *verificar* que foi chamado — ele só alimenta o teste com um cenário controlado.
 
