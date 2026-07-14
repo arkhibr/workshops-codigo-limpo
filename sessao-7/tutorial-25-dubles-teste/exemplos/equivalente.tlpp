@@ -59,38 +59,75 @@ class GatewayPagamentoStub
     return ResultadoPagamento():new(::cStatusConfigurado, nValor)
 endclass
 
-class ProcessadorPagamento
-    public data oGateway as object
-
-    public method new(oGateway as object) as object
-        ::oGateway := oGateway
+// Stub: sempre confirma o envio, sem instrumentar chamadas — usado no
+// caminho em que a notificação precisa mesmo ser exercitada (aprovado).
+class ServicoNotificacaoStub
+    public method new() as object
     return self
 
-    public method processar(nValor as numeric) as object
-    return ::oGateway:cobrar(nValor)
+    public method enviar(cDestinatario as character, cMensagem as character) as logical
+    return .T.
+endclass
+
+// Dummy: implementa o contrato só para satisfazer o construtor de
+// ProcessadorPagamento — nunca deveria ser chamado. Lança exceção se for,
+// provando que o caminho testado não o exercita (mesmo papel do
+// GatewayPagamentoStub para gateway, mas aqui para notificação).
+class ServicoNotificacaoDummy
+    public method new() as object
+    return self
+
+    public method enviar(cDestinatario as character, cMensagem as character) as logical
+        UserException("Dummy nao deveria ser chamado neste caminho")
+    return .F.
+endclass
+
+class ProcessadorPagamento
+    public data oGateway as object
+    public data oNotificacao as object
+
+    public method new(oGateway as object, oNotificacao as object) as object
+        ::oGateway := oGateway
+        ::oNotificacao := oNotificacao
+    return self
+
+    public method processar(nValor as numeric, cDestinatario as character) as object
+        local oResultado := ::oGateway:cobrar(nValor)
+        if oResultado:cStatus == "aprovado"
+            ::oNotificacao:enviar(cDestinatario, "Pagamento aprovado")
+        endif
+    return oResultado
 endclass
 
 @TestFixture()
 class ProcessadorPagamentoTest
     @Test('Processa pagamento aprovado usando stub do gateway')
     method testProcessaPagamentoAprovado() as logical
-        // Arrange — seam: stub escrito à mão passado via construtor
+        // Arrange — seam: stub escrito à mão passado via construtor.
+        // A notificação precisa mesmo ser enviada aqui, então usamos um
+        // Stub que responde .T. — um Dummy quebraria este teste.
         local oGateway := GatewayPagamentoStub():new("aprovado")
-        local oProcessador := ProcessadorPagamento():new(oGateway)
+        local oNotificacao := ServicoNotificacaoStub():new()
+        local oProcessador := ProcessadorPagamento():new(oGateway, oNotificacao)
 
         // Act
-        local oResultado := oProcessador:processar(100)
+        local oResultado := oProcessador:processar(100, "cliente@teste.com")
 
         // Assert
         ::assertEquals( oResultado:cStatus, "aprovado" )
     return .T.
 
-    @Test('Processa pagamento recusado usando stub do gateway')
+    @Test('Dummy: notificacao nao e exercitada quando pagamento e recusado')
     method testProcessaPagamentoRecusado() as logical
+        // Dummy: quando o pagamento é recusado, o `if` dentro de
+        // processar() pula a chamada a oNotificacao:enviar(...) — um
+        // ServicoNotificacaoDummy que lançaria erro se chamado é
+        // suficiente aqui, provando que este caminho não o exercita.
         local oGateway := GatewayPagamentoStub():new("recusado")
-        local oProcessador := ProcessadorPagamento():new(oGateway)
+        local oNotificacao := ServicoNotificacaoDummy():new()
+        local oProcessador := ProcessadorPagamento():new(oGateway, oNotificacao)
 
-        local oResultado := oProcessador:processar(100)
+        local oResultado := oProcessador:processar(100, "cliente@teste.com")
 
         ::assertEquals( oResultado:cStatus, "recusado" )
     return .T.

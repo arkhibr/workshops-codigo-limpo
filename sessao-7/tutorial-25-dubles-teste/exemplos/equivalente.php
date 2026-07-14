@@ -103,4 +103,28 @@ final class ProcessadorPagamentoTest extends PHPUnit\Framework\TestCase
         $processador = new ProcessadorPagamento($gateway, $notificacao);
         $processador->processar(100.0, 'cliente@teste.com');
     }
+
+    public function testDummyNotificacaoNaoEExercitadaQuandoPagamentoRecusado(): void
+    {
+        // Dummy: precisa implementar ServicoNotificacao para satisfazer o
+        // construtor de ProcessadorPagamento, mas nunca é de fato invocado
+        // neste caminho — quando o pagamento é recusado, o `if` dentro de
+        // processar() pula a chamada a notificacao->enviar(...). Lança uma
+        // exceção se for chamado, provando que o caminho testado não o exercita.
+        $gateway = $this->createStub(GatewayPagamento::class);
+        $gateway->method('cobrar')->willReturn(new ResultadoPagamento(status: 'recusado', valor: 100.0));
+
+        $notificacaoDummy = new class implements ServicoNotificacao {
+            public function enviar(string $destinatario, string $mensagem): bool
+            {
+                throw new \LogicException('Dummy não deveria ser chamado');
+            }
+        };
+
+        $processador = new ProcessadorPagamento($gateway, $notificacaoDummy);
+
+        $resultado = $processador->processar(100.0, 'cliente@teste.com');
+
+        $this->assertSame('recusado', $resultado->status);
+    }
 }

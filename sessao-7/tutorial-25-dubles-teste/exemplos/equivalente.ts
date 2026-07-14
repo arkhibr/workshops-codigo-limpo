@@ -96,6 +96,27 @@ describe("ProcessadorPagamento", () => {
     expect(notificacao.enviar).not.toHaveBeenCalled();
   });
 
+  it("dummy: notificacao nao e exercitada quando pagamento e recusado", () => {
+    // Dummy: precisa satisfazer a interface ServicoNotificacao para o
+    // construtor de ProcessadorPagamento, mas nunca é de fato invocado
+    // neste caminho — quando o pagamento é recusado, o `if` dentro de
+    // processar() pula a chamada a notificacao.enviar(...). Lança um erro
+    // se for chamado, provando que o caminho testado não o exercita.
+    const gateway: GatewayPagamento = {
+      cobrar: vi.fn().mockReturnValue({ status: "recusado", valor: 100 }),
+    };
+    const notificacaoDummy: ServicoNotificacao = {
+      enviar: () => {
+        throw new Error("Dummy não deveria ser chamado");
+      },
+    };
+    const processador = new ProcessadorPagamento(gateway, notificacaoDummy);
+
+    const resultado = processador.processar(100, "cliente@teste.com");
+
+    expect(resultado.status).toBe("recusado");
+  });
+
   it("espiona uma chamada real via spyOn sobre o gateway real", () => {
     // Spy: vi.spyOn observa uma implementação real em execução, sem
     // substituir o comportamento — apenas registra a chamada.

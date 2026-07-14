@@ -179,7 +179,7 @@ Nas quatro linguagens, o **Fake** nunca vem de uma biblioteca de mocking — é 
 
 ADVPL/TLPP não tem framework de mocking equivalente a `unittest.mock`, PHPUnit ou Vitest — não há `createStub()`, `vi.fn()` ou qualquer geração automática de dublês. A prática padrão é a mesma discutida no **Tutorial 07** (código legado) sobre **seams**: expor um ponto de substituição (tipicamente um parâmetro de classe no construtor) e passar manualmente uma classe que implementa o mesmo contrato por convenção — os mesmos métodos, com a mesma assinatura, mas comportamento controlado para teste.
 
-`exemplos/equivalente.tlpp` mostra o contraste: `ProcessarPagamentoSemSeam` instancia `GatewayPagamentoReal` internamente (sem seam, impossível testar sem infraestrutura real); `ProcessadorPagamento` recebe o gateway via construtor (seam), permitindo passar `GatewayPagamentoStub` — uma classe manual, sem nenhuma mágica de framework por trás.
+`exemplos/equivalente.tlpp` mostra o contraste: `ProcessarPagamentoSemSeam` instancia `GatewayPagamentoReal` internamente (sem seam, impossível testar sem infraestrutura real); `ProcessadorPagamento` recebe o gateway via construtor (seam), permitindo passar `GatewayPagamentoStub` — uma classe manual, sem nenhuma mágica de framework por trás. O mesmo arquivo também ilustra um Dummy sem nenhum framework: `ServicoNotificacaoDummy` implementa o contrato só para satisfazer o construtor, e lança `UserException` se `Enviar()` for chamado — a prova manual de que o caminho testado (pagamento recusado) não o exercita, equivalente ao `object()` do Python ou à classe anônima que lança exceção no PHP/TS.
 
 ---
 
