@@ -83,6 +83,14 @@ if __name__ == "__main__":
     registro = GerenciadorDeRegistros()
     print("Data de criação:", registro.data_criacao)
 
+    # Solução 3: três funções com nomes que revelam a distinção entre elas
+    print("\nget_usuario():", get_usuario())
+    print("get_usuario_com_idade():", get_usuario_com_idade())
+    print("get_usuario_nome_maiusculo():", get_usuario_nome_maiusculo())
+
+    # Solução 5: variáveis sem prefixo de tipo (sem notação húngara)
+    print("\nnome:", nome, "| idade:", idade, "| pedidos:", pedidos, "| ativo:", ativo)
+
     # Solução 6: nomes em snake_case, em português, no idioma do domínio
     print("\nobter_dados_usuario('U001'):", obter_dados_usuario("U001"))
     print("listar_clientes_ativos():", listar_clientes_ativos())
