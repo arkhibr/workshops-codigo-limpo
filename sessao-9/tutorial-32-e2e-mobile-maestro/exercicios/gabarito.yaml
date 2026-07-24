@@ -1,0 +1,31 @@
+# Gabarito — mesmo objetivo de exercicio.yaml (login, catálogo, adicionar o
+# livro), agora começando do zero e com seletores estáveis.
+appId: br.com.workshop.pedidos
+---
+# ✅ clearState garante que o fluxo começa deslogado e com carrinho vazio
+- launchApp:
+    clearState: true
+
+# ✅ login explícito, por id, sem presumir sessão anterior
+- assertVisible:
+    id: "campo_usuario"
+- tapOn:
+    id: "campo_usuario"
+- inputText: "ana"
+- tapOn:
+    id: "campo_senha"
+- inputText: "secreta"
+- hideKeyboard
+- tapOn:
+    text: "Entrar"
+
+# ✅ confirma que chegou ao catálogo antes de seguir
+- assertVisible: "Catálogo"
+- tapOn:
+    id: "produto_livro"
+- tapOn:
+    text: "Adicionar ao carrinho"
+
+# ✅ assertion do resultado da ação
+- assertVisible:
+    text: "1 item no carrinho"
