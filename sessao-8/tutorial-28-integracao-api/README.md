@@ -5,59 +5,81 @@
 
 ## 1. Contexto e Motivação
 
-Sessão 7 tratou de testes de unidade: unidades isoladas, sem I/O, rodando em milissegundos, no topo da confiança-por-esforço mas na base da pirâmide de testes (unit >> integration > e2e). Uma suíte de unidade perfeita ainda não prova que o sistema funciona **como um todo** — ela prova que cada peça, isolada, se comporta como esperado quando você mesmo prepara as entradas.
+Um teste de unidade verifica uma parte pequena do sistema em isolamento. Ele confirma, por exemplo, que uma função calcula corretamente o total de um pedido quando recebe itens e descontos conhecidos. As dependências que não fazem parte daquela lógica — banco de dados, rede, relógio, filas ou serviços externos — são normalmente substituídas, controladas ou simplesmente não utilizadas.
 
-Testes de **integração** verificam a colaboração entre componentes reais: o handler HTTP, a serialização de request/response, os códigos de status, a validação declarada no schema. Em vez de chamar uma função Python diretamente, um teste de integração de API sobe (ou simula, em memória) o servidor inteiro e faz requisições HTTP de verdade contra ele — exercitando a camada de transporte que o teste de unidade nunca toca.
+Isso é valioso, mas não responde a outra pergunta: as partes do sistema se conectam corretamente quando trabalham juntas? Um teste de integração existe para responder a essa pergunta. Ele inclui componentes reais em uma mesma execução e verifica a fronteira entre eles.
 
-O que muda, na prática:
-- **HTTP entra na equação:** métodos, rotas, status codes, headers.
-- **Serialização entra na equação:** o corpo vai e volta como JSON — um bug de serialização (campo renomeado, tipo trocado) só aparece aqui, nunca num teste de unidade que chama a função Python diretamente.
-- **O contrato observável é a resposta HTTP**, não o valor de retorno de uma função.
+Em uma API, essa fronteira não é apenas a regra de negócio. Ela inclui o contrato que a aplicação oferece a quem a consome: endereço da rota, método HTTP, parâmetros, headers, corpo da requisição, validação dos dados, código de status e formato da resposta. Um aplicativo mobile, uma página web ou outro sistema não chama diretamente a função Python que cria um pedido. Ele envia uma requisição para `POST /pedidos` e interpreta a resposta recebida.
 
-Este tutorial usa como SUT (`exemplos/app.py`) uma API de pedidos em FastAPI — a mesma que o Tutorial 30 (Sessão 9) vai reaproveitar, agora com persistência real. Os testes aqui usam `TestClient` (em memória, sem subir um processo de servidor), que já é suficiente para caracterizar um teste de integração: ele passa pela camada HTTP/serialização completa, só não abre uma porta de rede.
+É por isso que uma suíte de testes unitários pode estar inteiramente verde e, ainda assim, a API estar quebrada para seus consumidores. Imagine que a lógica de negócio continue calculando corretamente o campo `total`, mas alguém altere a resposta pública da API para devolver `valor_total`. O teste unitário da função de cálculo continuará passando: internamente, o valor está certo. O aplicativo mobile, porém, poderá falhar porque seu contrato esperava receber o campo `total` no JSON.
+
+Um teste de integração de API encontra esse tipo de problema porque testa a aplicação a partir do ponto de vista de um consumidor. Em vez de chamar uma função interna, ele envia uma requisição para a rota e examina a resposta produzida. Não basta confirmar que a rota respondeu com `201 Created`; o teste precisa verificar também os campos que constituem o contrato, como o identificador criado, o status inicial e o valor total.
 
 ---
 
 ## 2. Conceito Central
 
-### (a) Test client em memória vs. servidor real
+### (a) Duas formas de executar o teste: em processo ou contra um servidor real
 
-`TestClient` (FastAPI/Starlette) monta as requisições e as processa via ASGI diretamente em memória — sem abrir socket, sem porta, sem processo separado. Isso mantém o teste rápido (milissegundos) e ainda assim exercita rotas, validação de schema e serialização de verdade. Um teste contra um **servidor real** (processo `uvicorn` rodando, requisições via rede/`localhost`) vai além: também verifica configuração de processo, timeouts, e é o que os equivalentes PHP (Guzzle) e TLPP (FWRest) deste tutorial fazem, por serem os padrões idiomáticos dessas linguagens. Ambos são testes de integração legítimos; `TestClient` é a opção mais rápida e é a recomendada como padrão neste tutorial.
+Há mais de uma forma de executar esse teste, e a diferença entre elas está no escopo da integração. Em uma abordagem, o teste cria uma requisição com método, URL, headers e corpo HTTP, mas a entrega diretamente à aplicação, dentro do mesmo processo. Ele verifica o contrato HTTP da aplicação, mas não abre uma conexão de rede. Em outra, o teste inicia — ou se conecta a — um servidor real e envia a requisição por `localhost`. Nesse caso, ele verifica também a infraestrutura de execução: processo do servidor, porta, conexão TCP e alguns comportamentos de timeout.
 
-### (b) Contrato completo, não só o status
+As duas abordagens são testes de integração legítimos. A primeira integra os componentes que implementam a API; a segunda acrescenta a integração entre a aplicação e o ambiente em que ela é servida. A escolha depende do risco que se deseja cobrir. Para testar muitas rotas a cada alteração de código, a abordagem em processo tende a ser mais rápida e estável. Para verificar se a aplicação sobe e responde como serviço de rede, testes contra um servidor real complementam a suíte.
 
-Um teste que verifica só `status_code == 200` pode passar mesmo que o corpo da resposta esteja completamente errado — total calculado errado, campo faltando, tipo trocado. "Verde" nesse caso não significa "correto", só significa "não caiu".
+### (b) A tecnologia: FastAPI, ASGI e o `TestClient`
+
+Neste tutorial, aplicaremos essa ideia a uma API de pedidos escrita em FastAPI, disponível em [`exemplos/app.py`](exemplos/app.py). FastAPI é um framework Python para construir APIs web. Em uma execução normal, um servidor como o Uvicorn recebe requisições HTTP da rede e as encaminha para a aplicação FastAPI. A interface usada nessa comunicação é chamada ASGI.
+
+Os testes usarão o `TestClient`, fornecido pelo FastAPI/Starlette. Ao executar `cliente.post("/pedidos", json=dados)`, o teste monta uma requisição como a que seria enviada por um consumidor real, mas a encaminha diretamente à aplicação por ASGI. Não é necessário iniciar o Uvicorn, abrir uma porta ou criar uma conexão TCP.
+
+Mesmo sem rede, a rota é executada de verdade. O FastAPI identifica `POST /pedidos`, lê e valida o JSON recebido, executa dependências e *middlewares*, chama o código da rota, define o status HTTP, monta os headers e serializa a resposta. O `TestClient` não é um simulador da API: ele testa a API real, retirando apenas a camada de servidor e transporte de rede.
+
+Isso também delimita o que esse teste não garante. Ele não confirma que o Uvicorn inicia corretamente, que a porta está disponível ou que os timeouts de rede estão bem configurados. Além disso, ele não transforma automaticamente banco de dados, filas ou serviços externos em dependências falsas: se a rota estiver configurada para acessá-los, o teste poderá acessá-los também. Quando for necessário isolá-los, será preciso substituí-los explicitamente no ambiente de teste.
+
+### (c) Verificar o contrato completo, campo a campo
+
+A seção anterior descreveu o que verificar; esta mostra o código. A diferença entre um teste que dá confiança e um que apenas parece dar está em quanto da resposta ele examina. Um teste que confere só o código de status passa mesmo quando o corpo está errado — o total calculado incorretamente, um campo ausente, o status inicial trocado. Os dois testes abaixo vêm de [`exemplos/integracao_ruins.py`](exemplos/integracao_ruins.py) e [`exemplos/integracao_bons.py`](exemplos/integracao_bons.py):
 
 ```python
-# ❌ Só confirma que a rota respondeu — não confirma o que ela respondeu
-def test_cria_pedido(cliente):
-    resposta = cliente.post("/pedidos", json={...})
+# ❌ Confirma apenas que a rota respondeu — não confirma o que ela respondeu
+def test_cria_pedido():
+    resposta = cliente.post("/pedidos", json={
+        "cliente": "Ana",
+        "itens": [{"produto": "Livro", "quantidade": 2, "preco_unitario": 30.0}],
+    })
     assert resposta.status_code == 201
 
-# ✅ Verifica o contrato completo: status + campos do corpo
+# ✅ Confere os campos do contrato: total calculado (2 × 30,00 = 60,00) e status inicial "aberto"
 def test_cria_pedido_retorna_201_com_total_calculado(cliente):
-    resposta = cliente.post("/pedidos", json={...})
+    resposta = cliente.post("/pedidos", json={
+        "cliente": "Ana",
+        "itens": [{"produto": "Livro", "quantidade": 2, "preco_unitario": 30.0}],
+    })
     assert resposta.status_code == 201
     corpo = resposta.json()
     assert corpo["total"] == 60.0
     assert corpo["status"] == "aberto"
+    assert corpo["id"] >= 1
 ```
 
-### (c) Isolamento de estado — factory + fixture por teste
+O primeiro teste sobreviveria a um bug que devolvesse o total como `0.0`. O segundo falharia, que é exatamente o que se espera dele.
 
-`app.py` expõe `criar_app()`, uma **factory**: cada chamada devolve uma instância nova do FastAPI com seu próprio dicionário de pedidos em memória. Se um teste guardasse o app (ou o `TestClient`) num escopo compartilhado do módulo, o estado criado por um teste (um pedido com id=1, por exemplo) vazaria para o próximo teste — a ordem de execução passaria a importar, e rodar um teste isolado (`pytest -k test_x`) quebraria.
+### (d) Isolamento de estado entre testes
+
+Um bom teste depende apenas do que ele mesmo prepara. Quando vários testes compartilham o mesmo estado — o mesmo dicionário de pedidos, a mesma aplicação já povoada por execuções anteriores —, a ordem em que rodam passa a influenciar o resultado. Um teste pode passar porque outro rodou antes dele e deixou um pedido no lugar certo, e falhar quando executado sozinho. Suítes assim são difíceis de confiar e impossíveis de paralelizar.
+
+A forma de garantir o isolamento é dar a cada teste o seu próprio estado. A aplicação em [`exemplos/app.py`](exemplos/app.py) foi escrita para permitir isso: em vez de expor uma instância pronta, ela oferece a função `criar_app()`, chamada de *factory*. Cada chamada devolve uma aplicação nova, com um dicionário de pedidos vazio. Uma fixture do pytest chama essa função uma vez para cada teste, entregando a ele um `TestClient` sobre uma aplicação limpa.
 
 ```python
-# ❌ TestClient global — todos os testes do módulo compartilham o mesmo app
+# ❌ TestClient global no módulo: todos os testes compartilham a mesma aplicação e o mesmo estado
 cliente = TestClient(criar_app())
 
 def test_cria_pedido():
-    cliente.post("/pedidos", json={...})  # cria id=1
+    cliente.post("/pedidos", json={...})            # cria o pedido id=1
 
 def test_busca_pedido_criado_anteriormente():
-    cliente.get("/pedidos/1")  # só funciona se o teste acima já rodou antes
+    cliente.get("/pedidos/1")                        # só passa se o teste acima rodou antes
 
-# ✅ Fixture por teste — cada teste recebe um app novo e isolado
+# ✅ Fixture: cada teste recebe uma aplicação nova, com estado zerado
 @pytest.fixture
 def cliente() -> TestClient:
     return TestClient(criar_app())
@@ -66,9 +88,17 @@ def test_cria_pedido_retorna_201_com_total_calculado(cliente):
     ...
 ```
 
-### (d) Testar caminhos de erro (404 / 409 / 422)
+### (e) Cobrir os caminhos de erro: 404, 409 e 422
 
-Uma suíte de integração que só testa o caminho feliz (criar pedido, pagar pedido) deixa a maior parte do contrato da API sem cobertura: o que acontece quando o pedido não existe? Quando ele já foi pago? Quando o corpo da requisição é inválido? `app.py` define três desses caminhos explicitamente — `404` (pedido não encontrado), `409` (pedido já pago) e `422` (validação do Pydantic: itens vazio ou quantidade não positiva) — e a suíte-alvo (`integracao_bons.py`) cobre os três.
+O contrato de uma API não descreve apenas o que acontece quando tudo dá certo. Ele descreve também como a aplicação responde quando algo sai do esperado, e é justamente aí que costuma estar o comportamento menos testado. Uma suíte que exercita só o caminho feliz — criar um pedido, pagar um pedido — deixa boa parte do contrato sem cobertura. A aplicação de exemplo define três caminhos de erro, cada um com um significado próprio.
+
+O primeiro é o pedido inexistente. Uma requisição `GET /pedidos/999` para um pedido que nunca foi criado recebe `404 Not Found`. O código de status é o meio pelo qual o consumidor entende o que ocorreu sem precisar interpretar o corpo, e `404` afirma algo específico: o recurso não existe. Isso é diferente de uma falha do servidor (`500`). Um cliente bem construído reage de formas distintas a cada caso — no `404`, informa que o pedido não foi encontrado; no `500`, tenta novamente ou aciona o monitoramento.
+
+O segundo é o conflito de estado. Pagar um pedido que já está pago não é um dado mal formado; é uma operação incompatível com o estado atual do recurso. A resposta correta é `409 Conflict`, e não `400 Bad Request`, porque a requisição em si está bem formada — o que impede a operação é a situação do pedido. Essa distinção orienta a reação do consumidor, que tratará um `409` como "este pedido já foi pago", e não como "corrija os dados enviados".
+
+O terceiro é o corpo inválido, e aqui entra o Pydantic. Em FastAPI, o formato esperado do corpo é declarado como uma classe — no caso, `NovoPedido`, que contém uma lista de `ItemPedido`. Antes de o código da rota executar, o FastAPI valida o corpo recebido contra essa classe e, se ele não corresponde, responde `422 Unprocessable Entity` por conta própria. A aplicação vai além do formato e declara duas regras de negócio como validação: a lista de itens não pode ser vazia e a quantidade precisa ser positiva. Uma requisição com `itens: []` é recusada com `422` antes de se tornar um pedido.
+
+A suíte [`exemplos/integracao_bons.py`](exemplos/integracao_bons.py) dedica um teste a cada um desses caminhos. Cada resposta de erro é uma parte do contrato que o consumidor vai encontrar em produção, e cobri-las é o que permite dizer que a suíte descreve a API, e não apenas o trecho que já se sabia funcionar.
 
 ---
 
@@ -81,26 +111,26 @@ Uma suíte de integração que só testa o caminho feliz (criar pedido, pagar pe
 | TypeScript | **Vitest + supertest** | `npm install` | `npx vitest run` |
 | ADVPL/TLPP | **PROBAT + FWRest/HttpGet** | já incluso no ambiente TOTVS (tlppCore) | executar via AppServer com o endpoint publicado |
 
-**Nota sobre PHP/TypeScript/TLPP:** os arquivos `equivalente.php`, `equivalente.ts` e `equivalente.tlpp` (e seus pares em `exercicios/`) são paridade **ilustrativa** — mostram o mesmo padrão bom/ruim na sintaxe idiomática de cada linguagem, mas não são executados neste workshop (PHP e Vitest não estão instalados neste ambiente; PROBAT exige um AppServer TOTVS no ar). Isso segue a mesma convenção da Sessão 7.
+Os arquivos [`equivalente.php`](exemplos/equivalente.php), [`equivalente.ts`](exemplos/equivalente.ts) e [`equivalente.tlpp`](exemplos/equivalente.tlpp) — com os pares em `exercicios/` — trazem o mesmo par bom/ruim na sintaxe idiomática de cada linguagem. Os exemplos em PHP (com Guzzle) e em ADVPL/TLPP (com FWRest) adotam a variante contra servidor real descrita na seção 2(a). Eles servem de referência, não de suíte executável neste workshop: PHP e Vitest não estão instalados neste ambiente, e o PROBAT depende de um AppServer TOTVS no ar. O Python é a implementação que você executa; as outras três mostram como o mesmo padrão se traduz.
 
 ---
 
 ## 4. Exercício
 
-O arquivo `exercicios/exercicio.py` (e seus equivalentes `.php`, `.ts`, `.tlpp`) contém uma suíte de testes sobre a rota `POST /pedidos/{id}/pagar` com os mesmos 3 problemas estruturais de `exemplos/integracao_ruins.py`:
+O arquivo [`exercicios/exercicio.py`](exercicios/exercicio.py), e os equivalentes `.php`, `.ts` e `.tlpp`, trazem uma suíte de testes sobre a rota `POST /pedidos/{id}/pagar` com os mesmos três problemas estruturais de [`exemplos/integracao_ruins.py`](exemplos/integracao_ruins.py):
 
-1. `TestClient` global compartilhado entre os testes (estado vaza — a ordem passa a importar).
-2. Só verifica `status_code` (nunca olha o corpo da resposta).
-3. Ordem dependente — um teste assume que o pedido criado por outro teste ainda existe, com o id que ele espera.
+1. Um `TestClient` global, compartilhado entre os testes, pelo qual o estado vaza de um para o outro e a ordem de execução passa a importar.
+2. Verificação restrita ao `status_code`, sem examinar o corpo da resposta.
+3. Dependência de ordem: um teste assume que o pedido criado por outro ainda existe, com o identificador que ele espera.
 
-**Nota sobre autocontenção:** `exercicios/app.py` é uma cópia local do SUT (idêntico a `exemplos/app.py`) — o repositório não permite que um arquivo importe de outro diretório, então o app é replicado aqui para que o exercício rode de forma independente.
+A [`exercicios/app.py`](exercicios/app.py) é uma cópia local da aplicação, idêntica à de `exemplos/`. Como o repositório não permite que um arquivo importe de outro diretório, a aplicação é replicada aqui para que o exercício rode por conta própria.
 
 **Etapas:**
 
-1. Rode a suíte como está — ela passa, mas os problemas são estruturais, não de execução.
-2. Identifique os 3 problemas (compare com a lista de `integracao_ruins.py`, seção 2 acima).
-3. Refatore aplicando os padrões de `integracao_bons.py`: fixture pytest que cria um `TestClient(criar_app())` novo por teste, nomes comportamentais, e asserções sobre o contrato completo (status + corpo).
-4. Compare com `exercicios/gabarito.*` na sua linguagem.
+1. Execute a suíte como está. Ela passa — os problemas são de estrutura, não de execução.
+2. Identifique os três problemas, comparando com a lista de `integracao_ruins.py` na seção 2(d).
+3. Refatore seguindo [`exemplos/integracao_bons.py`](exemplos/integracao_bons.py): uma fixture que cria um `TestClient(criar_app())` por teste, nomes que descrevem o comportamento esperado e asserções sobre os campos do corpo, além do status.
+4. Compare o resultado com [`exercicios/gabarito.py`](exercicios/gabarito.py), ou com o gabarito na sua linguagem.
 
 ```bash
 # Rodar o exercício e o gabarito (Python)
@@ -113,13 +143,13 @@ pytest gabarito.py -v
 
 ## 5. Checklist
 
-- [ ] O teste verifica o contrato completo da resposta (status **e** corpo), não só o status?
-- [ ] Cada teste tem seu próprio estado isolado (factory + fixture por teste), sem depender de execução anterior?
-- [ ] Os caminhos de erro (404, 409, 422) estão cobertos, não só o caminho feliz?
-- [ ] O teste não depende de I/O de rede externa (chamadas a serviços de terceiros pela internet)? Se depender, está isolado/marcado como tal (`@pytest.mark.skip`) e documentado?
-- [ ] O nome do teste descreve o comportamento e o resultado esperado, sem precisar olhar o corpo?
+- [ ] O teste examina os campos do corpo da resposta, além do código de status?
+- [ ] Cada teste monta o próprio estado, por meio de uma factory e de uma fixture por teste, e roda independente da ordem?
+- [ ] Os caminhos de erro 404, 409 e 422 têm, cada um, o seu teste?
+- [ ] O teste evita I/O de rede externa? Quando precisa chamar um serviço de terceiros, ele está isolado, marcado com `@pytest.mark.skip` e documentado?
+- [ ] O nome do teste descreve o comportamento e o resultado esperado, sem exigir a leitura do corpo do teste?
 
-**Nota sobre `integracao_ruins.py`:** o teste que ilustra dependência de rede real (`test_consulta_servico_externo`) está marcado `@pytest.mark.skip(reason="depende de rede real — anti-padrão ilustrado")` para não quebrar a suíte em CI/ambientes offline. O defeito estrutural que ele demonstra (lentidão, flakiness, não-repetibilidade) existe independentemente de o teste estar rodando ou não — é por isso que esse padrão deve ser evitado em produção, não movido para trás de um `skip` permanente.
+O teste que ilustra dependência de rede real em `integracao_ruins.py` (`test_consulta_servico_externo`) está marcado com `@pytest.mark.skip(reason="depende de rede real — anti-padrão ilustrado")`, para não quebrar a suíte em CI ou em ambientes offline. O defeito que ele demonstra — lentidão, instabilidade e falha quando a rede cai — continua existindo independentemente de o teste rodar. O `skip` serve à didática; em produção, a resposta certa é não escrever o teste dessa forma, e não escondê-lo atrás de um `skip` permanente.
 
 ---
 
@@ -131,11 +161,11 @@ pytest gabarito.py -v
 
 - **FOWLER, Martin.** "TestPyramid" (bliki).
   `https://martinfowler.com/bliki/TestPyramid.html`
-  O modelo de proporção entre unidade, integração e e2e já apresentado na Sessão 7 — a base conceitual para decidir quanto investir em cada camada.
+  O modelo de proporção entre unidade, integração e e2e apresentado na Sessão 7 — a base para decidir quanto investir em cada camada.
 
 - **FastAPI.** "Testing" — documentação oficial sobre `TestClient`.
   `https://fastapi.tiangolo.com/tutorial/testing/`
-  Referência oficial do padrão de teste usado neste tutorial (TestClient em memória via ASGI).
+  Referência oficial do padrão usado neste tutorial: o TestClient em memória, via ASGI.
 
 - **DODDS, Kent C.** "Write tests. Not too many. Mostly integration." (blog).
-  Argumento da variação "trophy" de testes (já citada na Sessão 7) — relevante aqui porque testes de integração de API são exatamente a camada que essa variação recomenda enfatizar.
+  O argumento por trás da variação "trophy" de testes, citada na Sessão 7 — relevante aqui porque os testes de integração de API são a camada que essa variação recomenda enfatizar.
