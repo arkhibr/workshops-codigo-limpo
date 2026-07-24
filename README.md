@@ -6,9 +6,10 @@ Workshop organizado em temas, baseado em **Clean Code** de Robert C. Martin e **
 - **Tema 2 (Sessões 3–4):** Design Patterns e Idiom Patterns Aplicados — 4 horas
 - **Tema 3 (Sessões 5–6):** Clean Code e uso consciente de IA — 4 horas
 - **Tema 4 (Sessão 7):** Testes de Unidade: Fundamentos, Dublês e Código Legado — 2 horas
+- **Tema 5 (Sessões 8–9):** Testes de Integração, E2E e Performance — 4 horas
 
 **Público:** Times mistos (Júnior + Pleno + Sênior).
-**Linguagem principal:** Python. Sessões 1–2 e 7 incluem equivalentes em **PHP**, **TypeScript** e **ADVPL/TLPP**. Sessões 5–6 cobrem apenas **Python** e **TypeScript**.
+**Linguagem principal:** Python. Sessões 1–2, 7 e 8 incluem equivalentes em **PHP**, **TypeScript** e **ADVPL/TLPP**. Sessões 5–6 cobrem apenas **Python** e **TypeScript**. Na Sessão 9, as ferramentas definem a linguagem: os fluxos do **Maestro** são escritos em **YAML** e os testes do **K6**, em **JavaScript** — nenhuma das duas tem equivalente multilíngue.
 
 ---
 
@@ -88,6 +89,26 @@ Workshop organizado em temas, baseado em **Clean Code** de Robert C. Martin e **
 | 27 | Testes de Unidade em Código Legado ⭐ | 10 min | 10 min | 20 min |
 | | **Total** | | | **120 min** |
 
+### Sessão 8 — Testes de Integração · 2 horas
+
+| # | Tutorial | Teoria | Prática | Total |
+|---|---|---|---|---|
+| 28 | Testes de Integração de API | 20 min | 20 min | 40 min |
+| 29 | Testes de Integração de Banco de Dados | 20 min | 20 min | 40 min |
+| 30 | Integração ponta a ponta de API e Banco ⭐ | 15 min | 15 min | 30 min |
+| — | **Pulmão** | | | **10 min** |
+| | **Total** | | | **120 min** |
+
+### Sessão 9 — E2E e Performance · 2 horas
+
+| # | Tutorial | Teoria | Prática | Total |
+|---|---|---|---|---|
+| 31 | E2E Web com Maestro | 20 min | 15 min | 35 min |
+| 32 | E2E Mobile com Maestro | 15 min | 15 min | 30 min |
+| 33 | Testes de Performance com K6 ⭐ | 20 min | 25 min | 45 min |
+| — | **Pulmão** | | | **10 min** |
+| | **Total** | | | **120 min** |
+
 ---
 
 ## Sessão 1 — Os Fundamentos da Escrita Limpa (2 horas)
@@ -151,6 +172,22 @@ Workshop organizado em temas, baseado em **Clean Code** de Robert C. Martin e **
 | 25 | [Dublês de Teste](sessao-7/tutorial-25-dubles-teste/) | Taxonomia Dummy/Stub/Fake/Spy/Mock; anti-patterns de over-mocking e mockar o que não é seu | Fowler ("Mocks Aren't Stubs") + Meszaros (*xUnit Test Patterns*) |
 | 26 | [Massa de Dados para Testes](sessao-7/tutorial-26-massa-dados/) | Object Mother vs. Test Data Builder, Factories, testes baseados em propriedade | Meszaros (*xUnit Test Patterns*); `factory_boy`, `Hypothesis`, `fast-check` |
 | 27 | [Testes de Unidade em Código Legado ⭐](sessao-7/tutorial-27-testes-legado/) | Âncora: ciclo seam → double → caracterização → suíte de regressão, síntese de T07+T25+T26 | Feathers (*Legacy Code*) + Fowler |
+
+## Sessão 8 — Testes de Integração (2 horas)
+
+| # | Tutorial | Conceito central | Referência |
+|---|---|---|---|
+| 28 | [Testes de Integração de API](sessao-8/tutorial-28-integracao-api/) | Contrato HTTP completo, cliente em memória vs. servidor real, isolamento por fixture, caminhos de erro 404/409/422 | Fowler ("IntegrationTest"); FastAPI TestClient |
+| 29 | [Testes de Integração de Banco de Dados](sessao-8/tutorial-29-integracao-banco/) | SQL real vs. mock, SQLite `:memory:`, schema no setup, isolamento por teste, `PRAGMA foreign_keys` | Fowler; `sqlite3`; testcontainers (evolução) |
+| 30 | [Integração ponta a ponta de API e Banco ⭐](sessao-8/tutorial-30-integracao-api-banco/) | Âncora: teste vertical HTTP→app→banco, verificar os dois lados, integração vertical falsa, "trophy" | Dodds ("Mostly integration") |
+
+## Sessão 9 — E2E e Performance (2 horas)
+
+| # | Tutorial | Conceito central | Referência |
+|---|---|---|---|
+| 31 | [E2E Web com Maestro](sessao-9/tutorial-31-e2e-web-maestro/) | Flow em YAML, seletor estável vs. coordenada, assertion vs. espera fixa, idempotência | Maestro docs; Fowler ("TestPyramid") |
+| 32 | [E2E Mobile com Maestro](sessao-9/tutorial-32-e2e-mobile-maestro/) | Estado do app (`clearState`), permissões, gestos, botão voltar, teclado, diferenças iOS/Android | Maestro docs |
+| 33 | [Testes de Performance com K6 ⭐](sessao-9/tutorial-33-performance-k6/) | Âncora: usuários virtuais e stages, thresholds como SLO, checks vs. thresholds, percentis (p95) | k6 docs (Grafana) |
 
 ---
 
@@ -248,6 +285,10 @@ tutorial-20-revisao-critica-ia/
 └── exercicios/
     └── roteiro-ia.md          # roteiro hands-on
 ```
+
+**Tutoriais da Sessão 8** (T28–T30) seguem o padrão de quatro linguagens, com uma diferença: em vez de um par `_ruins`/`_bons` estático, os exemplos rodam de verdade contra um alvo executável — uma aplicação FastAPI (`exemplos/app.py`) ou um repositório SQLite (`exemplos/repositorio.py`) — verificado com `pytest`. Os arquivos passam a se chamar `integracao_ruins.py`/`integracao_bons.py`.
+
+**Tutoriais da Sessão 9** não seguem o esquema multilíngue, porque a linguagem é da ferramenta. Os do Maestro (T31, T32) trazem apenas fluxos em **YAML** (`exemplos/fluxo_ruins.yaml`/`fluxo_bons.yaml`); o de K6 (T33) traz apenas scripts em **JavaScript** (`exemplos/teste_ruins.js`/`teste_bons.js`). Quando há um alvo executável — a página de checkout do T31, o servidor HTTP do T33 —, ele fica em `exemplos/alvo/`.
 
 ---
 
