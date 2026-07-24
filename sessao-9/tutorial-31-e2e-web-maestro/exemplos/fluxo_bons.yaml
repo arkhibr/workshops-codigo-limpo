@@ -1,0 +1,17 @@
+# Fluxo Maestro robusto — E2E de checkout web.
+# Executar: maestro test fluxo_bons.yaml  (com o alvo servido em http://localhost:8080)
+appId: "http://localhost:8080"
+---
+- launchApp
+- assertVisible:
+    id: "produto-livro"
+- tapOn:
+    id: "adicionar"
+- assertVisible:
+    text: "Total: R$ 30,00"
+- tapOn:
+    id: "finalizar"
+- assertVisible:
+    id: "confirmacao"
+- assertVisible:
+    text: "Pedido confirmado"

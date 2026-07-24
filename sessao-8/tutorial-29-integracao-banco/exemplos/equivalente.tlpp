@@ -1,0 +1,135 @@
+// equivalente.tlpp — Testes de Integração de Banco de Dados em PROBAT + DBAccess/TCQuery
+// Roda SQL real contra tabelas de trabalho temporárias (TCQuery), não um
+// mock — é isso que caracteriza um teste de integração.
+//
+// Nota: PROBAT exige AppServer com acesso a um ambiente TOTVS (RPO + banco
+// de dados configurado) para executar — não há como rodar este arquivo
+// fora do ambiente TOTVS. Ilustrativo/paridade (igual Sessão 7 e T28).
+// Nota adicional: DBAccess/TCQuery não têm um mecanismo nativo de mocking
+// de banco (equivalente a um driver in-memory como sqlite3/better-sqlite3)
+// — testes de integração em ADVPL/TLPP tipicamente rodam contra um
+// ambiente de homologação com dados de teste, ou usam tabelas de trabalho
+// temporárias criadas e destruídas por teste, para aproximar o isolamento.
+#include 'tlpp-core.th'
+#include 'tlpp-probat.th'
+#include 'protheus.ch'
+
+namespace test.pedidos
+using namespace tlpp.probat
+
+function InserirCliente(cAliasPed as character, cNome as character, lVip as logical) as numeric
+    local nId := (cAliasPed)->(RecCount()) + 1
+    (cAliasPed)->(dbAppend())
+    (cAliasPed)->(FieldPut(FieldPos('CLI_ID'), nId))
+    (cAliasPed)->(FieldPut(FieldPos('CLI_NOME'), cNome))
+    (cAliasPed)->(FieldPut(FieldPos('CLI_VIP'), iif(lVip, 1, 0)))
+return nId
+
+function InserirPedido(cAliasPed as character, nClienteId as numeric, nTotal as numeric) as numeric
+    // ✅ Constraints reais checadas antes do insert — no SGBD de produção,
+    // isso seria FK + CHECK; na tabela de trabalho do exemplo, validamos
+    // explicitamente para reproduzir o mesmo comportamento de rejeição.
+    if !ClienteExiste(cAliasPed, nClienteId)
+        UserException('cliente_id inexistente — violação de integridade referencial')
+    endif
+    if nTotal < 0
+        UserException('total negativo — violação de constraint CHECK (total >= 0)')
+    endif
+
+    local nId := (cAliasPed)->(RecCount()) + 1
+    (cAliasPed)->(dbAppend())
+    (cAliasPed)->(FieldPut(FieldPos('PED_ID'), nId))
+    (cAliasPed)->(FieldPut(FieldPos('PED_CLIID'), nClienteId))
+    (cAliasPed)->(FieldPut(FieldPos('PED_TOTAL'), nTotal))
+    (cAliasPed)->(FieldPut(FieldPos('PED_STATUS'), 'aberto'))
+return nId
+
+static function ClienteExiste(cAliasCli as character, nClienteId as numeric) as logical
+    local lAchou := .F.
+    (cAliasCli)->(dbGoTop())
+    while !(cAliasCli)->(Eof())
+        if (cAliasCli)->(FieldGet(FieldPos('CLI_ID'))) == nClienteId
+            lAchou := .T.
+            exit
+        endif
+        (cAliasCli)->(dbSkip())
+    enddo
+return lAchou
+
+// ✅ Um alias/tabela de trabalho novo por teste (Setup), para isolamento —
+// já que DBAccess não oferece um banco em memória como sqlite3/better-sqlite3.
+@TestFixture()
+class PedidosIntegrationTest
+
+    @Setup()
+    method setup() as logical
+        TCGenQry("CLI_ID N(6,0), CLI_NOME C(40), CLI_VIP N(1,0)") alias "CLITST"
+        TCGenQry("PED_ID N(6,0), PED_CLIID N(6,0), PED_TOTAL N(12,2), PED_STATUS C(10)") alias "PEDTST"
+    return .T.
+
+    @Teardown()
+    method teardown() as logical
+        if select("PEDTST") > 0
+            PEDTST->(dbCloseArea())
+        endif
+        if select("CLITST") > 0
+            CLITST->(dbCloseArea())
+        endif
+    return .T.
+
+    @Test('Insere e recupera pedido do cliente')
+    method testInsereERecuperaPedidoDoCliente() as logical
+        local nClienteId := InserirCliente('CLITST', 'Ana', .T.)
+        local nPedidoId  := InserirPedido('PEDTST', nClienteId, 90.00)
+
+        PEDTST->(dbGoTop())
+
+        // ✅ Verifica o efeito colateral real na tabela, não um retorno simulado.
+        ::assertEquals( PEDTST->PED_CLIID, nClienteId )
+        ::assertEquals( PEDTST->PED_TOTAL, 90.00 )
+        ::assertEquals( PEDTST->PED_STATUS, 'aberto' )
+    return .T.
+
+    @Test('Rejeita pedido com cliente inexistente')
+    method testRejeitaPedidoComClienteInexistente() as logical
+        local lLancou := .F.
+        try
+            InserirPedido('PEDTST', 999, 10.00)
+        catch
+            lLancou := .T.
+        endtry
+        ::assertTrue( lLancou )
+    return .T.
+
+    @Test('Rejeita pedido com total negativo')
+    method testRejeitaPedidoComTotalNegativo() as logical
+        local nClienteId := InserirCliente('CLITST', 'Ana', .F.)
+        local lLancou := .F.
+        try
+            InserirPedido('PEDTST', nClienteId, -5.00)
+        catch
+            lLancou := .T.
+        endtry
+        ::assertTrue( lLancou )
+    return .T.
+
+endclass
+
+// ❌ Contraponto (anti-padrão, não incluído na suíte acima): "repositório"
+// stub que não executa SQL/DBAccess nenhum — devolve valores fixos. Sem
+// mocking nativo em DBAccess, esse é o jeito mais comum de "mockar o banco"
+// em ADVPL/TLPP, e tem o mesmo problema das outras linguagens: nenhuma
+// constraint real é exercitada.
+@TestFixture()
+class PedidosTestRuim
+
+    @Test('Insere pedido (ruim, stub)')
+    method testInserePedido() as logical
+        local nPedidoId := InserirPedidoStub(999, -50.00) // ❌ nunca toca o banco
+        ::assertEquals( nPedidoId, 1 ) // ❌ não prova que o banco aceitaria isso
+    return .T.
+
+endclass
+
+static function InserirPedidoStub(nClienteId as numeric, nTotal as numeric) as numeric
+return 1

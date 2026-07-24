@@ -1,0 +1,34 @@
+# Fluxo Maestro mobile robusto — login e primeiro pedido, do zero.
+# Requer um emulador Android ou simulador iOS com o app instalado (appId abaixo).
+# Executar: maestro test fluxo_bons.yaml
+appId: br.com.workshop.pedidos
+---
+# clearState apaga os dados do app antes de abrir: o fluxo começa sempre
+# deslogado, com o carrinho vazio, independentemente do que ficou de execuções
+# anteriores. É o que torna o fluxo repetível.
+- launchApp:
+    clearState: true
+
+# Login explícito — o fluxo não presume nenhuma sessão prévia.
+- assertVisible:
+    id: "campo_usuario"
+- tapOn:
+    id: "campo_usuario"
+- inputText: "ana"
+- tapOn:
+    id: "campo_senha"
+- inputText: "secreta"
+- hideKeyboard
+- tapOn:
+    text: "Entrar"
+
+# Confirma que o login levou ao catálogo antes de seguir.
+- assertVisible: "Catálogo"
+- tapOn:
+    id: "produto_livro"
+- tapOn:
+    text: "Adicionar ao carrinho"
+
+# Verifica o efeito da ação, não apenas que o botão foi tocado.
+- assertVisible:
+    text: "1 item no carrinho"

@@ -1,0 +1,29 @@
+# Gabarito — mesmo objetivo de exercicio.yaml (adicionar o livro duas
+# vezes e finalizar), agora com seletores estáveis e uma assertion
+# depois de cada ação relevante.
+appId: "http://localhost:8080"
+---
+- launchApp
+- assertVisible:
+    id: "produto-livro"
+
+# ✅ seletor estável — sobrevive a qualquer mudança de layout
+- tapOn:
+    id: "adicionar"
+- assertVisible:
+    text: "Total: R$ 30,00"
+
+# ✅ segundo clique, com assertion confirmando o novo total
+- tapOn:
+    id: "adicionar"
+- assertVisible:
+    text: "Total: R$ 60,00"
+
+- tapOn:
+    id: "finalizar"
+
+# ✅ confirma o resultado da ação, não apenas que o botão foi tocado
+- assertVisible:
+    id: "confirmacao"
+- assertVisible:
+    text: "Pedido confirmado"

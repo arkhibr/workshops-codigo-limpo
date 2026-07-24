@@ -1,0 +1,27 @@
+# Exercício — torne este fluxo mobile hermético.
+#
+# Objetivo do fluxo: fazer login como "ana", abrir o catálogo e adicionar o
+# livro ao carrinho, confirmando que o carrinho passou a ter 1 item.
+#
+# Como está, o fluxo tem dois problemas de E2E mobile: não reinicia o estado
+# do app (presume uma sessão já aberta) e localiza os elementos por
+# coordenada de tela. Ele depende do que ficou de execuções anteriores e
+# quebra em outro aparelho.
+#
+# Sua tarefa: reescrever o fluxo para que ele comece do zero (login incluído)
+# e use seletores estáveis, com uma assertion depois da ação final.
+# Compare o resultado com gabarito.yaml.
+appId: br.com.workshop.pedidos
+---
+# ❌ abre o app sem limpar o estado — conta com uma sessão anterior
+- launchApp
+
+# ❌ coordenada, presumindo que o catálogo já está aberto
+- tapOn:
+    point: "50%, 40%"
+
+# ❌ coordenada para "Adicionar ao carrinho"
+- tapOn:
+    point: "85%, 90%"
+
+# ❌ termina sem confirmar que o item entrou no carrinho

@@ -1,0 +1,56 @@
+// EXERCÍCIO 30 — Integração ponta-a-ponta API+Banco (PROBAT + FWRest + DBAccess)
+// Tempo estimado: 25 minutos
+//
+// INSTRUÇÕES:
+//   A suíte abaixo testa a rota POST /pedidos/{id}/pagar mas tem o mesmo
+//   problema estrutural de exemplos/equivalente.tlpp (anti-padrão 2 do
+//   tutorial): só verifica a resposta HTTP — nunca confere a tabela. O teste
+//   "prova" que a API respondeu com status "pago", mas não prova que o
+//   status foi realmente persistido.
+//
+//   Refatore aplicando o padrão de exemplos/equivalente.tlpp: depois de
+//   chamar a rota, releia o registro diretamente na tabela de trabalho e
+//   confirme que o status "pago" está lá — não só na resposta HTTP.
+//   Execute no PROBAT (exige AppServer com ambiente TOTVS configurado —
+//   igual Sessão 7, T28 e T29).
+//
+// NOTA DE AUTOCONTENÇÃO: o Setup/rota de pagamento abaixo são análogos ao
+// SUT (idênticos a exemplos/equivalente.tlpp, com a rota adicional
+// POST /pedidos/{id}/pagar publicada no AppServer) — o repositório não
+// permite que um arquivo importe de outro diretório.
+#include 'tlpp-core.th'
+#include 'tlpp-probat.th'
+#include 'protheus.ch'
+
+namespace test.pedidos.exercicio
+using namespace tlpp.probat
+
+@TestFixture()
+class ExercicioTestRuim
+
+    @Setup()
+    method setup() as logical
+        TCGenQry("PED_ID N(6,0), PED_CLIENTE C(40), PED_TOTAL N(12,2), PED_STATUS C(10)") alias "PEDTST"
+    return .T.
+
+    @Teardown()
+    method teardown() as logical
+        if select("PEDTST") > 0
+            PEDTST->(dbCloseArea())
+        endif
+    return .T.
+
+    @Test('Pagar pedido muda status para pago')
+    method testPagarPedidoMudaStatusParaPago() as logical
+        local oHttp := FWRest():New('http://localhost:8080')
+        local oCriado := oHttp:Post('/pedidos', '{"cliente":"Ana","itens":[{"produto":"Livro","quantidade":1,"preco_unitario":10.0}]}'):GetJson()
+
+        local oResp := oHttp:Post('/pedidos/' + cValToChar(oCriado:id) + '/pagar', '')
+
+        // ❌ Só confere a resposta HTTP — nunca relê a tabela para confirmar
+        // que o status "pago" foi de fato persistido em PEDTST.
+        ::assertEquals( oResp:GetStatus(), 200 )
+        ::assertEquals( oResp:GetJson():status, 'pago' )
+    return .T.
+
+endclass

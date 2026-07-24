@@ -1,0 +1,55 @@
+// GABARITO 28 — Testes de Integração de API (PROBAT + FWRest)
+// Suíte refatorada: um client HTTP novo por método de teste, nomes
+// comportamentais, contrato completo verificado (status + corpo), sem
+// dependência de ordem.
+// Execute no PROBAT (exige AppServer com o endpoint publicado).
+#include 'tlpp-core.th'
+#include 'tlpp-probat.th'
+
+namespace test.pedidos.gabarito
+using namespace tlpp.probat
+
+@TestFixture()
+class PedidosGabaritoTest
+
+    @Test('Cria pedido retorna 201 com status aberto')
+    method testCriaPedidoRetorna201ComStatusAberto() as logical
+        local oHttp := FWRest():New('http://localhost:8080')
+        local oResp := oHttp:Post('/pedidos', '{"cliente":"Bruno","itens":[{"produto":"Caneta","quantidade":3,"preco_unitario":5.0}]}')
+
+        ::assertEquals( oResp:GetStatus(), 201 )
+        ::assertEquals( oResp:GetJson():total, 15.0 )
+        ::assertEquals( oResp:GetJson():status, 'aberto' )
+    return .T.
+
+    @Test('Paga pedido aberto muda status para pago')
+    method testPagaPedidoAbertoMudaStatusParaPago() as logical
+        local oHttp := FWRest():New('http://localhost:8080')
+        local oCriado := oHttp:Post('/pedidos', '{"cliente":"Bruno","itens":[{"produto":"Caneta","quantidade":3,"preco_unitario":5.0}]}'):GetJson()
+
+        local oResp := oHttp:Post('/pedidos/' + cValToChar(oCriado:id) + '/pagar', '')
+
+        ::assertEquals( oResp:GetStatus(), 200 )
+        ::assertEquals( oResp:GetJson():status, 'pago' )
+    return .T.
+
+    @Test('Pagar pedido ja pago retorna 409')
+    method testPagarPedidoJaPagoRetorna409() as logical
+        local oHttp := FWRest():New('http://localhost:8080')
+        local oCriado := oHttp:Post('/pedidos', '{"cliente":"Bruno","itens":[{"produto":"Caneta","quantidade":3,"preco_unitario":5.0}]}'):GetJson()
+        oHttp:Post('/pedidos/' + cValToChar(oCriado:id) + '/pagar', '')
+
+        local oResp := oHttp:Post('/pedidos/' + cValToChar(oCriado:id) + '/pagar', '')
+
+        ::assertEquals( oResp:GetStatus(), 409 )
+    return .T.
+
+    @Test('Pagar pedido inexistente retorna 404')
+    method testPagarPedidoInexistenteRetorna404() as logical
+        local oHttp := FWRest():New('http://localhost:8080')
+        local oResp := oHttp:Post('/pedidos/999/pagar', '')
+
+        ::assertEquals( oResp:GetStatus(), 404 )
+    return .T.
+
+endclass

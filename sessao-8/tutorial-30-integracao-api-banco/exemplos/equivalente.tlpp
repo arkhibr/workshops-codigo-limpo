@@ -1,0 +1,79 @@
+// equivalente.tlpp — Integração ponta-a-ponta API+Banco em PROBAT + FWRest + DBAccess
+// Chama um endpoint REST real publicado no AppServer, que persiste em uma
+// tabela de trabalho temporária (TCGenQry) injetada por teste — a request
+// percorre a stack real até o banco, e o teste verifica os DOIS lados: a
+// resposta HTTP e o registro gravado (relendo a tabela diretamente).
+//
+// Nota: PROBAT exige AppServer com ambiente TOTVS configurado para executar
+// — não há como rodar este arquivo fora do ambiente TOTVS. Ilustrativo/
+// paridade (igual Sessão 7, T28 e T29).
+#include 'tlpp-core.th'
+#include 'tlpp-probat.th'
+#include 'protheus.ch'
+
+namespace test.pedidos
+using namespace tlpp.probat
+
+// ✅ Uma tabela de trabalho nova por teste (Setup) — o endpoint publicado no
+// AppServer grava nessa mesma tabela, análogo a criar_app(conn) receber a
+// conexão injetada.
+@TestFixture()
+class PedidosIntegracaoApiBancoTest
+
+    @Setup()
+    method setup() as logical
+        TCGenQry("PED_ID N(6,0), PED_CLIENTE C(40), PED_TOTAL N(12,2), PED_STATUS C(10)") alias "PEDTST"
+    return .T.
+
+    @Teardown()
+    method teardown() as logical
+        if select("PEDTST") > 0
+            PEDTST->(dbCloseArea())
+        endif
+    return .T.
+
+    @Test('Post pedido persiste no banco')
+    method testPostPedidoPersisteNoBanco() as logical
+        local oHttp := FWRest():New('http://localhost:8080')
+        local oResp := oHttp:Post('/pedidos', '{"cliente":"Ana","itens":[{"produto":"Livro","quantidade":3,"preco_unitario":10.0}]}')
+
+        ::assertEquals( oResp:GetStatus(), 201 )
+
+        // ✅ verifica o OUTRO lado: o dado realmente foi ao banco
+        local nPedidoId := oResp:GetJson():id
+        PEDTST->(dbGoTop())
+        PEDTST->(dbSeek(cValToChar(nPedidoId)))
+        ::assertEquals( PEDTST->PED_CLIENTE, 'Ana' )
+        ::assertEquals( PEDTST->PED_TOTAL, 30.00 )
+    return .T.
+
+    @Test('Get le pedido persistido')
+    method testGetLePedidoPersistido() as logical
+        local oHttp := FWRest():New('http://localhost:8080')
+        local oCriado := oHttp:Post('/pedidos', '{"cliente":"Bob","itens":[{"produto":"Caneta","quantidade":2,"preco_unitario":5.0}]}'):GetJson()
+
+        local oResp := oHttp:Get('/pedidos/' + cValToChar(oCriado:id))
+
+        ::assertEquals( oResp:GetStatus(), 200 )
+        ::assertEquals( oResp:GetJson():total, 10.00 )
+    return .T.
+
+endclass
+
+// ❌ Contraponto (anti-padrão, não incluído na suíte acima): "integração
+// vertical falsa" — um "repositório" stub que não roda DBAccess nenhum, então
+// a request nunca chega a gravar de verdade; e só confere o retorno
+// simulado, nunca a tabela.
+@TestFixture()
+class PedidosIntegracaoFalsaTest
+
+    @Test('Cria pedido com banco stub (ruim)')
+    method testCriaPedidoComBancoStub() as logical
+        local nPedidoId := InserirPedidoStub('Ana', 30.00) // ❌ nunca toca o banco
+        ::assertEquals( nPedidoId, 1 ) // ❌ não relê a tabela para confirmar persistência
+    return .T.
+
+endclass
+
+static function InserirPedidoStub(cCliente as character, nTotal as numeric) as numeric
+return 1
