@@ -1,0 +1,91 @@
+// GABARITO 29 — Testes de Integração de Banco de Dados (PROBAT + DBAccess/TCQuery)
+// Suíte refatorada: Setup() cria uma tabela de trabalho nova por teste,
+// e a soma real dos pedidos é verificada (SQL/DBAccess de verdade) — sem
+// stub, sem tabela persistente compartilhada.
+// Execute no PROBAT (exige AppServer com ambiente TOTVS configurado).
+#include 'tlpp-core.th'
+#include 'tlpp-probat.th'
+#include 'protheus.ch'
+
+namespace test.pedidos.gabarito
+using namespace tlpp.probat
+
+function InserirCliente(cAliasCli as character, nClienteId as numeric, cNome as character) as numeric
+    (cAliasCli)->(dbAppend())
+    (cAliasCli)->(FieldPut(FieldPos('CLI_ID'), nClienteId))
+    (cAliasCli)->(FieldPut(FieldPos('CLI_NOME'), cNome))
+return nClienteId
+
+function InserirPedido(cAliasPed as character, nClienteId as numeric, nTotal as numeric) as numeric
+    local nId := (cAliasPed)->(RecCount()) + 1
+    (cAliasPed)->(dbAppend())
+    (cAliasPed)->(FieldPut(FieldPos('PED_ID'), nId))
+    (cAliasPed)->(FieldPut(FieldPos('PED_CLIID'), nClienteId))
+    (cAliasPed)->(FieldPut(FieldPos('PED_TOTAL'), nTotal))
+return nId
+
+function TotalGastoPeloCliente(cAliasPed as character, nClienteId as numeric) as numeric
+    local nTotal := 0
+    (cAliasPed)->(dbGoTop())
+    while !(cAliasPed)->(Eof())
+        if (cAliasPed)->(FieldGet(FieldPos('PED_CLIID'))) == nClienteId
+            nTotal += (cAliasPed)->(FieldGet(FieldPos('PED_TOTAL')))
+        endif
+        (cAliasPed)->(dbSkip())
+    enddo
+return nTotal
+
+// ✅ Um alias/tabela de trabalho novo por teste (Setup) — isolamento real,
+// sem depender de dados deixados por uma execução anterior.
+@TestFixture()
+class PedidosGabaritoTest
+
+    @Setup()
+    method setup() as logical
+        TCGenQry("CLI_ID N(6,0), CLI_NOME C(40)") alias "CLITST"
+        TCGenQry("PED_ID N(6,0), PED_CLIID N(6,0), PED_TOTAL N(12,2)") alias "PEDTST"
+    return .T.
+
+    @Teardown()
+    method teardown() as logical
+        if select("PEDTST") > 0
+            PEDTST->(dbCloseArea())
+        endif
+        if select("CLITST") > 0
+            CLITST->(dbCloseArea())
+        endif
+    return .T.
+
+    @Test('Total gasto soma os pedidos do cliente')
+    method testTotalGastoSomaOsPedidosDoCliente() as logical
+        local nClienteId := InserirCliente('CLITST', 1, 'Ana')
+        InserirPedido('PEDTST', nClienteId, 30.00)
+        InserirPedido('PEDTST', nClienteId, 20.00)
+
+        local nTotal := TotalGastoPeloCliente('PEDTST', nClienteId)
+
+        ::assertEquals( nTotal, 50.00 )
+    return .T.
+
+    @Test('Total gasto e zero para cliente sem pedidos')
+    method testTotalGastoEZeroParaClienteSemPedidos() as logical
+        local nClienteId := InserirCliente('CLITST', 1, 'Ana')
+
+        local nTotal := TotalGastoPeloCliente('PEDTST', nClienteId)
+
+        ::assertEquals( nTotal, 0.00 )
+    return .T.
+
+    @Test('Total gasto nao soma pedidos de outro cliente')
+    method testTotalGastoNaoSomaPedidosDeOutroCliente() as logical
+        local nAna := InserirCliente('CLITST', 1, 'Ana')
+        local nBob := InserirCliente('CLITST', 2, 'Bob')
+        InserirPedido('PEDTST', nAna, 30.00)
+        InserirPedido('PEDTST', nBob, 100.00)
+
+        local nTotalAna := TotalGastoPeloCliente('PEDTST', nAna)
+
+        ::assertEquals( nTotalAna, 30.00 )
+    return .T.
+
+endclass

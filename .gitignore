@@ -7,3 +7,9 @@ sessao-7/vendor/
 __pycache__/
 *.pyc
 .pytest_cache/
+
+# Bancos SQLite gerados por anti-padrões demonstrados na Sessão 8 (T29) —
+# nunca versionar um banco de teste real, mesmo se criado fora de tempfile.
+*.db
+*.sqlite
+*.sqlite3

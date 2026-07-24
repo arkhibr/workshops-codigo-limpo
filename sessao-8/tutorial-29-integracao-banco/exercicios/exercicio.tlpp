@@ -1,0 +1,76 @@
+// EXERCÍCIO 29 — Testes de Integração de Banco de Dados (PROBAT + DBAccess/TCQuery)
+// Tempo estimado: 20 minutos
+//
+// INSTRUÇÕES:
+//   A suíte abaixo testa TotalGastoPeloCliente(cAliasPed, nClienteId) mas
+//   tem os mesmos 3 problemas estruturais de exemplos/equivalente.tlpp:
+//     1. Usa um "repositório" stub que não roda SQL/DBAccess nenhum.
+//     2. Depende de uma tabela persistente (não temporária), sem limpeza
+//        entre execuções.
+//     3. Sem Setup() isolado — assume que a tabela e os dados já existem.
+//
+//   Refatore aplicando os padrões de exemplos/equivalente.tlpp: Setup()
+//   cria uma tabela de trabalho nova por teste (TCGenQry), e verifique a
+//   soma real (e o isolamento entre clientes).
+//   Execute no PROBAT (exige AppServer com ambiente TOTVS configurado —
+//   igual Sessão 7 e T28).
+#include 'tlpp-core.th'
+#include 'tlpp-probat.th'
+#include 'protheus.ch'
+
+namespace test.pedidos.exercicio
+using namespace tlpp.probat
+
+function InserirPedido(cAliasPed as character, nClienteId as numeric, nTotal as numeric) as numeric
+    local nId := (cAliasPed)->(RecCount()) + 1
+    (cAliasPed)->(dbAppend())
+    (cAliasPed)->(FieldPut(FieldPos('PED_ID'), nId))
+    (cAliasPed)->(FieldPut(FieldPos('PED_CLIID'), nClienteId))
+    (cAliasPed)->(FieldPut(FieldPos('PED_TOTAL'), nTotal))
+return nId
+
+function TotalGastoPeloClienteRuim(nClienteId as numeric) as numeric
+    // ❌ 1. "Repositório" stub — devolve uma lista fixa, nunca consulta a
+    // tabela de verdade. Uma query errada em produção nunca seria pega.
+    local aPedidosFalsos := { {1, 1, 30.00}, {2, 1, 20.00} }
+    local nTotal := 0
+    local nI
+    for nI := 1 to len(aPedidosFalsos)
+        nTotal += aPedidosFalsos[nI][3]
+    next nI
+return nTotal
+
+@TestFixture()
+class PedidosExercicioTest
+
+    @Test('Total gasto soma os pedidos do cliente (stub)')
+    method testTotalGastoSomaOsPedidosDoCliente() as logical
+        local nTotal := TotalGastoPeloClienteRuim(1)
+        ::assertEquals( nTotal, 50.00 )
+    return .T.
+
+    @Test('Total gasto na tabela persistente compartilhada')
+    method testTotalGastoNaTabelaPersistenteCompartilhada() as logical
+        // ❌ 2 e 3. Sem Setup() isolado — usa uma tabela persistente
+        // (%PEDTST_PERSIST%) que não é recriada a cada execução. Cada
+        // rodada insere mais um registro, então o total cresce sem parar.
+        if select("PEDTST_PERSIST") == 0
+            TCGenQry("PED_ID N(6,0), PED_CLIID N(6,0), PED_TOTAL N(12,2)") alias "PEDTST_PERSIST"
+        endif
+        InserirPedido('PEDTST_PERSIST', 1, 15.00)
+
+        local nTotal := 0
+        PEDTST_PERSIST->(dbGoTop())
+        while !PEDTST_PERSIST->(Eof())
+            if PEDTST_PERSIST->PED_CLIID == 1
+                nTotal += PEDTST_PERSIST->PED_TOTAL
+            endif
+            PEDTST_PERSIST->(dbSkip())
+        enddo
+
+        // ❌ Esse assert só funciona por acaso: o total cresce a cada
+        // execução da suíte — não é repetível nem independente.
+        ::assertTrue( nTotal >= 15.00 )
+    return .T.
+
+endclass
