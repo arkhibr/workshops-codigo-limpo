@@ -1,0 +1,30 @@
+# Fluxo Maestro frágil — mesmos passos de fluxo_bons.yaml, com os três
+# anti-padrões mais comuns em suítes de E2E web (marcados com # ❌ abaixo).
+# Executar: maestro test fluxo_ruins.yaml  (com o alvo servido em http://localhost:8080)
+appId: "http://localhost:8080"
+---
+- launchApp
+
+# ❌ Anti-padrão 1: tapOn por coordenada fixa, em vez de por id/texto.
+# "50%, 30%" só acerta o botão "Adicionar" na resolução em que alguém
+# mediu a tela. Qualquer mudança de layout, fonte ou tamanho de viewport
+# desloca o botão e o toque cai em outro elemento — ou em nenhum.
+- tapOn:
+    point: "50%, 30%"
+
+# ❌ Anti-padrão 2: espera fixa em vez de assertion declarativa.
+# O fluxo aposta que 2 segundos bastam para o total ser recalculado e
+# renderizado. Numa máquina mais lenta, 2s pode não ser suficiente e o
+# teste falha por lentidão do ambiente, não por defeito da aplicação.
+# Numa máquina rápida, os 2s são tempo desperdiçado a cada execução.
+- extendedWaitUntil:
+    visible:
+        text: "Total"
+    timeout: 2000
+
+# ❌ Anti-padrão 3: sem assertion depois da ação.
+# O fluxo toca em "Finalizar" mas nunca confirma que a confirmação
+# apareceu. Se o botão parar de funcionar, o fluxo ainda "passa" —
+# ele só executa passos, não verifica resultado algum.
+- tapOn:
+    point: "50%, 80%"

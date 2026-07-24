@@ -1,0 +1,6 @@
+{
+  "name": "sessao-9",
+  "private": true,
+  "description": "K6 roda via binário próprio (k6 run); Maestro via CLI (maestro test). Sem deps npm obrigatórias.",
+  "devDependencies": {}
+}

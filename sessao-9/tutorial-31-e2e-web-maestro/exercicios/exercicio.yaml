@@ -1,0 +1,28 @@
+# Exercício — endureça este fluxo.
+#
+# Objetivo do fluxo: adicionar o livro duas vezes ao carrinho e finalizar
+# o pedido, confirmando que o total soma R$ 60,00 e que o pedido é
+# confirmado. Como está, o fluxo até executa esses passos, mas depende
+# de coordenadas de tela e não confirma nenhum resultado — qualquer
+# mudança de layout ou qualquer regressão silenciosa passa despercebida.
+#
+# Sua tarefa: reescrever fluxo.yaml usando seletores estáveis (id/text)
+# e uma assertion depois de cada ação relevante. Compare o resultado
+# com gabarito.yaml quando terminar.
+appId: "http://localhost:8080"
+---
+- launchApp
+
+# ❌ coordenada, não id — quebra se o layout mudar
+- tapOn:
+    point: "50%, 30%"
+
+# ❌ coordenada de novo, para o segundo clique em "Adicionar"
+- tapOn:
+    point: "50%, 30%"
+
+# ❌ nenhuma assertion aqui — o fluxo não confirma que o total é R$ 60,00
+- tapOn:
+    point: "50%, 80%"
+
+# ❌ fluxo termina sem verificar a confirmação do pedido
