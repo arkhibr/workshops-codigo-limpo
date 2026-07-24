@@ -1,0 +1,75 @@
+// equivalente.tlpp — Testes de Integração de API em PROBAT + FWRest/HttpGet
+// Chama um endpoint REST real publicado no AppServer (FWRest), não um mock —
+// é isso que caracteriza um teste de integração.
+//
+// Nota: PROBAT exige AppServer rodando para executar (igual Sessão 7) — não
+// há como rodar este arquivo fora do ambiente TOTVS. Ilustrativo/paridade.
+#include 'tlpp-core.th'
+#include 'tlpp-probat.th'
+
+namespace test.pedidos
+using namespace tlpp.probat
+
+// ✅ Um client HTTP novo por teste — cada método monta o seu, sem
+// compartilhar estado (endereço/porta) com outro teste.
+@TestFixture()
+class PedidosIntegrationTest
+
+    @Test('Cria pedido retorna 201 com total calculado')
+    method testCriaPedidoRetorna201ComTotalCalculado() as logical
+        local oHttp := FWRest():New('http://localhost:8080')
+        local oResp := oHttp:Post('/pedidos', '{"cliente":"Ana","itens":[{"produto":"Livro","quantidade":2,"preco_unitario":30.0}]}')
+
+        // ✅ Contrato completo: status + corpo, não só o status.
+        ::assertEquals( oResp:GetStatus(), 201 )
+        ::assertEquals( oResp:GetJson():total, 60.0 )
+        ::assertEquals( oResp:GetJson():status, 'aberto' )
+    return .T.
+
+    @Test('Busca pedido inexistente retorna 404')
+    method testBuscaPedidoInexistenteRetorna404() as logical
+        local oHttp := FWRest():New('http://localhost:8080')
+        local oResp := oHttp:Get('/pedidos/999')
+
+        ::assertEquals( oResp:GetStatus(), 404 )
+        ::assertEquals( oResp:GetJson():detail, 'pedido não encontrado' )
+    return .T.
+
+    @Test('Paga pedido aberto muda status para pago')
+    method testPagaPedidoAbertoMudaStatusParaPago() as logical
+        local oHttp := FWRest():New('http://localhost:8080')
+        local oCriado := oHttp:Post('/pedidos', '{"cliente":"Ana","itens":[{"produto":"Livro","quantidade":1,"preco_unitario":10.0}]}'):GetJson()
+        local oResp := oHttp:Post('/pedidos/' + cValToChar(oCriado:id) + '/pagar', '')
+
+        ::assertEquals( oResp:GetStatus(), 200 )
+        ::assertEquals( oResp:GetJson():status, 'pago' )
+    return .T.
+
+    @Test('Pagar pedido ja pago retorna 409')
+    method testPagarPedidoJaPagoRetorna409() as logical
+        local oHttp := FWRest():New('http://localhost:8080')
+        local oCriado := oHttp:Post('/pedidos', '{"cliente":"Ana","itens":[{"produto":"Livro","quantidade":1,"preco_unitario":10.0}]}'):GetJson()
+        oHttp:Post('/pedidos/' + cValToChar(oCriado:id) + '/pagar', '')
+
+        local oResp := oHttp:Post('/pedidos/' + cValToChar(oCriado:id) + '/pagar', '')
+
+        ::assertEquals( oResp:GetStatus(), 409 )
+    return .T.
+
+endclass
+
+// ❌ Contraponto (anti-padrão, não incluído na suíte acima): client estático
+// (STATIC) reaproveitado entre testes, e asserção só de status.
+static oClienteCompartilhado := NIL // ❌ vaza estado entre testes
+
+@TestFixture()
+class PedidosTestRuim
+    @Test()
+    method testCriaPedido() as logical
+        if oClienteCompartilhado == NIL
+            oClienteCompartilhado := FWRest():New('http://localhost:8080')
+        endif
+        local oResp := oClienteCompartilhado:Post('/pedidos', '{"cliente":"Ana","itens":[{"produto":"Livro","quantidade":1,"preco_unitario":10.0}]}')
+        ::assertEquals( oResp:GetStatus(), 201 ) // ❌ nunca olha o corpo
+    return .T.
+endclass

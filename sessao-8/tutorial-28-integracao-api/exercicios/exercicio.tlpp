@@ -1,0 +1,54 @@
+// EXERCÍCIO 28 — Testes de Integração de API (PROBAT + FWRest)
+// Tempo estimado: 20 minutos
+//
+// INSTRUÇÕES:
+//   A suíte abaixo testa POST /pedidos/{id}/pagar mas tem 3 problemas
+//   estruturais (os mesmos de exemplos/equivalente.tlpp):
+//     1. Client estático (STATIC) compartilhado entre os testes (estado vaza).
+//     2. Só verifica GetStatus() — nunca olha o corpo da resposta.
+//     3. Ordem importa — um teste assume que o pedido criado por outro
+//        teste ainda existe, com o id que ele espera.
+//
+//   Refatore aplicando os padrões de exemplos/equivalente.tlpp: um client
+//   HTTP novo por método de teste, nomes comportamentais, e asserções
+//   sobre o contrato completo (status + corpo).
+//   Execute no PROBAT (exige AppServer com o endpoint publicado — igual
+//   Sessão 7): deve passar antes e depois da refatoração.
+#include 'tlpp-core.th'
+#include 'tlpp-probat.th'
+
+namespace test.pedidos.exercicio
+using namespace tlpp.probat
+
+// ❌ 1. Client estático — reaproveitado por todos os testes da fixture.
+static oClienteCompartilhado := NIL
+
+@TestFixture()
+class PedidosExercicioTest
+
+    @Test('Cria pedido para pagar depois')
+    method testCriaPedidoParaPagarDepois() as logical
+        if oClienteCompartilhado == NIL
+            oClienteCompartilhado := FWRest():New('http://localhost:8080')
+        endif
+        // ❌ 2. Só checa o status — não confirma id, total ou status "aberto".
+        local oResp := oClienteCompartilhado:Post('/pedidos', '{"cliente":"Bruno","itens":[{"produto":"Caneta","quantidade":3,"preco_unitario":5.0}]}')
+        ::assertEquals( oResp:GetStatus(), 201 )
+    return .T.
+
+    @Test('Paga pedido')
+    method testPagaPedido() as logical
+        // ❌ 3. Ordem importa: assume que o pedido id=1, criado pelo teste
+        // anterior via client estático, ainda existe e está "aberto".
+        local oResp := oClienteCompartilhado:Post('/pedidos/1/pagar', '')
+        ::assertEquals( oResp:GetStatus(), 200 )
+    return .T.
+
+    @Test('Pagar pedido novamente falha')
+    method testPagarPedidoNovamenteFalha() as logical
+        // ❌ 3 (de novo): depende do teste anterior já ter pago o pedido id=1.
+        local oResp := oClienteCompartilhado:Post('/pedidos/1/pagar', '')
+        ::assertEquals( oResp:GetStatus(), 409 )
+    return .T.
+
+endclass
