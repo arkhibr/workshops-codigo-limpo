@@ -1,0 +1,68 @@
+// GABARITO 30 — Integração ponta-a-ponta API+Banco (PROBAT + FWRest + DBAccess)
+// Suíte refatorada: além de conferir a resposta HTTP, relê o registro
+// diretamente na tabela de trabalho para confirmar que o status "pago" foi
+// realmente persistido — verificando os DOIS lados, não só o contrato HTTP.
+// Execute no PROBAT (exige AppServer com ambiente TOTVS configurado).
+#include 'tlpp-core.th'
+#include 'tlpp-probat.th'
+#include 'protheus.ch'
+
+namespace test.pedidos.gabarito
+using namespace tlpp.probat
+
+@TestFixture()
+class GabaritoTest
+
+    @Setup()
+    method setup() as logical
+        TCGenQry("PED_ID N(6,0), PED_CLIENTE C(40), PED_TOTAL N(12,2), PED_STATUS C(10)") alias "PEDTST"
+    return .T.
+
+    @Teardown()
+    method teardown() as logical
+        if select("PEDTST") > 0
+            PEDTST->(dbCloseArea())
+        endif
+    return .T.
+
+    @Test('Pagar pedido persiste status pago na tabela')
+    method testPagarPedidoPersisteStatusPagoNaTabela() as logical
+        local oHttp := FWRest():New('http://localhost:8080')
+        local oCriado := oHttp:Post('/pedidos', '{"cliente":"Ana","itens":[{"produto":"Livro","quantidade":1,"preco_unitario":10.0}]}'):GetJson()
+
+        local oResp := oHttp:Post('/pedidos/' + cValToChar(oCriado:id) + '/pagar', '')
+
+        ::assertEquals( oResp:GetStatus(), 200 )
+        ::assertEquals( oResp:GetJson():status, 'pago' )
+
+        // ✅ verifica o OUTRO lado: o status "pago" foi realmente gravado
+        PEDTST->(dbGoTop())
+        PEDTST->(dbSeek(cValToChar(oCriado:id)))
+        ::assertEquals( PEDTST->PED_STATUS, 'pago' )
+    return .T.
+
+    @Test('Pagar pedido inexistente retorna 404')
+    method testPagarPedidoInexistenteRetorna404() as logical
+        local oHttp := FWRest():New('http://localhost:8080')
+        local oResp := oHttp:Post('/pedidos/999/pagar', '')
+
+        ::assertEquals( oResp:GetStatus(), 404 )
+    return .T.
+
+    @Test('Pagar pedido ja pago retorna 409 e nao altera a tabela')
+    method testPagarPedidoJaPagoRetorna409ENaoAlteraTabela() as logical
+        local oHttp := FWRest():New('http://localhost:8080')
+        local oCriado := oHttp:Post('/pedidos', '{"cliente":"Ana","itens":[{"produto":"Livro","quantidade":1,"preco_unitario":10.0}]}'):GetJson()
+        oHttp:Post('/pedidos/' + cValToChar(oCriado:id) + '/pagar', '')
+
+        local oResp := oHttp:Post('/pedidos/' + cValToChar(oCriado:id) + '/pagar', '')
+
+        ::assertEquals( oResp:GetStatus(), 409 )
+        // ✅ confirma que a tabela continua com status "pago" (não foi
+        // corrompida pela segunda tentativa de pagamento)
+        PEDTST->(dbGoTop())
+        PEDTST->(dbSeek(cValToChar(oCriado:id)))
+        ::assertEquals( PEDTST->PED_STATUS, 'pago' )
+    return .T.
+
+endclass
