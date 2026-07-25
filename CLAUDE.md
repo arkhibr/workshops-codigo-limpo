@@ -42,8 +42,10 @@ pip install -r <sessao>/requirements.txt
 cd <tutorial>/exemplos && python3 -m pytest integracao_bons.py -v   # nomear o arquivo: o padrão test_*.py não casa
 
 # Sessão 9 — Maestro (E2E, YAML) e K6 (performance, JavaScript)
-maestro test <tutorial>/exemplos/fluxo_bons.yaml   # requer Maestro + navegador/emulador
-k6 run <tutorial>/exemplos/teste_bons.js           # requer o binário k6 + o alvo em exemplos/alvo/ no ar
+# E2E roda contra apps de demonstração EXTERNOS: saucedemo.com (T31, web) e
+# Sauce Labs My Demo App (T32, mobile) — exigem internet / emulador com o app.
+maestro test <tutorial>/exemplos/fluxo_bons.yaml   # requer Maestro + navegador/emulador + app-alvo
+k6 run <tutorial>/exemplos/teste_bons.js           # requer o binário k6 + o alvo local em exemplos/alvo/ no ar
 ```
 
 Integração (Sessão 8) roda em memória — FastAPI `TestClient` e SQLite `:memory:` —, sem Docker nem serviço externo.
@@ -79,7 +81,7 @@ Tutorial 05 (code review) usa `codigo_para_revisar.*` + `gabarito_review_*.md`.
 
 **Arquivos "_ruins" são intencionalmente incorretos** — demonstram anti-padrões. Não "corrigir" violações de Clean Code em arquivos `*_ruins.*` ou `codigo_para_revisar.*`.
 
-**Autocontido:** nenhum arquivo importa de outros arquivos do repositório. Nas Sessões 1–6, toda verificação é via print/stdout, sem frameworks de teste. As Sessões 7–9 são a exceção documentada: usam ferramentas reais (pytest, PHPUnit, Vitest, PROBAT, FastAPI, Maestro, k6) e são verificadas executando essas ferramentas. Mesmo lá, cada tutorial continua autocontido — o `app.py`/`repositorio.py` é replicado dentro de `exercicios/` em vez de importado.
+**Autocontido:** nenhum arquivo importa de outros arquivos do repositório. Nas Sessões 1–6, toda verificação é via print/stdout, sem frameworks de teste. As Sessões 7–9 são a exceção documentada: usam ferramentas reais (pytest, PHPUnit, Vitest, PROBAT, FastAPI, Maestro, k6) e são verificadas executando essas ferramentas. Mesmo lá, cada tutorial continua autocontido — o `app.py`/`repositorio.py` (Sessão 8) e o subflow `login.yaml` do Maestro (Sessão 9) são replicados dentro de `exercicios/` em vez de importados.
 
 **Linguagem por ferramenta:** os fluxos do Maestro (Sessão 9) só existem em YAML; os testes do K6, só em JavaScript. Esses dois tutoriais não têm equivalentes multilíngue.
 

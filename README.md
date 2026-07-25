@@ -185,8 +185,8 @@ Workshop organizado em temas, baseado em **Clean Code** de Robert C. Martin e **
 
 | # | Tutorial | Conceito central | Referência |
 |---|---|---|---|
-| 31 | [E2E Web com Maestro](sessao-9/tutorial-31-e2e-web-maestro/) | Flow em YAML, seletor estável vs. coordenada, assertion vs. espera fixa, idempotência | Maestro docs; Fowler ("TestPyramid") |
-| 32 | [E2E Mobile com Maestro](sessao-9/tutorial-32-e2e-mobile-maestro/) | Estado do app (`clearState`), permissões, gestos, botão voltar, teclado, diferenças iOS/Android | Maestro docs |
+| 31 | [E2E Web com Maestro](sessao-9/tutorial-31-e2e-web-maestro/) | Flow YAML, seletor estável, subflows (`runFlow`) e parâmetros (`env`), condicionais, `scrollUntilVisible`, asserção de estado derivado; alvo saucedemo.com | Maestro docs; Fowler ("TestPyramid") |
+| 32 | [E2E Mobile com Maestro](sessao-9/tutorial-32-e2e-mobile-maestro/) | `clearState`, permissões e telas opcionais (`when`), gestos e `scrollUntilVisible`, seletor por `index`, botão voltar, teclado, iOS/Android; alvo Sauce Labs My Demo App | Maestro docs |
 | 33 | [Testes de Performance com K6 ⭐](sessao-9/tutorial-33-performance-k6/) | Âncora: usuários virtuais e stages, thresholds como SLO, checks vs. thresholds, percentis (p95) | k6 docs (Grafana) |
 
 ---
@@ -288,7 +288,7 @@ tutorial-20-revisao-critica-ia/
 
 **Tutoriais da Sessão 8** (T28–T30) seguem o padrão de quatro linguagens, com uma diferença: em vez de um par `_ruins`/`_bons` estático, os exemplos rodam de verdade contra um alvo executável — uma aplicação FastAPI (`exemplos/app.py`) ou um repositório SQLite (`exemplos/repositorio.py`) — verificado com `pytest`. Os arquivos passam a se chamar `integracao_ruins.py`/`integracao_bons.py`.
 
-**Tutoriais da Sessão 9** não seguem o esquema multilíngue, porque a linguagem é da ferramenta. Os do Maestro (T31, T32) trazem apenas fluxos em **YAML** (`exemplos/fluxo_ruins.yaml`/`fluxo_bons.yaml`); o de K6 (T33) traz apenas scripts em **JavaScript** (`exemplos/teste_ruins.js`/`teste_bons.js`). Quando há um alvo executável — a página de checkout do T31, o servidor HTTP do T33 —, ele fica em `exemplos/alvo/`.
+**Tutoriais da Sessão 9** não seguem o esquema multilíngue, porque a linguagem é da ferramenta. Os do Maestro (T31, T32) trazem apenas fluxos em **YAML** (`exemplos/fluxo_ruins.yaml`/`fluxo_bons.yaml`, mais um `login.yaml` reutilizável); o de K6 (T33) traz apenas scripts em **JavaScript** (`exemplos/teste_ruins.js`/`teste_bons.js`). Os testes E2E rodam contra aplicações de demonstração reais e externas — **saucedemo.com** (T31, web) e o **Sauce Labs My Demo App** (T32, mobile) —, então exigem, respectivamente, internet e um emulador com o app instalado. Só o T33 embute um alvo local, em `exemplos/alvo/` (um servidor HTTP em Python). A integração da Sessão 8, essa continua rodando offline (em memória).
 
 ---
 
