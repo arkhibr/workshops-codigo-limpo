@@ -394,7 +394,7 @@ Cada padrão resolve um problema diferente na mesma pipeline:
 
 **Domínio:** geração de contratos (serviço, locação, fornecimento).
 
-Arquivo: `exercicios/exercicio.py` (equivalentes: `.php`, `.ts`, `.tlpp`)
+Arquivo: [`exercicios/exercicio.py`](exercicios/exercicio.py) (equivalentes: `.php`, `.ts`, `.tlpp`)
 
 O código tem um dataclass `Contrato` com 9 campos e uma função `criar_contrato()` com `if/elif`. Sua tarefa:
 
@@ -407,7 +407,7 @@ python3 exercicios/exercicio.py   # estado inicial com violações
 python3 exercicios/gabarito.py    # solução com Factory + Builder + Singleton
 ```
 
-Gabarito: `exercicios/gabarito.py`
+Gabarito: [`exercicios/gabarito.py`](exercicios/gabarito.py)
 
 ---
 
@@ -420,7 +420,7 @@ Gabarito: `exercicios/gabarito.py`
 | **TypeScript** | `Map<string, FabricaFn>` | Métodos fluentes, `?: type` para campos opcionais | `private constructor()` + `static instancia` |
 | **ADVPL/TLPP** | Array de `{cTipo, codeblock}` + loop de busca | Função validadora antes do `Return` | `Static Variable` de módulo persistindo entre chamadas |
 
-> Arquivos: `exemplos/criacao_ruins.py` · `exemplos/criacao_bons.py` · `exemplos/equivalente.php` · `exemplos/equivalente.ts` · `exemplos/equivalente.tlpp`
+> Arquivos: [`exemplos/criacao_ruins.py`](exemplos/criacao_ruins.py) · [`exemplos/criacao_bons.py`](exemplos/criacao_bons.py) · [`exemplos/equivalente.php`](exemplos/equivalente.php) · [`exemplos/equivalente.ts`](exemplos/equivalente.ts) · [`exemplos/equivalente.tlpp`](exemplos/equivalente.tlpp)
 
 ---
 

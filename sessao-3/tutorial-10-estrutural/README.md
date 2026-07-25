@@ -115,8 +115,8 @@ As funções `gerar_boleto_legado`, `consultar_status_legado` e `cancelar_boleto
 1. Crie um `Adapter` que isole o sistema legado: normalize os campos e encapsule os detalhes de nomenclatura.
 2. Crie uma `Facade` que simplifique o fluxo completo (emitir + consultar + cancelar) em uma única chamada.
 
-Arquivos: `exercicios/exercicio.py` (e equivalentes `.php`, `.ts`, `.tlpp`)
-Solução: `exercicios/gabarito.py` (e equivalentes)
+Arquivos: [`exercicios/exercicio.py`](exercicios/exercicio.py) (e equivalentes `.php`, `.ts`, `.tlpp`)
+Solução: [`exercicios/gabarito.py`](exercicios/gabarito.py) (e equivalentes)
 
 ## 4. Checklist
 

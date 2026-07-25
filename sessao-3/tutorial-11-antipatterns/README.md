@@ -165,7 +165,7 @@ class PedidoAgendado(PedidoBase):
 
 **Domínio:** sistema de RH / folha de pagamento.
 
-O arquivo `exercicios/exercicio.py` apresenta `GestorFolhaPagamento` com 12 métodos cobrindo CRUD, cálculo de INSS/FGTS, notificação, relatório e validação — além de magic strings (`"C"`, `"P"`, `"E"`) e magic numbers (`1412`, `0.075`, `0.08`).
+O arquivo [`exercicios/exercicio.py`](exercicios/exercicio.py) apresenta `GestorFolhaPagamento` com 12 métodos cobrindo CRUD, cálculo de INSS/FGTS, notificação, relatório e validação — além de magic strings (`"C"`, `"P"`, `"E"`) e magic numbers (`1412`, `0.075`, `0.08`).
 
 **Objetivo:**
 1. Quebrar o God Object em classes especializadas: `RepositorioFuncionario`, `CalculadorInss`, `CalculadorFgts`, `ServicoNotificacao`, `GeradorRelatorioRH`.

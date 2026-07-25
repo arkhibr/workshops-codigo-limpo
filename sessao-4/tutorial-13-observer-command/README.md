@@ -51,9 +51,11 @@ Dois padrões para sistemas reativos: Observer para desacoplar quem dispara de q
 
 Domínio: sistema de pagamentos.
 
-**`exercicios/exercicio.py`** — `ProcessadorPagamento` com 3 serviços acoplados + `estornar_pagamento()` sem undo.
+**[`exercicios/exercicio.py`](exercicios/exercicio.py)** — `ProcessadorPagamento` com 3 serviços acoplados + `estornar_pagamento()` sem undo.
 
 **Objetivo:** Refatorar para Observer + Command.
+
+> Antes/depois: [`exemplos/observer_ruins.py`](exemplos/observer_ruins.py) → [`exemplos/observer_bons.py`](exemplos/observer_bons.py). Equivalentes: [PHP](exemplos/equivalente.php) · [TypeScript](exemplos/equivalente.ts) · [ADVPL/TLPP](exemplos/equivalente.tlpp).
 
 ## 6. Checklist
 

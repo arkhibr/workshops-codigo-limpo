@@ -96,7 +96,7 @@ Testes de caracterização antes da mudança são o mecanismo de verificação q
 
 ## 3. Exercício
 
-O arquivo `exercicios/exercicio.py` (e o equivalente `.ts`) contém uma função
+O arquivo [`exercicios/exercicio.py`](exercicios/exercicio.py) (e o equivalente `.ts`) contém uma função
 `calcular_desconto_fidelidade(meses_cliente, valor_compra)` com faixas de desconto
 e **nenhum teste de caracterização**.
 
@@ -104,12 +104,12 @@ e **nenhum teste de caracterização**.
 
 1. Escreva os testes de caracterização incluindo **exatamente os valores de borda** entre
    as faixas — não apenas os valores mid-band. Confirme que todos passam com o código atual.
-2. Use `exemplos/prompt.md` para pedir ao seu modelo preferido que adicione uma nova faixa
+2. Use [`exemplos/prompt.md`](exemplos/prompt.md) para pedir ao seu modelo preferido que adicione uma nova faixa
    de fidelidade (clientes com mais de 36 meses).
 3. Rode sua suite de caracterização contra o output recebido. Se algum caso falhar, a mudança
    introduziu regressão — use o relatório para corrigir o agente.
 
-O gabarito em `exercicios/gabarito.py` mostra a suite completa com bordas e a nova faixa
+O gabarito em [`exercicios/gabarito.py`](exercicios/gabarito.py) mostra a suite completa com bordas e a nova faixa
 adicionada corretamente, com todos os casos passando.
 
 ---
@@ -131,6 +131,6 @@ Antes de aceitar qualquer output de IA que muda código com faixas ou condiciona
 
 - Michael Feathers — *Working Effectively with Legacy Code*, Cap. 13 (Characterization Tests)
 - Robert C. Martin — *Clean Code*, Cap. 9 (Unit Tests)
-- `exemplos/frete_gerado.py` — suite fraca que não detecta a regressão de fronteira
-- `exemplos/frete_revisado.py` — suite completa com bordas que detecta e confirma a correção
-- `exercicios/gabarito_revisao.md` — análise dos casos que precisam de caracterização e por quê
+- [`exemplos/frete_gerado.py`](exemplos/frete_gerado.py) — suite fraca que não detecta a regressão de fronteira
+- [`exemplos/frete_revisado.py`](exemplos/frete_revisado.py) — suite completa com bordas que detecta e confirma a correção
+- [`exercicios/gabarito_revisao.md`](exercicios/gabarito_revisao.md) — análise dos casos que precisam de caracterização e por quê

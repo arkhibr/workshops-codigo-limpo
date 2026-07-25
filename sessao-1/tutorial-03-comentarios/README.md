@@ -34,7 +34,7 @@ O Clean Code categoriza comentários em dois grupos: os que agregam valor e os q
 def timestamp_atual() -> str: ...
 ```
 
-**Intenção** — explica o *porquê* de uma decisão, não o *o quê* do código. Regras de negócio, restrições externas, trade-offs conscientes.
+**Intenção** — explica o *porquê* de uma decisão, não o *o quê* do código. Regras de negócio, restrições externas, compromissos assumidos de forma consciente.
 ```python
 # Ordenamos por data DESC aqui porque o cliente lê apenas os 10 primeiros
 # e a query com índice DESC é 40x mais rápida nesse volume (benchmark Sprint 38).

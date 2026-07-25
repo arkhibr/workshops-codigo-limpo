@@ -10,7 +10,7 @@ Lemos código muito mais do que o escrevemos. Robert Martin estima que a propor�
 
 Nomes são a forma mais barata e poderosa de documentação que existe. Eles não precisam de manutenção separada, não ficam desatualizados quando o código muda (se você os mudar junto) e são lidos inline, no contexto certo.
 
-O conceito-chave aqui é **cognitive load** — carga cognitiva. Cada nome ruim é um pequeno imposto pago pelo leitor toda vez que encontra aquele símbolo: ele precisa pausar, lembrar o que aquilo significa, traduzir mentalmente para algo com sentido, e só então continuar. Nomes ruins não tornam o código apenas menos bonito — eles tornam a leitura ativamente mais cara.
+O conceito-chave aqui é a **carga cognitiva**. Cada nome ruim é um pequeno imposto pago pelo leitor toda vez que encontra aquele símbolo: ele precisa pausar, lembrar o que aquilo significa, traduzir mentalmente para algo com sentido, e só então continuar. Um nome ruim encarece cada leitura do código, e esse custo se paga muitas vezes ao longo da vida do arquivo.
 
 ---
 
@@ -87,7 +87,7 @@ Use nomes técnicos (`Queue`, `Stack`, `Visitor`) quando estiver implementando p
 
 **Uma palavra por conceito**
 
-Escolha uma palavra para cada operação e mantenha-a em todo o codebase:
+Escolha uma palavra para cada operação e mantenha-a em toda a base de código:
 
 ```python
 # ❌ Mistura — leitor não sabe se há diferença semântica
@@ -208,7 +208,7 @@ Function FiltrarPedidosPorStatus( aPedidos, cStatus )
 
 ## 6. Aprofundamento: Nomes em Contexto de Time
 
-O impacto de nomes ruins se multiplica em times. Quando cada desenvolvedor usa seu próprio vocabulário para os mesmos conceitos, o codebase vira uma Torre de Babel.
+O impacto de nomes ruins se multiplica em times. Quando cada desenvolvedor usa seu próprio vocabulário para os mesmos conceitos, a base de código vira uma Torre de Babel.
 
 ### Glossário de domínio
 
@@ -231,7 +231,7 @@ Esse documento não precisa ter mais de uma página. O valor está na decisão, 
 
 ### Consistência é mais importante que perfeição
 
-`buscar_usuario` é um nome razoável. `fetch_usuario` também é. Mas usar os dois no mesmo codebase é pior do que qualquer um deles sozinho — porque força o leitor a questionar se há uma diferença intencional.
+`buscar_usuario` é um nome razoável. `fetch_usuario` também é. Mas usar os dois na mesma base de código é pior do que qualquer um deles sozinho — porque força o leitor a questionar se há uma diferença intencional.
 
 ---
 
@@ -247,7 +247,7 @@ Esse documento não precisa ter mais de uma página. O valor está na decisão, 
 - **Evite abreviações** — editores modernos completam nomes longos; leitores humanos não completam nomes curtos
 - **Consistência é lei** — se você usa `buscar_usuario` em um lugar, não use `get_user` em outro
 - **Uma palavra por conceito** — escolha `buscar`, `calcular` ou `validar` e use sempre a mesma palavra para a mesma operação
-- **Não faça trocadilhos** — o mesmo nome não deve ter dois propósitos distintos no mesmo codebase
+- **Não faça trocadilhos** — o mesmo nome não deve ter dois propósitos distintos na mesma base de código
 
 ---
 

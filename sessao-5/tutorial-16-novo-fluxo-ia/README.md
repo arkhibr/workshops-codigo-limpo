@@ -110,7 +110,7 @@ Se a resposta for "não" em qualquer uma, o prompt precisava de mais contexto de
 
 ## 3. Exercício
 
-**Contexto:** o arquivo `exercicios/exercicio.py` (e `.ts`) contém um módulo de categorias
+**Contexto:** o arquivo [`exercicios/exercicio.py`](exercicios/exercicio.py) (e `.ts`) contém um módulo de categorias
 gerado por um modelo de fronteira sem contexto de convenção. O código funciona e é limpo
 em si — mas diverge do padrão do repositório.
 
@@ -127,9 +127,9 @@ em si — mas diverge do padrão do repositório.
    do projeto (`CLAUDE.md`, trecho de `funcoes_boas.py`).
 
 4. Alinhe o código ao padrão do repositório — ou use o prompt revisado em um modelo
-   e compare com `gabarito.py`.
+   e compare com [`gabarito.py`](exercicios/gabarito.py).
 
-**Referência:** `exercicios/gabarito_revisao.md` tem a tabela de divergências e o
+**Referência:** [`exercicios/gabarito_revisao.md`](exercicios/gabarito_revisao.md) tem a tabela de divergências e o
 prompt com contexto sugerido para os três modelos.
 
 ---
@@ -154,5 +154,5 @@ Use estas perguntas ao revisar qualquer código gerado por IA:
 - OpenAI Codex: [AGENTS.md e system instructions](https://platform.openai.com/docs/agents)
 - Gemini CLI: [GEMINI.md e system instructions](https://cloud.google.com/vertex-ai/docs/generative-ai/model-reference/gemini)
 - Exemplos do repositório:
-  - `sessao-1/tutorial-02-funcoes/exemplos/funcoes_boas.py`
-  - `sessao-2/tutorial-06-divida-tecnica/exemplos/divida_depois.py`
+  - [`sessao-1/tutorial-02-funcoes/exemplos/funcoes_boas.py`](../../sessao-1/tutorial-02-funcoes/exemplos/funcoes_boas.py)
+  - [`sessao-2/tutorial-06-divida-tecnica/exemplos/divida_depois.py`](../../sessao-2/tutorial-06-divida-tecnica/exemplos/divida_depois.py)

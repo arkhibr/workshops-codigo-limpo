@@ -309,7 +309,7 @@ Agora o resto do sistema usa `CalculadorDeComissao.calcular()` — com parâmetr
 
 ## 3. O Problema na Prática
 
-Fragmento de `exemplos/legado_antes.py`:
+Fragmento de [`exemplos/legado_antes.py`](exemplos/legado_antes.py):
 
 ```python
 _db = {"faturas": {}, "clientes": {...}}  # estado global mutável
@@ -357,7 +357,7 @@ class FaturaProcessor:
 
 ## 4. A Solução
 
-Fragmento de `exemplos/legado_depois.py`:
+Fragmento de [`exemplos/legado_depois.py`](exemplos/legado_depois.py):
 
 ```python
 # Constantes nomeadas — sem magic numbers espalhados pelo código
@@ -398,7 +398,7 @@ class ProcessadorDeFaturas:
 
 ### PHP — Seam via Injeção de Dependência
 
-Arquivo: `exemplos/equivalente.php`
+Arquivo: [`exemplos/equivalente.php`](exemplos/equivalente.php)
 
 O problema clássico em PHP legado: `new Mailer()` e `new Repository()` instanciados diretamente dentro do método. Não há seam — não há como substituir por fakes sem editar a classe.
 
@@ -406,13 +406,13 @@ A solução não altera a lógica de negócio: apenas a forma como os colaborado
 
 ### TypeScript — Strangler Fig Pattern
 
-Arquivo: `exemplos/equivalente.ts`
+Arquivo: [`exemplos/equivalente.ts`](exemplos/equivalente.ts)
 
 Uma interface `ProcessadorDePedidos` é extraída do código legado. A nova implementação honra a mesma interface. Um `RoteadorDePedidos` decide qual usar baseado em critério configurável (valor do pedido, feature flag, etc.). O `ClienteCheckout` só enxerga a interface — não sabe que existe um roteador. A migração acontece gradualmente, sem big bang.
 
 ### ADVPL/TLPP — Extração de Function em código Protheus
 
-Arquivo: `exemplos/equivalente.tlpp`
+Arquivo: [`exemplos/equivalente.tlpp`](exemplos/equivalente.tlpp)
 
 Em Protheus, o equivalente do Extract Method é extrair sub-Functions globais. A Function `CALCPED` original tinha ~80 linhas cobrindo validação, cálculo fiscal, geração de ID, gravação e log. Após refatoração, `CALCPED` mantém a mesma assinatura (nenhum chamador quebra) e delega para `VALIDA_DADOS_PED`, `CALC_IMPOSTO_PED`, `GERA_NUM_PEDIDO`, `GRAVA_PEDIDO` e `REGISTRA_LOG_PEDIDO`.
 
@@ -438,7 +438,7 @@ O benefício imediato: `CALC_IMPOSTO_PED` pode ser chamada em testes unitários 
 
 ## 7. Exercício
 
-O arquivo `exercicios/exercicio.py` contém um módulo legado de cálculo de comissões com os seguintes problemas clássicos: parâmetros obscuros, magic numbers, lógica duplicada, estado global modificado dentro de método, e comentário que contradiz o código.
+O arquivo [`exercicios/exercicio.py`](exercicios/exercicio.py) contém um módulo legado de cálculo de comissões com os seguintes problemas clássicos: parâmetros obscuros, magic numbers, lógica duplicada, estado global modificado dentro de método, e comentário que contradiz o código.
 
 **Etapas:**
 

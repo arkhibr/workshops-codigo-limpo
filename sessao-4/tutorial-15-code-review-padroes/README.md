@@ -8,15 +8,15 @@
 ## Objetivo
 
 Praticar identificação de padrões e anti-patterns em código real sem dicas visuais.
-O código em `codigo_para_revisar.py` (e equivalentes) é funcional e bem formatado —
+O código em [`codigo_para_revisar.py`](codigo_para_revisar.py) (e equivalentes) é funcional e bem formatado —
 mas contém oportunidades de melhoria que você aprendeu ao longo deste workshop.
 
 ## Como usar
 
-1. **Leia** `codigo_para_revisar.py` com atenção (15 minutos)
+1. **Leia** [`codigo_para_revisar.py`](codigo_para_revisar.py) com atenção (15 minutos)
 2. **Liste** as oportunidades de melhoria que você encontrar — use o Checklist abaixo
-3. **Compare** com `gabarito_review.md` (6 violações esperadas)
-4. **Consulte** `gabarito_patterns.md` para referência permanente em revisões futuras
+3. **Compare** com [`gabarito_review.md`](gabarito_review.md) (6 violações esperadas)
+4. **Consulte** [`gabarito_patterns.md`](gabarito_patterns.md) para referência permanente em revisões futuras
 
 ## Checklist de revisão (sem spoilers)
 
@@ -37,9 +37,9 @@ Antes de ver o gabarito, responda:
 | 2–3/6 | Regular — rever T19 (Anti-patterns) e T16–T21 |
 | 0–1/6 | Reiniciar — rever o workshop do início |
 
-## `gabarito_patterns.md` — seu guia permanente
+## [`gabarito_patterns.md`](gabarito_patterns.md) — seu guia permanente
 
-Após o workshop, use `gabarito_patterns.md` como referência em code reviews da sua equipe.
+Após o workshop, use [`gabarito_patterns.md`](gabarito_patterns.md) como referência em code reviews da sua equipe.
 Ele contém uma tabela de todos os padrões vistos, com: quando usar, quando NÃO usar,
 e equivalentes ADVPL/TLPP.
 
