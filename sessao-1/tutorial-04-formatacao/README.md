@@ -392,4 +392,4 @@ flake8 exercicios/gabarito.py --max-line-length 88
 
 ---
 
-> **Próximo tutorial:** [Tutorial 05 — Code Review Simulado](../tutorial-05-code-review/README.md)
+> **Próximo tutorial:** [Tutorial 05 — Code Review Simulado](../../sessao-2/tutorial-05-code-review/README.md)
