@@ -8,8 +8,8 @@
 
 Em 2026, modelos de fronteira não apenas geram funções isoladas — eles editam
 múltiplos arquivos em uma única instrução, propagando mudanças de interface
-através do repositório. Claude Code, Codex e Gemini CLI operam sobre o
-codebase completo, aplicando diffs coordenados que tocam dezenas de arquivos.
+através do repositório. Claude Code, Codex e Gemini CLI operam sobre a
+base de código completa, aplicando diffs coordenados que tocam dezenas de arquivos.
 
 Essa capacidade traz um risco específico: **a inconsistência cross-file**.
 
@@ -119,7 +119,7 @@ Resposta: não. A linha `calcular_total(carrinho.itens)` não foi alterada. O ag
 atualizou as linhas ao redor mas esqueceu esta. O cupom está no dict de retorno
 mas nunca chega ao cálculo — inconsistência cross-file silenciosa.
 
-Veja `exemplos/diff-comentado.md` para o diff completo com análise.
+Veja [`exemplos/diff-comentado.md`](exemplos/diff-comentado.md) para o diff completo com análise.
 
 ---
 
@@ -175,9 +175,9 @@ cálculo de frete ao pedido. O agente atualizou `exercicio_precificacao` correta
 3. Corrija o chamador inconsistente e confirme que o total agora inclui o frete
    (nordeste: R$ 29,90; total esperado: R$ 219,60).
 
-4. Compare com `gabarito_carrinho.py` e `gabarito_revisao.md`.
+4. Compare com [`gabarito_carrinho.py`](exercicios/gabarito_carrinho.py) e [`gabarito_revisao.md`](exercicios/gabarito_revisao.md).
 
-**Referência:** `exercicios/roteiro-ia.md` contém o roteiro para os três modelos.
+**Referência:** [`exercicios/roteiro-ia.md`](exercicios/roteiro-ia.md) contém o roteiro para os três modelos.
 
 ---
 
@@ -202,6 +202,6 @@ Use estas perguntas sempre que receber um diff de agente que toca múltiplos arq
 - OpenAI Codex: [Agent mode e AGENTS.md](https://platform.openai.com/docs/agents)
 - Gemini CLI: [GEMINI.md e contexto amplo](https://cloud.google.com/vertex-ai/docs/generative-ai/model-reference/gemini)
 - Exemplos do repositório:
-  - `sessao-5/tutorial-19-multiarquivo-agentes/exemplos/diff-comentado.md`
-  - `sessao-5/tutorial-19-multiarquivo-agentes/exemplos/gerado/carrinho.py`
-  - `sessao-5/tutorial-19-multiarquivo-agentes/exemplos/revisado/carrinho.py`
+  - [`sessao-5/tutorial-19-multiarquivo-agentes/exemplos/diff-comentado.md`](exemplos/diff-comentado.md)
+  - [`sessao-5/tutorial-19-multiarquivo-agentes/exemplos/gerado/carrinho.py`](exemplos/gerado/carrinho.py)
+  - [`sessao-5/tutorial-19-multiarquivo-agentes/exemplos/revisado/carrinho.py`](exemplos/revisado/carrinho.py)

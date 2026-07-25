@@ -185,7 +185,7 @@ verdade que orienta, verifica e documenta o comportamento esperado**.
 
 ## 3. Exercício
 
-**Contexto:** o arquivo `exercicios/exercicio.py` (e `.ts`) contém um módulo de
+**Contexto:** o arquivo [`exercicios/exercicio.py`](exercicios/exercicio.py) (e `.ts`) contém um módulo de
 cancelamento de reserva gerado por um modelo de fronteira — limpo e tipado, com
 tratamento de erro correto. Mas foi gerado sem a especificação de uma exigência
 implícita: **o cancelamento só é permitido com antecedência mínima de 2 horas**.
@@ -205,9 +205,9 @@ antes do horário — o que violaria a política da empresa.
 3. Escreva a spec que fixa a exigência, incluindo exemplos de contrato
    (entrada→saída esperada para os casos-limite).
 
-4. Corrija o código (ou use a spec revisada em um modelo) e compare com `gabarito.py`.
+4. Corrija o código (ou use a spec revisada em um modelo) e compare com [`gabarito.py`](exercicios/gabarito.py).
 
-**Referência:** `exercicios/gabarito_revisao.md` contém a exigência implícita
+**Referência:** [`exercicios/gabarito_revisao.md`](exercicios/gabarito_revisao.md) contém a exigência implícita
 identificada, a spec com os exemplos de contrato, e o roteiro para os três modelos.
 
 ---
@@ -248,6 +248,6 @@ identificada, a spec com os exemplos de contrato, e o roteiro para os três mode
 - OpenAI Codex: [AGENTS.md e system instructions](https://platform.openai.com/docs/agents)
 - Gemini CLI: [GEMINI.md e system instructions](https://cloud.google.com/vertex-ai/docs/generative-ai/model-reference/gemini)
 - Exemplos do repositório:
-  - `sessao-5/tutorial-17-engenharia-de-prompt/exemplos/prompt.md`
-  - `sessao-5/tutorial-18-spec-first/exemplos/spec.md`
-  - `sessao-5/tutorial-18-spec-first/exemplos/reserva_revisado.py`
+  - [`sessao-5/tutorial-17-engenharia-de-prompt/exemplos/prompt.md`](../tutorial-17-engenharia-de-prompt/exemplos/prompt.md)
+  - [`sessao-5/tutorial-18-spec-first/exemplos/spec.md`](exemplos/spec.md)
+  - [`sessao-5/tutorial-18-spec-first/exemplos/reserva_revisado.py`](exemplos/reserva_revisado.py)

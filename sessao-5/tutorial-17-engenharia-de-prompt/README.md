@@ -166,7 +166,7 @@ Só a segunda acerta a regra de negócio porque a regra estava no prompt.
 
 ## 3. Exercício
 
-**Contexto:** o arquivo `exercicios/exercicio.py` (e `.ts`) contém um módulo de cupom
+**Contexto:** o arquivo [`exercicios/exercicio.py`](exercicios/exercicio.py) (e `.ts`) contém um módulo de cupom
 progressivo gerado por um modelo de fronteira com contexto de convenção, mas **sem a
 regra de limiar explícita**. O código é limpo e tipado — mas usa `>` onde devia `>=`
 nos limiares de faixa, fazendo valores exatos de fronteira caírem na faixa errada.
@@ -181,11 +181,11 @@ nos limiares de faixa, fazendo valores exatos de fronteira caírem na faixa erra
 2. Identifique qual caso revela o defeito (dica: tente `R$200,00` e `R$500,00` exatos).
 
 3. Escreva o prompt contextualizado que deveria ter gerado o código correto — use o
-   template da equipe em `exercicios/gabarito_revisao.md`.
+   template da equipe em [`exercicios/gabarito_revisao.md`](exercicios/gabarito_revisao.md).
 
-4. Corrija o código (ou use o prompt revisado em um modelo) e compare com `gabarito.py`.
+4. Corrija o código (ou use o prompt revisado em um modelo) e compare com [`gabarito.py`](exercicios/gabarito.py).
 
-**Referência:** `exercicios/gabarito_revisao.md` tem o caso que revela o defeito,
+**Referência:** [`exercicios/gabarito_revisao.md`](exercicios/gabarito_revisao.md) tem o caso que revela o defeito,
 o prompt contextualizado sugerido e o template de prompt da equipe.
 
 ---
@@ -211,6 +211,6 @@ Use estas perguntas antes de enviar qualquer prompt de geração:
 - OpenAI Codex: [AGENTS.md e system instructions](https://platform.openai.com/docs/agents)
 - Gemini CLI: [GEMINI.md e system instructions](https://cloud.google.com/vertex-ai/docs/generative-ai/model-reference/gemini)
 - Exemplos do repositório:
-  - `sessao-1/tutorial-02-funcoes/exemplos/funcoes_boas.py`
-  - `sessao-5/tutorial-16-novo-fluxo-ia/exemplos/catalogo_revisado.py`
-  - `sessao-5/tutorial-17-engenharia-de-prompt/exemplos/preco_revisado.py`
+  - [`sessao-1/tutorial-02-funcoes/exemplos/funcoes_boas.py`](../../sessao-1/tutorial-02-funcoes/exemplos/funcoes_boas.py)
+  - [`sessao-5/tutorial-16-novo-fluxo-ia/exemplos/catalogo_revisado.py`](../tutorial-16-novo-fluxo-ia/exemplos/catalogo_revisado.py)
+  - [`sessao-5/tutorial-17-engenharia-de-prompt/exemplos/preco_revisado.py`](exemplos/preco_revisado.py)
