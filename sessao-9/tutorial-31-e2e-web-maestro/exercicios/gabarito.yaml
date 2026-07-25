@@ -1,29 +1,43 @@
-# Gabarito — mesmo objetivo de exercicio.yaml (adicionar o livro duas
-# vezes e finalizar), agora com seletores estáveis e uma assertion
-# depois de cada ação relevante.
-appId: "http://localhost:8080"
+# Gabarito — checkout completo no saucedemo, com login reaproveitado,
+# seletores estáveis e uma assertion depois de cada etapa relevante.
+# Executar: maestro test gabarito.yaml
+appId: "https://www.saucedemo.com"
 ---
-- launchApp
-- assertVisible:
-    id: "produto-livro"
+# Login como subflow, não copiado.
+- runFlow:
+    file: login.yaml
+    env:
+      USUARIO: standard_user
 
-# ✅ seletor estável — sobrevive a qualquer mudança de layout
+# Adiciona a mochila e confirma pelo estado derivado (botão vira "Remove").
 - tapOn:
-    id: "adicionar"
+    id: "add-to-cart-sauce-labs-backpack"
 - assertVisible:
-    text: "Total: R$ 30,00"
+    id: "remove-sauce-labs-backpack"
 
-# ✅ segundo clique, com assertion confirmando o novo total
+# Abre o carrinho. O container do carrinho tem id estável no saucedemo;
+# confirme o seletor exato com `maestro studio` no seu ambiente.
 - tapOn:
-    id: "adicionar"
+    id: "shopping_cart_container"
 - assertVisible:
-    text: "Total: R$ 60,00"
+    id: "checkout"
 
+# Checkout: formulário de dados e finalização, tudo por id.
 - tapOn:
-    id: "finalizar"
+    id: "checkout"
+- tapOn:
+    id: "first-name"
+- inputText: "Ana"
+- tapOn:
+    id: "last-name"
+- inputText: "Souza"
+- tapOn:
+    id: "postal-code"
+- inputText: "31000-000"
+- tapOn:
+    id: "continue"
+- tapOn:
+    id: "finish"
 
-# ✅ confirma o resultado da ação, não apenas que o botão foi tocado
-- assertVisible:
-    id: "confirmacao"
-- assertVisible:
-    text: "Pedido confirmado"
+# Confirma o resultado final pelo texto da tela de sucesso.
+- assertVisible: "Thank you for your order!"

@@ -1,17 +1,18 @@
-# Exercício — torne este fluxo mobile hermético.
+# Exercício — complete e torne hermético este fluxo mobile no Sauce Labs My Demo App.
 #
-# Objetivo do fluxo: fazer login como "ana", abrir o catálogo e adicionar o
-# livro ao carrinho, confirmando que o carrinho passou a ter 1 item.
+# Objetivo: começar do zero, fazer login, encontrar o "Sauce Labs Backpack" na
+# lista rolável e adicioná-lo ao carrinho, confirmando pelo estado da tela.
 #
-# Como está, o fluxo tem dois problemas de E2E mobile: não reinicia o estado
-# do app (presume uma sessão já aberta) e localiza os elementos por
-# coordenada de tela. Ele depende do que ficou de execuções anteriores e
-# quebra em outro aparelho.
+# Como está, o fluxo não reinicia o estado (presume uma sessão anterior), toca
+# por coordenada, não rola a lista e não confirma nada.
 #
-# Sua tarefa: reescrever o fluxo para que ele comece do zero (login incluído)
-# e use seletores estáveis, com uma assertion depois da ação final.
-# Compare o resultado com gabarito.yaml.
-appId: br.com.workshop.pedidos
+# Sua tarefa:
+#   1. Comece do zero: troque o login copiado/ausente por `runFlow` de login.yaml
+#      (com clearState, que já está no subflow).
+#   2. Role até o produto com `scrollUntilVisible` e toque nele por texto.
+#   3. Adicione ao carrinho e confirme pelo estado derivado ("Remove Item").
+# Descubra os seletores exatos com `maestro studio`. Compare com gabarito.yaml.
+appId: com.saucelabs.mydemoapp.rn
 ---
 # ❌ abre o app sem limpar o estado — conta com uma sessão anterior
 - launchApp
@@ -20,7 +21,7 @@ appId: br.com.workshop.pedidos
 - tapOn:
     point: "50%, 40%"
 
-# ❌ coordenada para "Adicionar ao carrinho"
+# ❌ coordenada para adicionar ao carrinho, sem rolar a lista
 - tapOn:
     point: "85%, 90%"
 

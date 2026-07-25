@@ -1,34 +1,24 @@
-# Fluxo Maestro mobile robusto — login e primeiro pedido, do zero.
-# Requer um emulador Android ou simulador iOS com o app instalado (appId abaixo).
-# Executar: maestro test fluxo_bons.yaml
-appId: br.com.workshop.pedidos
+# Fluxo mobile robusto — entra no Sauce Labs My Demo App, encontra um produto
+# na lista rolável e o adiciona ao carrinho, confirmando pelo estado da tela.
+# Requer emulador/simulador com o app instalado. Executar: maestro test fluxo_bons.yaml
+appId: com.saucelabs.mydemoapp.rn
 ---
-# clearState apaga os dados do app antes de abrir: o fluxo começa sempre
-# deslogado, com o carrinho vazio, independentemente do que ficou de execuções
-# anteriores. É o que torna o fluxo repetível.
-- launchApp:
-    clearState: true
+# Login reaproveitado como subflow, não copiado.
+- runFlow:
+    file: login.yaml
+    env:
+      USUARIO: "bob@example.com"
 
-# Login explícito — o fluxo não presume nenhuma sessão prévia.
-- assertVisible:
-    id: "campo_usuario"
-- tapOn:
-    id: "campo_usuario"
-- inputText: "ana"
-- tapOn:
-    id: "campo_senha"
-- inputText: "secreta"
-- hideKeyboard
-- tapOn:
-    text: "Entrar"
+# A lista de produtos é rolável: role até o produto antes de tocar, em vez de
+# supor que ele já está na tela (o que depende do tamanho do aparelho).
+- scrollUntilVisible:
+    element:
+      text: "Sauce Labs Backpack"
+    direction: DOWN
+- tapOn: "Sauce Labs Backpack"
 
-# Confirma que o login levou ao catálogo antes de seguir.
-- assertVisible: "Catálogo"
-- tapOn:
-    id: "produto_livro"
-- tapOn:
-    text: "Adicionar ao carrinho"
-
-# Verifica o efeito da ação, não apenas que o botão foi tocado.
-- assertVisible:
-    text: "1 item no carrinho"
+# Na tela do produto, adiciona ao carrinho.
+- tapOn: "Add To Cart"
+# Estado derivado: o botão troca de "Add To Cart" para "Remove Item".
+# Verificar a troca prova que o item entrou, e não apenas que houve um toque.
+- assertVisible: "Remove Item"

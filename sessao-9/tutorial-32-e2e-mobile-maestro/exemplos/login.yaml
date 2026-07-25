@@ -1,0 +1,24 @@
+# Subflow de login reutilizável no Sauce Labs My Demo App (mobile).
+#
+# Trecho chamado por outros fluxos com `runFlow`, para não repetir o login em
+# cada arquivo. Recebe o usuário por parâmetro (env). As credenciais abaixo são
+# as do app de demonstração; confirme os seletores exatos (accessibility id /
+# texto) com `maestro studio` no seu ambiente, pois variam por versão do app.
+appId: com.saucelabs.mydemoapp.rn
+env:
+  USUARIO: "bob@example.com"
+---
+- launchApp:
+    clearState: true          # começa deslogado a cada execução
+- tapOn: "Open menu"
+- tapOn: "Log In"
+- tapOn:
+    id: "Username input field"
+- inputText: "${USUARIO}"
+- tapOn:
+    id: "Password input field"
+- inputText: "10203040"
+- hideKeyboard               # fecha o teclado antes de tocar no botão
+- tapOn:
+    id: "Login button"
+- assertVisible: "Products"   # confirma que o login levou ao catálogo

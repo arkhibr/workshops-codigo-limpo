@@ -1,31 +1,21 @@
-# Gabarito — mesmo objetivo de exercicio.yaml (login, catálogo, adicionar o
-# livro), agora começando do zero e com seletores estáveis.
-appId: br.com.workshop.pedidos
+# Gabarito — mesmo objetivo de exercicio.yaml, agora começando do zero, com o
+# login reaproveitado como subflow, rolagem até o produto e assertion de estado.
+# Executar: maestro test gabarito.yaml
+appId: com.saucelabs.mydemoapp.rn
 ---
-# ✅ clearState garante que o fluxo começa deslogado e com carrinho vazio
-- launchApp:
-    clearState: true
+# ✅ login como subflow (já inclui clearState), não copiado
+- runFlow:
+    file: login.yaml
+    env:
+      USUARIO: "bob@example.com"
 
-# ✅ login explícito, por id, sem presumir sessão anterior
-- assertVisible:
-    id: "campo_usuario"
-- tapOn:
-    id: "campo_usuario"
-- inputText: "ana"
-- tapOn:
-    id: "campo_senha"
-- inputText: "secreta"
-- hideKeyboard
-- tapOn:
-    text: "Entrar"
+# ✅ rola a lista até o produto, em vez de supor sua posição
+- scrollUntilVisible:
+    element:
+      text: "Sauce Labs Backpack"
+    direction: DOWN
+- tapOn: "Sauce Labs Backpack"
 
-# ✅ confirma que chegou ao catálogo antes de seguir
-- assertVisible: "Catálogo"
-- tapOn:
-    id: "produto_livro"
-- tapOn:
-    text: "Adicionar ao carrinho"
-
-# ✅ assertion do resultado da ação
-- assertVisible:
-    text: "1 item no carrinho"
+# ✅ adiciona ao carrinho e confirma pelo estado derivado
+- tapOn: "Add To Cart"
+- assertVisible: "Remove Item"

@@ -4,93 +4,159 @@
 
 ## 1. Contexto e Motivação
 
-A Sessão 7 apresentou a pirâmide de testes e situou o teste end-to-end no topo: poucos, lentos, caros, mas insubstituíveis para uma pergunta que nenhum teste de unidade ou de integração consegue responder sozinho — o sistema funciona da forma como a pessoa que usa o produto de fato o usa?
+A Sessão 7 apresentou a pirâmide de testes e colocou o teste end-to-end no topo: poucos, lentos, caros, e ainda assim insubstituíveis para uma pergunta que nenhum teste de unidade ou de integração responde sozinho — a pessoa que usa o produto consegue, de fato, percorrer o fluxo até o fim pela interface real?
 
-Um teste de unidade chama uma função com parâmetros conhecidos e confere o retorno. Um teste de integração, como os da Sessão 8, envia uma requisição HTTP para uma rota e examina a resposta. Os dois verificam o sistema por dentro, a partir do código ou do contrato de API. Nenhum dos dois abre uma página no navegador, clica em um botão e olha o que aparece na tela — e é exatamente esse último passo que separa "o back-end calcula o total corretamente" de "a pessoa que compra consegue finalizar o pedido".
+Um teste de unidade chama uma função e confere o retorno. Um teste de integração, como os da Sessão 8, envia uma requisição HTTP e examina a resposta. Ambos verificam o sistema por dentro, a partir do código ou do contrato de API. Nenhum dos dois abre uma página no navegador, faz login, adiciona um item ao carrinho e confirma o que aparece na tela. É esse último passo que separa "o back-end calcula o total corretamente" de "o cliente consegue comprar".
 
-Esse é o papel do teste end-to-end: percorrer um fluxo completo do jeito que ele acontece na interface real, sem atalho para dentro do código. Ele encontra uma categoria de defeito que os dois andares de baixo da pirâmide não alcançam — o botão que existe no HTML mas não dispara o evento certo, o texto que o JavaScript esquece de atualizar, o elemento que fica escondido atrás de outro. Nenhum desses problemas aparece testando a função de cálculo isoladamente; todos aparecem na tela.
+O teste end-to-end percorre esse caminho pela interface, sem atalho para dentro do código, e por isso encontra uma categoria de defeito que os andares de baixo não alcançam: o botão que existe no HTML mas não dispara o evento certo, o texto que o JavaScript esquece de atualizar, o elemento que carrega tarde demais, a tela que só aparece depois do login.
 
-Este tutorial cobre o fundamento de E2E web usando o Maestro, uma ferramenta que descreve o fluxo de teste como um arquivo YAML em vez de como código imperativo. O Tutorial 32 aplica a mesma ferramenta a um app mobile; o Tutorial 33 fecha a Sessão 9 com K6, testando não a interface, mas a carga que o sistema aguenta.
+Este tutorial usa o **Maestro**, uma ferramenta que descreve o teste como um arquivo YAML declarativo em vez de código imperativo, e o aplica a uma aplicação real: o **[saucedemo.com](https://www.saucedemo.com)**, a loja de demonstração da Sauce Labs, feita justamente para praticar automação. Ela tem o que uma aplicação de verdade tem e um exemplo de brinquedo não tem — login obrigatório, um catálogo com vários produtos e rolagem, um carrinho que guarda estado, e um checkout de várias etapas com formulário. São esses elementos que exigem os recursos do Maestro que este tutorial cobre. O Tutorial 32 leva a mesma ferramenta ao mobile; o 33 fecha a Sessão 9 com o K6, medindo carga em vez de interface.
 
 ---
 
 ## 2. Conceito Central
 
-### O que é um flow do Maestro
+### (a) O flow e o seletor
 
-Um **flow** é a unidade de trabalho do Maestro: um arquivo YAML que descreve, passo a passo, o que uma pessoa faria ao usar a aplicação — abrir a tela, tocar em um botão, esperar algo aparecer, verificar um texto. Em vez de escrever esse roteiro em código (como se faz em ferramentas como Playwright ou Cypress), o Maestro pede que ele seja declarado como uma lista de comandos, o que o torna legível por alguém que nunca programou em nenhuma dessas linguagens.
+Um **flow** é a unidade de trabalho do Maestro: um arquivo YAML que descreve, passo a passo, o que uma pessoa faria na aplicação — abrir a tela, tocar em um botão, digitar, verificar que algo apareceu. O arquivo tem duas partes separadas pela marcação `---`: um cabeçalho, com o campo `appId` (o identificador do app mobile ou, no caso web, a URL a abrir), e a lista de comandos, executados de cima para baixo.
 
-O arquivo tem duas partes, separadas pela marcação `---` do YAML. A primeira é o cabeçalho, com o campo `appId` — o identificador do aplicativo mobile ou, no caso deste tutorial, a URL que o navegador deve abrir. A segunda é a lista de comandos, executados em ordem, de cima para baixo:
+Para agir sobre um elemento, o Maestro precisa apontar para ele. Essa forma de apontar chama-se **seletor**, e a escolha do seletor decide se o fluxo é estável. Um seletor **estável** identifica o elemento por algo que descreve o que ele é e não muda com o layout — um `id`, um texto visível, uma propriedade de acessibilidade. Um seletor **frágil** identifica pela posição na tela, como a coordenada `point: "90%, 45%"`, que só acerta o alvo na resolução exata em que alguém a mediu.
 
 ```yaml
-appId: "http://localhost:8080"
----
-- launchApp
+# ❌ Frágil — depende de onde o elemento está
+- tapOn:
+    point: "90%, 45%"
+
+# ✅ Estável — depende do que o elemento é
+- tapOn:
+    id: "add-to-cart-sauce-labs-backpack"
+```
+
+O flow frágil não fica lento nem acusa erro: ele simplesmente clica no lugar errado e segue relatando sucesso. Por isso o seletor estável é a primeira decisão de um teste confiável.
+
+### (b) Assertion em vez de espera fixa
+
+Depois de uma ação, a tela leva um instante para reagir — geralmente milissegundos, mas o tempo varia com a máquina, a rede e o navegador. Há duas formas de lidar com essa espera. Uma **espera fixa** aposta em um número: pausar dois segundos e torcer para que já tenha carregado. Essa aposta erra dos dois lados — numa máquina lenta, dois segundos podem não bastar, e o teste falha por lentidão do ambiente, não por defeito; numa máquina rápida, os dois segundos são desperdício, multiplicado por cada passo de cada fluxo.
+
+Uma **assertion** resolve o mesmo problema esperando pela condição, não pelo relógio. `assertVisible` tenta localizar o elemento até um tempo-limite e segue assim que o encontra. Ela é, ao mesmo tempo, a espera e a verificação: se o elemento nunca aparecer, o fluxo falha, e falha pela razão certa.
+
+```yaml
+# ✅ Espera exatamente até o elemento existir, e falha se ele nunca aparecer
 - assertVisible:
-    id: "produto-livro"
-- tapOn:
-    id: "adicionar"
+    id: "inventory_container"
 ```
 
-`launchApp` abre a aplicação — no caso web, o Maestro sobe um navegador e navega até o `appId`. `tapOn` clica em um elemento. `assertVisible` e `assertNotVisible` verificam se um elemento está, ou não, visível na tela. `inputText` digita em um campo. Um flow pode ainda chamar outro com `runFlow`, o que permite reaproveitar um trecho comum — o login, por exemplo — em vários fluxos diferentes.
+### (c) Reaproveitar um fluxo: o subflow de login (`runFlow`)
 
-### Como o Maestro localiza um elemento: o seletor
+Num app real, quase todo fluxo começa pela mesma coisa: o login. Copiar a sequência de login em cada arquivo de teste cria o mesmo problema que a duplicação cria em qualquer código — no dia em que a tela de login mudar, será preciso corrigir arquivo por arquivo, e uma das cópias vai ficar para trás.
 
-Para tocar em um botão ou verificar um texto, o Maestro precisa de alguma forma de apontar para o elemento certo na tela. Essa forma de apontar chama-se **seletor**, e a escolha do seletor é a decisão mais importante para a estabilidade do flow.
-
-Um seletor **estável** identifica o elemento por algo que descreve o que ele é, e que não muda quando o design muda: um `id` fixo, um texto visível, uma propriedade de acessibilidade. `id: "adicionar"` continua apontando para o botão "Adicionar", esteja ele no canto superior da tela ou embaixo de um carrossel novo, tenha ele oito pixels de padding ou vinte.
-
-Um seletor **frágil** identifica o elemento por onde ele está, não pelo que ele é. O exemplo mais comum é a coordenada de tela — `point: "50%, 30%"` — que só acerta o botão certo na resolução e no layout em que alguém mediu aquele ponto na hora de escrever o flow. Mude o tamanho da fonte, adicione um banner acima, rode o mesmo teste num celular com tela maior, e a coordenada passa a apontar para outro elemento, ou para nenhum. O flow não fica devagar nem impreciso: ele simplesmente clica no lugar errado e segue em frente, relatando sucesso.
+O Maestro resolve isso com o comando `runFlow`, que executa outro arquivo de fluxo como um trecho do fluxo atual. A sequência de login vive em um único lugar — o [`exemplos/login.yaml`](exemplos/login.yaml) — e cada teste a invoca:
 
 ```yaml
-# ❌ Frágil — depende da posição exata na tela
-- tapOn:
-    point: "50%, 30%"
-
-# ✅ Estável — depende do que o elemento é, não de onde está
-- tapOn:
-    id: "adicionar"
+# Em vez de repetir os passos de login, chama o subflow que os contém
+- runFlow:
+    file: login.yaml
 ```
 
-### Assertion contra espera fixa
+O `login.yaml` não é um teste completo; é um pedaço reutilizável. Quando a tela de login mudar, corrige-se um arquivo, e todos os fluxos que o chamam continuam corretos.
 
-A segunda decisão que separa um flow confiável de um instável é como ele espera que algo aconteça. Depois de tocar em "Adicionar", o total do carrinho leva um instante para ser recalculado e reescrito na tela — geralmente milissegundos, mas o tempo exato varia com a máquina, a carga do sistema, a versão do navegador.
+### (d) Parametrizar um fluxo (`env`)
 
-Uma **espera fixa** resolve isso apostando em um número: pausar por dois segundos e seguir em frente, na esperança de que o total já tenha sido atualizado. Essa aposta erra dos dois lados. Numa máquina mais lenta ou sob carga, dois segundos podem não ser suficientes, e o teste falha por lentidão do ambiente — não porque a aplicação tem um defeito. Numa máquina rápida, os dois segundos viram tempo desperdiçado a cada execução, multiplicado por centenas de flows numa suíte.
+O saucedemo oferece usuários diferentes para simular situações diferentes — o `standard_user` (fluxo normal), o `locked_out_user` (conta bloqueada), o `problem_user` (interface com defeitos propositais). O mesmo roteiro de login serve a todos; só muda o nome do usuário. Repetir o subflow inteiro para cada um seria a duplicação de novo.
 
-Uma **assertion** resolve o mesmo problema de outra forma: em vez de esperar um tempo fixo, ela espera pela condição que interessa. `assertVisible` fica tentando localizar o elemento até um tempo-limite, e segue assim que o encontra — nem antes, nem depois do necessário. Isso também é o que torna a assertion uma verificação, e não apenas uma pausa: se o elemento nunca aparecer, o flow falha, e falha pela razão certa.
+Um flow pode receber valores por parâmetro, através do bloco `env`. O `login.yaml` declara um valor padrão e usa a variável com a sintaxe `${...}`; quem chama pode sobrescrevê-la:
 
 ```yaml
-# ❌ Espera fixa — lenta quando não precisa, curta demais quando precisa
+# login.yaml — declara o parâmetro e o usa
+env:
+  USUARIO: standard_user
+---
+- inputText: "${USUARIO}"
+
+# fluxo que chama — escolhe qual usuário exercitar
+- runFlow:
+    file: login.yaml
+    env:
+      USUARIO: problem_user
+```
+
+Com isso, o mesmo subflow cobre vários cenários de login sem nenhuma cópia — é o equivalente, em teste, a uma função que recebe argumentos.
+
+### (e) Lidar com o opcional: condicionais (`when`)
+
+Nem tudo aparece sempre. Um banner de cookies surge só na primeira visita; um aviso aparece apenas para certo usuário. Um passo incondicional que tenta fechar um banner que não está lá faz o fluxo falhar. O Maestro permite condicionar um trecho à presença (ou ausência) de um elemento, com `when`:
+
+```yaml
+# Só toca em "Aceitar" se o banner de cookies estiver visível
+- runFlow:
+    when:
+      visible: "Aceitar cookies"
+    commands:
+      - tapOn: "Aceitar cookies"
+```
+
+O `when` aceita `visible` e `notVisible`. Ele torna o fluxo robusto a variações de estado que não são o objeto do teste, sem transformar cada uma delas em uma falha.
+
+### (f) Alcançar o que está fora da tela (`scrollUntilVisible`)
+
+O catálogo do saucedemo é mais alto que a viewport: parte dos produtos só aparece depois de rolar. Um `tapOn` em um elemento que ainda não está visível não o encontra. Rolar por uma quantidade fixa tem o mesmo problema da espera fixa — depende do tamanho da tela. O comando `scrollUntilVisible` rola na direção indicada até o elemento aparecer, e só então para:
+
+```yaml
+# Rola para baixo até o botão do segundo produto entrar na tela
+- scrollUntilVisible:
+    element:
+      id: "add-to-cart-sauce-labs-bike-light"
+    direction: DOWN
+- tapOn:
+    id: "add-to-cart-sauce-labs-bike-light"
+```
+
+### (g) Esperar conteúdo que carrega depois (`extendedWaitUntil`)
+
+`assertVisible` já espera por um tempo-limite padrão, suficiente para a maioria dos casos. Quando um conteúdo demora mais — uma busca que consulta o servidor, uma lista que se popula por rede —, `extendedWaitUntil` permite declarar uma espera mais longa e explícita por uma condição, com um limite próprio:
+
+```yaml
+# Espera até 10 segundos pela condição, verificando continuamente
 - extendedWaitUntil:
     visible:
-        text: "Total"
-    timeout: 2000
-
-# ✅ Assertion — espera exatamente a condição, falha se ela nunca ocorrer
-- assertVisible:
-    text: "Total: R$ 30,00"
+      id: "inventory_container"
+    timeout: 10000
 ```
 
-Repare que a assertion acima também verifica o valor do total, não apenas a palavra "Total". Um flow que só confirma a presença de um rótulo genérico pode passar mesmo quando o cálculo está errado — o mesmo problema, descrito na Sessão 8, de um teste de integração que confere só o código de status HTTP e ignora o corpo da resposta. A assertion precisa examinar o resultado que importa, não só um sinal de que alguma coisa aconteceu.
+A diferença para a espera fixa continua valendo: `extendedWaitUntil` espera *pela condição* e segue assim que ela ocorre; o `timeout` é só o teto, não o tempo que o fluxo sempre gasta.
 
-### Um flow sem assertion não testa nada
+### (h) Verificar estado, não cliques: asserção de estado derivado
 
-Existe ainda um terceiro defeito, mais silencioso que os dois anteriores: um flow que executa uma sequência de ações — abrir a tela, tocar em botões — e termina sem verificar nada. Ele "passa" sempre, porque o Maestro só reporta falha quando um comando não consegue ser executado. Se o botão "Finalizar" parar de funcionar por completo, e a tela de confirmação nunca aparecer, um flow sem `assertVisible` no fim não percebe a diferença. Ele tocou no botão; a tarefa dele terminou ali.
+O erro mais comum em E2E é confirmar que a ação foi executada — o toque aconteceu — sem confirmar que ela teve efeito. Um fluxo que toca em "adicionar ao carrinho" e segue em frente passa mesmo que o item nunca tenha entrado no carrinho.
 
-Um flow de E2E existe para verificar um resultado, não para demonstrar que os passos foram executados. Cada ação relevante — adicionar um item, finalizar um pedido — deveria ser seguida de uma assertion que confirma o efeito esperado dela.
+A verificação que dá confiança olha o **estado derivado** da ação. No saucedemo, quando um produto entra no carrinho, o botão "Add to cart" daquele item vira "Remove". Verificar essa troca prova que a ação surtiu efeito:
 
-### Idempotência: o flow precisa rodar mais de uma vez
+```yaml
+- tapOn:
+    id: "add-to-cart-sauce-labs-backpack"
+# Estado derivado: o botão trocou de "Add to cart" para "Remove"
+- assertVisible:
+    id: "remove-sauce-labs-backpack"
+```
 
-Um flow bem escrito produz o mesmo resultado toda vez que roda, independentemente de quantas vezes já rodou antes. Isso parece óbvio até se considerar o que acontece quando o alvo tem estado: se o carrinho de compras não for reiniciado a cada execução, um flow que soma "Total: R$ 30,00" na primeira vez pode encontrar "Total: R$ 60,00" na segunda, porque o item da execução anterior continua lá. A assertion que passava ontem falha hoje, sem que nada tenha quebrado de fato — o ambiente é que não foi devolvido ao estado inicial.
+O mesmo raciocínio vale para o contador do carrinho, que passa a exibir o número de itens, ou para o total na tela de checkout. É a mesma lição da Sessão 8, onde um teste de integração conferia o corpo da resposta, e não só o código de status: verificar o resultado, não o gesto.
 
-Por isso, um flow começa tipicamente com `launchApp`, que reabre a aplicação do zero, e evita depender de qualquer estado deixado por uma execução anterior ou por outro flow. O alvo deste tutorial é uma página estática sem back-end: cada `launchApp` recarrega a página e o carrinho volta a zero, o que dá ao flow essa idempotência de graça. Alvos com estado persistente (banco de dados, sessão de servidor) exigem um passo explícito de reset antes de cada execução.
+### (i) Idempotência com `clearState`
+
+Um bom fluxo produz o mesmo resultado toda vez que roda, quantas vezes já tenha rodado antes. Isso exige começar sempre do mesmo estado. O saucedemo guarda a sessão e o carrinho no navegador; sem reiniciar, um fluxo que espera o carrinho vazio pode encontrar itens de uma execução anterior. Por isso o `login.yaml` abre a aplicação com `clearState: true`, que limpa os dados do navegador antes de começar:
+
+```yaml
+- launchApp:
+    clearState: true   # sessão e carrinho zerados a cada execução
+```
+
+Com o estado reiniciado no início, o fluxo é repetível e pode rodar em paralelo com outros sem que um interfira no outro.
 
 ---
 
 ## 3. Ferramentas Modernas por Linguagem
 
-Os flows do Maestro são escritos em **YAML**, e é assim para as três plataformas que a ferramenta suporta — web, Android e iOS. Não existe uma sintaxe do Maestro em Python, PHP, TypeScript ou ADVPL/TLPP: o YAML é a própria linguagem nativa da ferramenta, não uma escolha deste workshop. Por isso este tutorial não traz `equivalente.php`, `equivalente.ts` nem `equivalente.tlpp` — o par bom/ruim vive inteiramente nos dois arquivos YAML descritos acima.
+Os flows do Maestro são escritos em **YAML**, para as três plataformas que a ferramenta suporta — web, Android e iOS. Não existe uma sintaxe do Maestro em Python, PHP, TypeScript ou ADVPL/TLPP: o YAML é a linguagem nativa da ferramenta. Por isso este tutorial não traz arquivos `equivalente.*`; o material vive nos fluxos YAML descritos acima.
 
 **Instalar o Maestro:**
 
@@ -98,38 +164,36 @@ Os flows do Maestro são escritos em **YAML**, e é assim para as três platafor
 curl -Ls "https://get.maestro.mobile.dev" | bash
 ```
 
-**Servir o alvo deste tutorial** — uma página de checkout estática, sem back-end, em [`exemplos/alvo/index.html`](exemplos/alvo/index.html):
-
-```bash
-python3 -m http.server 8080 --directory sessao-9/tutorial-31-e2e-web-maestro/exemplos/alvo
-```
-
-**Rodar um flow**, com o servidor acima ativo em outro terminal:
+**Rodar um flow** (o alvo é o saucedemo na internet, então basta ter conexão e um navegador; o Maestro cuida de abri-lo):
 
 ```bash
 maestro test sessao-9/tutorial-31-e2e-web-maestro/exemplos/fluxo_bons.yaml
 ```
 
-O suporte do Maestro a aplicações web é mais recente do que o suporte a Android e iOS, e a sintaxe exata de alguns comandos pode variar entre versões da ferramenta. Os comandos usados neste tutorial — `launchApp`, `tapOn`, `assertVisible`, `assertNotVisible`, `inputText`, `runFlow` — são os documentados oficialmente e considerados estáveis, mas, antes de rodar contra uma versão específica do Maestro, vale conferir a sintaxe atual em maestro.mobile.dev. O Maestro não está instalado neste ambiente de workshop; os flows aqui foram verificados por validação estrutural do YAML, não por execução real contra um navegador.
+**Inspecionar a tela para descobrir seletores** — abre a árvore de elementos da página atual, com os seletores que cada elemento aceita:
+
+```bash
+maestro studio
+```
+
+O `maestro studio` é a forma prática de encontrar o `id` ou o texto de um elemento em vez de recorrer a coordenadas. Alguns elementos do saucedemo têm `id` estável (os campos de login, os botões de "adicionar", os campos do checkout); outros, como o link do carrinho, convém confirmar com o `studio` no seu ambiente antes de fixar o seletor. Duas observações sobre este tutorial: o suporte do Maestro a web é mais recente que o de Android e iOS, e a sintaxe de alguns comandos pode variar entre versões — vale conferir em maestro.mobile.dev. E o Maestro não está instalado no ambiente do workshop; os fluxos aqui foram verificados por validação estrutural do YAML e uso de seletores reais do saucedemo, não por execução contra o navegador.
 
 ---
 
 ## 4. Exercício
 
-Os arquivos [`exercicios/exercicio.yaml`](exercicios/exercicio.yaml) e [`exercicios/gabarito.yaml`](exercicios/gabarito.yaml) trazem um fluxo com objetivo simples: adicionar o livro duas vezes ao carrinho e finalizar o pedido, confirmando que o total soma R$ 60,00 e que a confirmação aparece.
-
-O `exercicio.yaml` está escrito com os dois defeitos discutidos na seção 2: toca nos botões por coordenada de tela, e não verifica nenhum resultado ao longo do caminho — nem o total depois de cada clique, nem a confirmação no final.
+O arquivo [`exercicios/exercicio.yaml`](exercicios/exercicio.yaml) começa um fluxo de compra no saucedemo e para no meio: ele repete o login em vez de reusar o subflow, toca por coordenada e não chega ao checkout nem confirma nada. O objetivo é completá-lo e endurecê-lo até o fim da compra.
 
 **Etapas:**
 
-1. Leia [`exercicios/exercicio.yaml`](exercicios/exercicio.yaml) e identifique cada `tapOn` por coordenada, e cada ponto onde falta uma assertion.
-2. Reescreva o flow trocando cada coordenada pelo seletor estável correspondente — os mesmos `id` usados em [`exemplos/fluxo_bons.yaml`](exemplos/fluxo_bons.yaml): `produto-livro`, `adicionar`, `finalizar`, `confirmacao`.
-3. Adicione uma `assertVisible` depois de cada ação relevante: o total depois do primeiro clique em "Adicionar", o total depois do segundo, e a confirmação depois de "Finalizar".
-4. Compare o resultado com [`exercicios/gabarito.yaml`](exercicios/gabarito.yaml).
+1. Troque o login copiado por `runFlow` do subflow [`exercicios/login.yaml`](exercicios/login.yaml).
+2. Troque as coordenadas por `id` estáveis (`add-to-cart-sauce-labs-backpack` para a mochila).
+3. Abra o carrinho — descubra o seletor do link do carrinho com `maestro studio` — e siga o checkout: `checkout`, depois os campos `first-name`, `last-name` e `postal-code`, depois `continue` e `finish`.
+4. Confirme o resultado com uma assertion do texto `Thank you for your order!`.
+5. Compare com [`exercicios/gabarito.yaml`](exercicios/gabarito.yaml).
 
 ```bash
-# Validar a estrutura YAML de ambos (não substitui rodar com o Maestro instalado)
-python3 -c "import yaml; list(yaml.safe_load_all(open('sessao-9/tutorial-31-e2e-web-maestro/exercicios/exercicio.yaml')))"
+# Validar a estrutura YAML (não substitui rodar com o Maestro instalado)
 python3 -c "import yaml; list(yaml.safe_load_all(open('sessao-9/tutorial-31-e2e-web-maestro/exercicios/gabarito.yaml')))"
 ```
 
@@ -137,11 +201,13 @@ python3 -c "import yaml; list(yaml.safe_load_all(open('sessao-9/tutorial-31-e2e-
 
 ## 5. Checklist
 
-- [ ] O flow localiza cada elemento por `id`, texto ou propriedade de acessibilidade — nunca por coordenada de tela?
-- [ ] Cada ação relevante (tocar em um botão, preencher um campo) é seguida de uma `assertVisible` que confirma o efeito esperado?
-- [ ] As assertions verificam o conteúdo que importa (o valor do total, o texto da confirmação), não apenas a presença de um rótulo genérico?
-- [ ] O flow evita espera fixa (`sleep`, `extendedWaitUntil` com timeout arbitrário) onde uma assertion resolveria o mesmo problema de forma mais rápida e mais confiável?
-- [ ] O flow começa com `launchApp` e roda de forma idêntica na primeira e na décima execução, sem depender de estado deixado por uma execução anterior?
+- [ ] O fluxo localiza cada elemento por `id`, texto ou acessibilidade — nunca por coordenada de tela?
+- [ ] O login está em um subflow reutilizável (`login.yaml`), chamado por `runFlow`, em vez de copiado em cada arquivo?
+- [ ] O que varia entre cenários (o usuário, por exemplo) entra por parâmetro (`env`), em vez de gerar uma cópia do fluxo?
+- [ ] Passos que dependem de elementos opcionais estão protegidos por uma condicional (`when`)?
+- [ ] Elementos fora da viewport são alcançados com `scrollUntilVisible`, em vez de uma rolagem de tamanho fixo?
+- [ ] Cada ação relevante é seguida de uma assertion sobre o **estado derivado** (o botão que virou "Remove", o contador do carrinho), não apenas sobre o clique?
+- [ ] O fluxo começa de um estado limpo (`clearState`) e roda igual na primeira e na décima execução?
 
 ---
 
@@ -149,8 +215,11 @@ python3 -c "import yaml; list(yaml.safe_load_all(open('sessao-9/tutorial-31-e2e-
 
 - **Maestro.** Documentação oficial.
   `https://maestro.mobile.dev`
-  Referência de comandos (`launchApp`, `tapOn`, `assertVisible` e os demais), instalação e o estado atual do suporte a web — vale conferir antes de rodar flows novos, já que essa parte da ferramenta evolui rápido.
+  Referência dos comandos usados aqui — `runFlow` (com `file`, `env` e `when`), `scrollUntilVisible`, `extendedWaitUntil`, `launchApp` com `clearState`, `tapOn`, `assertVisible` —, da instalação e do `maestro studio`.
+
+- **Sauce Labs.** Sauce Demo (`https://www.saucedemo.com`).
+  A loja de demonstração usada como alvo: login, catálogo, carrinho e checkout, com usuários que simulam cenários distintos (`standard_user`, `locked_out_user`, `problem_user`).
 
 - **FOWLER, Martin.** "TestPyramid" (bliki).
   `https://martinfowler.com/bliki/TestPyramid.html`
-  O modelo de proporção entre unidade, integração e e2e apresentado na Sessão 7 — a base para entender por que este tutorial trata E2E como o topo raro e caro da pirâmide, não como o ponto de partida.
+  O modelo da pirâmide, já usado na Sessão 7 — a base para tratar o E2E como o topo raro e caro, e não como ponto de partida.
