@@ -114,14 +114,14 @@ def verificar_equivalencia() -> None:
             print(f"FALHOU: {venda.vendedor_id}  esperado={esperado:.2f}  obtido={obtido:.2f}")
 ```
 
-Esta função é o que `comissao_revisado.py` tem e `comissao_gerado.py` não tem.
+Esta função é o que [`comissao_revisado.py`](exemplos/comissao_revisado.py) tem e [`comissao_gerado.py`](exemplos/comissao_gerado.py) não tem.
 A diferença não é a função em si — é a inclusão dos **limites exatos** como casos.
 
 ---
 
 ## 3. Exercício
 
-**Contexto:** o arquivo `exercicios/exercicio.py` (e `.ts`) contém um módulo
+**Contexto:** o arquivo [`exercicios/exercicio.py`](exercicios/exercicio.py) (e `.ts`) contém um módulo
 de cálculo de bônus por meta de vendas, com uma refatoração gerada por IA —
 idiomática e com uma verificação que passa. Mas a verificação é fraca: não
 inclui os limites exatos de atingimento (80%, 100%, 120%).
@@ -142,8 +142,8 @@ inclui os limites exatos de atingimento (80%, 100%, 120%).
 4. Corrija a refatoração (`calcular_bonus_refatorado`) para preservar o
    comportamento original, e rode de novo até todas as linhas serem `OK:`.
 
-**Referência:** `exercicios/gabarito.py` contém a verificação completa e a
-correção. `exercicios/gabarito_revisao.md` detalha o caso de borda quebrado
+**Referência:** [`exercicios/gabarito.py`](exercicios/gabarito.py) contém a verificação completa e a
+correção. [`exercicios/gabarito_revisao.md`](exercicios/gabarito_revisao.md) detalha o caso de borda quebrado
 e a sequência de passos.
 
 ---
@@ -169,6 +169,6 @@ Use estas perguntas antes de integrar qualquer refatoração gerada por IA:
 - OpenAI Codex: [AGENTS.md e system instructions](https://platform.openai.com/docs/agents)
 - Gemini CLI: [GEMINI.md e system instructions](https://cloud.google.com/vertex-ai/docs/generative-ai/model-reference/gemini)
 - Exemplos do repositório:
-  - `sessao-6/tutorial-21-refatoracao-avancada/exemplos/prompt.md`
-  - `sessao-6/tutorial-21-refatoracao-avancada/exemplos/comissao_revisado.py`
-  - `sessao-6/tutorial-21-refatoracao-avancada/exercicios/gabarito_revisao.md`
+  - [`sessao-6/tutorial-21-refatoracao-avancada/exemplos/prompt.md`](exemplos/prompt.md)
+  - [`sessao-6/tutorial-21-refatoracao-avancada/exemplos/comissao_revisado.py`](exemplos/comissao_revisado.py)
+  - [`sessao-6/tutorial-21-refatoracao-avancada/exercicios/gabarito_revisao.md`](exercicios/gabarito_revisao.md)

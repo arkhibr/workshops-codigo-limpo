@@ -130,7 +130,7 @@ Além do `ORDER BY`, código gerado por IA frequentemente apresenta:
 
 ### O que fazer
 
-1. **Leia** `exercicios/exercicio.py` (ou `.ts`) como um Pull Request real.
+1. **Leia** [`exercicios/exercicio.py`](exercicios/exercicio.py) (ou `.ts`) como um Pull Request real.
    O código parece correto — toda a query está montada de forma aparentemente
    segura. Encontre a brecha sutil.
 
@@ -148,7 +148,7 @@ Além do `ORDER BY`, código gerado por IA frequentemente apresenta:
 
 4. **Implemente** a correção no próprio arquivo ou em uma cópia.
 
-5. **Compare** com `gabarito.py` (ou `.ts`) e leia `gabarito_revisao.md`
+5. **Compare** com [`gabarito.py`](exercicios/gabarito.py) (ou `.ts`) e leia [`gabarito_revisao.md`](exercicios/gabarito_revisao.md)
    para conferir o checklist aplicado.
 
 ---

@@ -132,7 +132,7 @@ def cobrar(cobranca: Cobranca) -> ResultadoCobranca:
 
 ### O que fazer
 
-1. **Leia** `codigo_gerado_por_ia.py` do início ao fim como se fosse um Pull Request real.
+1. **Leia** [`codigo_gerado_por_ia.py`](codigo_gerado_por_ia.py) do início ao fim como se fosse um Pull Request real.
 
 2. **Rode** o código para confirmar que o caminho feliz funciona:
    ```bash
@@ -142,9 +142,9 @@ def cobrar(cobranca: Cobranca) -> ResultadoCobranca:
 
 3. **Anote** cada problema encontrado com: linha, categoria do checklist, problema, sugestão.
 
-4. **Compare** com `gabarito_review.md` (Python) ou `gabarito_review_ts.md` (TypeScript).
+4. **Compare** com [`gabarito_review.md`](gabarito_review.md) (Python) ou [`gabarito_review_ts.md`](gabarito_review_ts.md) (TypeScript).
 
-5. **Faça o roteiro hands-on** em `exercicios/roteiro-ia.md` — inclui a trilha de gerar
+5. **Faça o roteiro hands-on** em [`exercicios/roteiro-ia.md`](exercicios/roteiro-ia.md) — inclui a trilha de gerar
    código real nos três modelos e comparar.
 
 ### Critério de calibração
@@ -158,7 +158,7 @@ def cobrar(cobranca: Cobranca) -> ResultadoCobranca:
 
 ## 4. Checklist de Revisão
 
-O `checklist_revisao_ia.md` é a ferramenta reutilizável deste tutorial.
+O [`checklist_revisao_ia.md`](checklist_revisao_ia.md) é a ferramenta reutilizável deste tutorial.
 Use-o em qualquer revisão de código gerado por IA, não apenas neste exercício.
 
 Categorias:
