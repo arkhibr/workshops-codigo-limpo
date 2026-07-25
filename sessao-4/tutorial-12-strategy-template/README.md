@@ -51,9 +51,11 @@ Dois padrões para eliminar duplicação e tornar o código extensível sem alte
 
 Domínio: logística de entregas.
 
-**`exercicios/exercicio.py`** — `calcular_frete()` com if/elif de transportadoras + `RelatorioEntregas`/`RelatorioColetas` com esqueleto de 4 etapas duplicado.
+**[`exercicios/exercicio.py`](exercicios/exercicio.py)** — `calcular_frete()` com if/elif de transportadoras + `RelatorioEntregas`/`RelatorioColetas` com esqueleto de 4 etapas duplicado.
 
 **Objetivo:** Refatorar para Strategy (frete) + Template Method (relatórios).
+
+> Antes/depois: [`exemplos/strategy_ruins.py`](exemplos/strategy_ruins.py) → [`exemplos/strategy_bons.py`](exemplos/strategy_bons.py). Equivalentes: [PHP](exemplos/equivalente.php) · [TypeScript](exemplos/equivalente.ts) · [ADVPL/TLPP](exemplos/equivalente.tlpp).
 
 ## 6. Checklist
 

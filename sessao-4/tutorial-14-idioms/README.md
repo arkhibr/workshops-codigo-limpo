@@ -49,9 +49,11 @@ Idioms são padrões de uso estabelecidos em uma linguagem — não são padrõe
 
 Domínio: folha de pagamento.
 
-**`exercicios/exercicio.py`** — `Funcionario` sem `@dataclass`, `AbridorArquivo` sem context manager, lista em vez de generator, timing copiado.
+**[`exercicios/exercicio.py`](exercicios/exercicio.py)** — `Funcionario` sem `@dataclass`, `AbridorArquivo` sem context manager, lista em vez de generator, timing copiado.
 
 **Objetivo:** Aplicar os 4 idioms Python (e equivalentes em sua linguagem principal).
+
+> Antes/depois: [`exemplos/idioms_ruins.py`](exemplos/idioms_ruins.py) → [`exemplos/idioms_bons.py`](exemplos/idioms_bons.py). Equivalentes: [PHP](exemplos/equivalente.php) · [TypeScript](exemplos/equivalente.ts) · [ADVPL/TLPP](exemplos/equivalente.tlpp).
 
 ## 7. Checklist
 
