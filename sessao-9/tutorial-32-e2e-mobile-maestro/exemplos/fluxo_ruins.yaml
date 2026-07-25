@@ -1,29 +1,23 @@
-# Fluxo Maestro mobile frágil — mesmo objetivo de fluxo_bons.yaml (chegar ao
-# catálogo e adicionar um item), com os anti-padrões típicos de E2E mobile.
+# Fluxo mobile frágil — mesmo objetivo de fluxo_bons.yaml (entrar e adicionar
+# um produto no Sauce Labs My Demo App), com os anti-padrões típicos de E2E mobile.
 # Executar: maestro test fluxo_ruins.yaml
-appId: br.com.workshop.pedidos
+appId: com.saucelabs.mydemoapp.rn
 ---
 # ❌ Anti-padrão 1: launchApp sem clearState.
 # O app guarda a sessão entre aberturas — quem rodou o fluxo antes continua
-# logado. Este fluxo pula o login presumindo essa sessão. Ele passa na
-# segunda execução (quando já há sessão) e falha na primeira, numa máquina
-# limpa ou logo depois de reinstalar o app. O resultado depende do que ficou
-# para trás, não do que o fluxo faz.
+# logado. Este fluxo pula o login presumindo essa sessão. Passa na segunda
+# execução (quando já há sessão) e falha na primeira, numa máquina limpa ou
+# logo após reinstalar o app. O resultado depende do que ficou para trás.
 - launchApp
 
-# ❌ Anti-padrão 2: depende de estado deixado por uma execução anterior.
-# Toca direto no produto, assumindo que o catálogo já está na tela — o que
-# só é verdade se a sessão anterior parou exatamente aqui.
+# ❌ Anti-padrão 2: toca por coordenada, presumindo que o catálogo já está na
+# tela e que o produto está nessa posição — some em telas de tamanho diferente.
 - tapOn:
     point: "50%, 40%"
 
-# ❌ Anti-padrão 3: tapOn por coordenada, não por id ou texto.
-# "85%, 90%" só acerta o botão "Adicionar ao carrinho" no aparelho e na
-# resolução em que alguém mediu o ponto. Muda o tamanho da tela e o toque
-# cai em outro lugar.
+# ❌ Anti-padrão 3: assume o produto visível sem rolar a lista.
 - tapOn:
     point: "85%, 90%"
 
-# ❌ Anti-padrão 4: nenhuma assertion do resultado.
-# O fluxo tocou nos botões e terminou. Se o item não entrou no carrinho,
-# ninguém fica sabendo — o fluxo "passou".
+# ❌ Anti-padrão 4: o fluxo termina sem nenhuma assertion. Se o item não entrou
+# no carrinho, ninguém fica sabendo — ele "passa" por ter executado os toques.
