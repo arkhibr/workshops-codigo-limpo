@@ -506,7 +506,7 @@ A injeção de dependência cria a *possibilidade* de testar com dublês — mas
 
 ## 11. Exercício
 
-Arquivo: `exercicios/exercicio.py` (equivalentes: `.php`, `.ts`, `.tlpp`)
+Arquivo: [`exercicios/exercicio.py`](exercicios/exercicio.py) (equivalentes: `.php`, `.ts`, `.tlpp`)
 
 A classe `GeradorFatura` viola SRP e DIP:
 - Valida, calcula, persiste e envia e-mail na mesma classe.
@@ -522,7 +522,7 @@ python3 exercicios/exercicio.py   # estado inicial com violações
 python3 exercicios/gabarito.py    # solução refatorada
 ```
 
-Gabarito: `exercicios/gabarito.py`
+Gabarito: [`exercicios/gabarito.py`](exercicios/gabarito.py)
 
 ---
 
@@ -537,7 +537,7 @@ Os mesmos 5 princípios são demonstrados nos arquivos de exemplo com as conven�
 | **TypeScript** | `interface` ou `type` | `PascalCase` simples (ESLint community) |
 | **ADVPL/TLPP** | codeblocks para DIP; funções separadas para SRP | prefixo de tipo obrigatório para variáveis (`c`, `n`, `a`, `l`) |
 
-> Arquivos: `exemplos/solid_ruins.py` · `exemplos/solid_bons.py` · `exemplos/equivalente.php` · `exemplos/equivalente.ts` · `exemplos/equivalente.tlpp`
+> Arquivos: [`exemplos/solid_ruins.py`](exemplos/solid_ruins.py) · [`exemplos/solid_bons.py`](exemplos/solid_bons.py) · [`exemplos/equivalente.php`](exemplos/equivalente.php) · [`exemplos/equivalente.ts`](exemplos/equivalente.ts) · [`exemplos/equivalente.tlpp`](exemplos/equivalente.tlpp)
 
 ---
 
