@@ -240,7 +240,7 @@ tutorial-0N-<tema>/           # Sessões 5–6 (padrão)
 │   ├── <tema>_revisado.py     # versão revisada com critérios de Clean Code — Python
 │   └── <tema>_revisado.ts     # versão revisada — TypeScript
 └── exercicios/
-    ├── roteiro-ia.md          # roteiro hands-on com a IA
+    ├── roteiro-ia.md          # roteiro prático com a IA
     ├── exercicio.py           # desafio — Python
     ├── exercicio.ts           # desafio — TypeScript
     ├── gabarito.py            # solução — Python
