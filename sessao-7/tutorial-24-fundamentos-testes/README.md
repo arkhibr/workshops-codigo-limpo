@@ -186,7 +186,7 @@ Um padrão comum (não obrigatório, mas útil): `test_<resultado_esperado>_quan
 
 ## 4. Exercício
 
-O arquivo `exercicios/exercicio.py` (e seus equivalentes `.php`, `.ts`, `.tlpp`) contém uma suíte de testes sobre `calcular_comissao(valor_venda, meta_batida)` — 8% de comissão se a meta foi batida, 3% caso contrário — com os mesmos 4 problemas estruturais de `exemplos/testes_ruins.py`:
+O arquivo [`exercicios/exercicio.py`](exercicios/exercicio.py) (e seus equivalentes `.php`, `.ts`, `.tlpp`) contém uma suíte de testes sobre `calcular_comissao(valor_venda, meta_batida)` — 8% de comissão se a meta foi batida, 3% caso contrário — com os mesmos 4 problemas estruturais de [`exemplos/testes_ruins.py`](exemplos/testes_ruins.py):
 
 1. Nomes que não dizem o que é testado (`test1`, `test2`, `test_comissao`)
 2. Um teste verificando comportamentos não relacionados
@@ -196,7 +196,7 @@ O arquivo `exercicios/exercicio.py` (e seus equivalentes `.php`, `.ts`, `.tlpp`)
 **Etapas:**
 
 1. Rode a suíte como está — ela passa, mas os problemas são estruturais, não de execução.
-2. Identifique os 4 problemas (compare com a lista de `testes_ruins.py`, na seção anterior).
+2. Identifique os 4 problemas (compare com a lista de [`testes_ruins.py`](exemplos/testes_ruins.py), na seção anterior).
 3. Refatore aplicando AAA, FIRST e nomes comportamentais. Use a parametrização nativa da linguagem (`@pytest.mark.parametrize`, `#[DataProvider]`, `it.each`) para cobrir as variações de valor e meta — em PROBAT, repita o método de teste.
 4. Compare com `exercicios/gabarito.*` na sua linguagem.
 

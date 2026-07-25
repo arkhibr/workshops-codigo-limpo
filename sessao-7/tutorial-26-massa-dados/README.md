@@ -11,7 +11,7 @@ Os Tutoriais 24 e 25 resolveram como estruturar um teste (AAA, FIRST, nomenclatu
 
 O sintoma mais comum é o **Mystery Guest** (Meszaros, *xUnit Test Patterns*): um teste que depende de um objeto de dados grande, montado por inteiro, cujos detalhes irrelevantes ao cenário sendo testado ficam escondidos no meio de dezenas de campos. Quem lê o teste não consegue responder rapidamente "o que este teste realmente precisa que seja verdade para passar?" — porque a resposta está soterrada num literal de cliente, endereço, forma de pagamento e cupom, quando só o cupom importa.
 
-`exemplos/massa_ruins.py` mostra o padrão: dois testes que aplicam um cupom de desconto, cada um recriando um pedido inteiro (cliente, itens, endereço de entrega, forma de pagamento, datas) só para variar o campo `cupom_desconto`. Além do Mystery Guest, há duplicação — se o formato de `endereco_entrega` mudar (um novo campo obrigatório, por exemplo), toda a suíte de testes que monta pedidos manualmente precisa ser editada, mesmo que nenhum desses testes verifique nada sobre endereço.
+[`exemplos/massa_ruins.py`](exemplos/massa_ruins.py) mostra o padrão: dois testes que aplicam um cupom de desconto, cada um recriando um pedido inteiro (cliente, itens, endereço de entrega, forma de pagamento, datas) só para variar o campo `cupom_desconto`. Além do Mystery Guest, há duplicação — se o formato de `endereco_entrega` mudar (um novo campo obrigatório, por exemplo), toda a suíte de testes que monta pedidos manualmente precisa ser editada, mesmo que nenhum desses testes verifique nada sobre endereço.
 
 ```python
 # ❌ Mystery Guest: 8 campos montados à mão, mas só "cupom_desconto" importa
@@ -38,7 +38,7 @@ A solução não é "escrever menos dados" — é **centralizar a montagem dos d
 
 ### Object Mother vs. Test Data Builder
 
-Ambos os padrões resolvem o mesmo problema — centralizar a criação de massa de dados de teste — mas com trade-offs diferentes de simplicidade vs. escala.
+Ambos os padrões resolvem o mesmo problema — centralizar a criação de massa de dados de teste — mas equilibram de forma diferente a simplicidade e a escala.
 
 **Object Mother** é uma classe (ou módulo) com métodos de fábrica nomeados para cenários fixos e conhecidos: `Pedidos.pedidoComCupomValido()`, `Pedidos.pedidoVIPSemDesconto()`, `Clientes.clienteInadimplente()`. Cada método já devolve o objeto pronto, sem parâmetros de configuração (ou com poucos). É extremamente simples de ler e usar — o nome do método já documenta o cenário.
 
@@ -71,7 +71,7 @@ def test_cupom_aplica_10_por_cento_de_desconto():
     assert resultado.itens[0]["preco"] == 2700.0
 ```
 
-Compare com `massa_ruins.py`: o teste acima declara só o item e o cupom — os oito campos irrelevantes (cliente, endereço, forma de pagamento, datas) ficam escondidos dentro do `PedidoBuilder`, com valores padrão que ninguém precisa repetir.
+Compare com [`massa_ruins.py`](exemplos/massa_ruins.py): o teste acima declara só o item e o cupom — os oito campos irrelevantes (cliente, endereço, forma de pagamento, datas) ficam escondidos dentro do `PedidoBuilder`, com valores padrão que ninguém precisa repetir.
 
 **Trade-off resumido:** Object Mother é mais simples de ler para um número pequeno e estável de cenários fixos ("preciso sempre destes 3 ou 4 tipos de pedido"); Test Data Builder escala melhor quando o número de combinações de campos relevantes cresce, porque cada teste compõe só os métodos que precisa, sem multiplicar nomes de método.
 
@@ -139,7 +139,7 @@ Em todas as quatro linguagens, o princípio é o mesmo independentemente de have
 
 ## 4. Exercício
 
-O arquivo `exercicios/exercicio.py` (e seus equivalentes `.php`, `.ts`, `.tlpp`) contém `NotaFiscal`, com o mesmo problema de `massa_ruins.py`: cada teste duplica um literal gigante (número, emitente, destinatário, itens, alíquota, chave de acesso), mudando só a alíquota entre um teste e outro.
+O arquivo [`exercicios/exercicio.py`](exercicios/exercicio.py) (e seus equivalentes `.php`, `.ts`, `.tlpp`) contém `NotaFiscal`, com o mesmo problema de [`massa_ruins.py`](exemplos/massa_ruins.py): cada teste duplica um literal gigante (número, emitente, destinatário, itens, alíquota, chave de acesso), mudando só a alíquota entre um teste e outro.
 
 **Etapas:**
 
@@ -178,7 +178,7 @@ pytest exercicios/gabarito.py -v
 
 - **Documentação oficial do `factory_boy`.**
   `https://factoryboy.readthedocs.io/`
-  Referência da biblioteca de Factories usada em `massa_bons.py`, incluindo `LazyFunction` e integração com `Faker`.
+  Referência da biblioteca de Factories usada em [`massa_bons.py`](exemplos/massa_bons.py), incluindo `LazyFunction` e integração com `Faker`.
 
 - **Documentação oficial do `Hypothesis`.**
   `https://hypothesis.readthedocs.io/`
@@ -190,7 +190,7 @@ pytest exercicios/gabarito.py -v
 
 - **Documentação oficial do `fishery`.**
   `https://github.com/thoughtbot/fishery`
-  Biblioteca de Factories tipadas para TypeScript usada em `exemplos/equivalente.ts`.
+  Biblioteca de Factories tipadas para TypeScript usada em [`exemplos/equivalente.ts`](exemplos/equivalente.ts).
 
 - **FEATHERS, Michael.** *Working Effectively with Legacy Code*. Prentice Hall, 2004.
   Contexto complementar sobre por que dados de teste bem estruturados facilitam a introdução de testes de caracterização em código legado (Sessão 2 deste workshop).

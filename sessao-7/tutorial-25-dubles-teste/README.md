@@ -17,7 +17,7 @@ Este tutorial ensina a taxonomia completa (Dummy, Stub, Fake, Spy, Mock), quando
 
 ### Taxonomia: Dummy, Stub, Fake, Spy, Mock
 
-Os cinco tipos de dublê, do mais simples ao mais sofisticado, todos ilustrados em `exemplos/dubles_bons.py`:
+Os cinco tipos de dublê, do mais simples ao mais sofisticado, todos ilustrados em [`exemplos/dubles_bons.py`](exemplos/dubles_bons.py):
 
 **Dummy** — um objeto passado apenas para satisfazer uma assinatura de método ou construtor, mas nunca de fato usado no caminho testado. Existe só para o código compilar/rodar — não precisa ter comportamento nenhum, porque nenhum método dele é chamado. Um Dummy é diferente de um Stub: o Stub *é* chamado e devolve algo; o Dummy nunca chega a ser chamado.
 
@@ -93,7 +93,7 @@ def test_processa_pagamento_aprovado_notifica_cliente():
     notificacao.enviar.assert_called_once_with("cliente@teste.com", "Pagamento aprovado")
 ```
 
-Repare no par de testes em `dubles_bons.py`: `test_processa_pagamento_aprovado_notifica_cliente` usa Mock porque o comportamento esperado é uma **ação colateral** (enviar notificação) que não tem um valor de retorno para inspecionar — só dá pra verificar que a chamada aconteceu. Já `test_pagamento_recusado_nao_notifica_cliente` usa o mesmo Mock para provar a ausência de uma chamada (`assert_not_called()`), o outro lado da mesma moeda.
+Repare no par de testes em [`dubles_bons.py`](exemplos/dubles_bons.py): `test_processa_pagamento_aprovado_notifica_cliente` usa Mock porque o comportamento esperado é uma **ação colateral** (enviar notificação) que não tem um valor de retorno para inspecionar — só dá pra verificar que a chamada aconteceu. Já `test_pagamento_recusado_nao_notifica_cliente` usa o mesmo Mock para provar a ausência de uma chamada (`assert_not_called()`), o outro lado da mesma moeda.
 
 ---
 
@@ -130,7 +130,7 @@ resultado = ResultadoPagamento(status="aprovado", valor=100.0)
 assert resultado.status == "aprovado"
 ```
 
-O teste `test_processa_pagamento_com_mock_fragil`, em `exemplos/dubles_ruins.py`, ilustra a variante mais perigosa deste anti-padrão: um `MagicMock()` usado para verificar a **ordem exata** de chamadas internas (`method_calls[0][0] == "cobrar"`). Esse teste está acoplado à implementação — qualquer refatoração interna do `ProcessadorPagamento` que preserve o comportamento observável (o pagamento ainda é processado corretamente) pode quebrar esse teste sem que nenhum bug real tenha sido introduzido. Compare com `dubles_bons.py`, onde o Mock verifica apenas que `enviar()` foi chamado com os argumentos certos — uma verificação de contrato, não de implementação interna.
+O teste `test_processa_pagamento_com_mock_fragil`, em [`exemplos/dubles_ruins.py`](exemplos/dubles_ruins.py), ilustra a variante mais perigosa deste anti-padrão: um `MagicMock()` usado para verificar a **ordem exata** de chamadas internas (`method_calls[0][0] == "cobrar"`). Esse teste está acoplado à implementação — qualquer refatoração interna do `ProcessadorPagamento` que preserve o comportamento observável (o pagamento ainda é processado corretamente) pode quebrar esse teste sem que nenhum bug real tenha sido introduzido. Compare com [`dubles_bons.py`](exemplos/dubles_bons.py), onde o Mock verifica apenas que `enviar()` foi chamado com os argumentos certos — uma verificação de contrato, não de implementação interna.
 
 ---
 
@@ -158,7 +158,7 @@ class GatewayStripe:
 # não contra a API do Stripe — exatamente o padrão usado em dubles_bons.py.
 ```
 
-A prática recomendada: encapsule a biblioteca externa com um **Adapter** de fronteira fina (só traduz chamadas), teste o resto do sistema contra a interface desse Adapter (com Stub/Fake, como em `dubles_bons.py`), e reserve testes de integração — não testes de unidade — para verificar que o Adapter realmente conversa bem com a lib real.
+A prática recomendada: encapsule a biblioteca externa com um **Adapter** de fronteira fina (só traduz chamadas), teste o resto do sistema contra a interface desse Adapter (com Stub/Fake, como em [`dubles_bons.py`](exemplos/dubles_bons.py)), e reserve testes de integração — não testes de unidade — para verificar que o Adapter realmente conversa bem com a lib real.
 
 ---
 
@@ -179,13 +179,13 @@ Nas quatro linguagens, o **Fake** nunca vem de uma biblioteca de mocking — é 
 
 ADVPL/TLPP não tem framework de mocking equivalente a `unittest.mock`, PHPUnit ou Vitest — não há `createStub()`, `vi.fn()` ou qualquer geração automática de dublês. A prática padrão é a mesma discutida no **Tutorial 07** (código legado) sobre **seams**: expor um ponto de substituição (tipicamente um parâmetro de classe no construtor) e passar manualmente uma classe que implementa o mesmo contrato por convenção — os mesmos métodos, com a mesma assinatura, mas comportamento controlado para teste.
 
-`exemplos/equivalente.tlpp` mostra o contraste: `ProcessarPagamentoSemSeam` instancia `GatewayPagamentoReal` internamente (sem seam, impossível testar sem infraestrutura real); `ProcessadorPagamento` recebe o gateway via construtor (seam), permitindo passar `GatewayPagamentoStub` — uma classe manual, sem nenhuma mágica de framework por trás. O mesmo arquivo também ilustra um Dummy sem nenhum framework: `ServicoNotificacaoDummy` implementa o contrato só para satisfazer o construtor, e lança `UserException` se `Enviar()` for chamado — a prova manual de que o caminho testado (pagamento recusado) não o exercita, equivalente ao `object()` do Python ou à classe anônima que lança exceção no PHP/TS.
+[`exemplos/equivalente.tlpp`](exemplos/equivalente.tlpp) mostra o contraste: `ProcessarPagamentoSemSeam` instancia `GatewayPagamentoReal` internamente (sem seam, impossível testar sem infraestrutura real); `ProcessadorPagamento` recebe o gateway via construtor (seam), permitindo passar `GatewayPagamentoStub` — uma classe manual, sem nenhuma mágica de framework por trás. O mesmo arquivo também ilustra um Dummy sem nenhum framework: `ServicoNotificacaoDummy` implementa o contrato só para satisfazer o construtor, e lança `UserException` se `Enviar()` for chamado — a prova manual de que o caminho testado (pagamento recusado) não o exercita, equivalente ao `object()` do Python ou à classe anônima que lança exceção no PHP/TS.
 
 ---
 
 ## 5. Exercício
 
-O arquivo `exercicios/exercicio.py` (e seus equivalentes `.php`, `.ts`, `.tlpp`) contém `ServicoEntrega`, que depende de `ApiCepReal` (chamada de rede real/simulada, lenta) e `RepositorioEnderecoReal` (banco real/simulado), ambos instanciados internamente — sem seam algum. O teste fornecido passa, mas leva ~0,5s por causa das dependências reais.
+O arquivo [`exercicios/exercicio.py`](exercicios/exercicio.py) (e seus equivalentes `.php`, `.ts`, `.tlpp`) contém `ServicoEntrega`, que depende de `ApiCepReal` (chamada de rede real/simulada, lenta) e `RepositorioEnderecoReal` (banco real/simulado), ambos instanciados internamente — sem seam algum. O teste fornecido passa, mas leva ~0,5s por causa das dependências reais.
 
 **Etapas:**
 
