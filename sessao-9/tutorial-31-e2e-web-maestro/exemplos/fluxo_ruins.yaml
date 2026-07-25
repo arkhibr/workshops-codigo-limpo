@@ -1,30 +1,32 @@
-# Fluxo Maestro frágil — mesmos passos de fluxo_bons.yaml, com os três
-# anti-padrões mais comuns em suítes de E2E web (marcados com # ❌ abaixo).
-# Executar: maestro test fluxo_ruins.yaml  (com o alvo servido em http://localhost:8080)
-appId: "http://localhost:8080"
+# Fluxo frágil — mesmo objetivo de fluxo_bons.yaml (entrar e adicionar dois
+# produtos no saucedemo), com os anti-padrões mais comuns em E2E web.
+# Executar: maestro test fluxo_ruins.yaml
+appId: "https://www.saucedemo.com"
 ---
 - launchApp
 
-# ❌ Anti-padrão 1: tapOn por coordenada fixa, em vez de por id/texto.
-# "50%, 30%" só acerta o botão "Adicionar" na resolução em que alguém
-# mediu a tela. Qualquer mudança de layout, fonte ou tamanho de viewport
-# desloca o botão e o toque cai em outro elemento — ou em nenhum.
+# ❌ Anti-padrão 1: login copiado e colado, em vez de um subflow reutilizável.
+# A mesma sequência vai se repetir em todos os fluxos da suíte; no dia em que
+# a tela de login mudar, será preciso corrigir arquivo por arquivo.
 - tapOn:
-    point: "50%, 30%"
-
-# ❌ Anti-padrão 2: espera fixa em vez de assertion declarativa.
-# O fluxo aposta que 2 segundos bastam para o total ser recalculado e
-# renderizado. Numa máquina mais lenta, 2s pode não ser suficiente e o
-# teste falha por lentidão do ambiente, não por defeito da aplicação.
-# Numa máquina rápida, os 2s são tempo desperdiçado a cada execução.
-- extendedWaitUntil:
-    visible:
-        text: "Total"
-    timeout: 2000
-
-# ❌ Anti-padrão 3: sem assertion depois da ação.
-# O fluxo toca em "Finalizar" mas nunca confirma que a confirmação
-# apareceu. Se o botão parar de funcionar, o fluxo ainda "passa" —
-# ele só executa passos, não verifica resultado algum.
+    id: "user-name"
+- inputText: "standard_user"
 - tapOn:
-    point: "50%, 80%"
+    id: "password"
+- inputText: "secret_sauce"
+- tapOn:
+    id: "login-button"
+
+# ❌ Anti-padrão 2: tapOn por coordenada, em vez de id/texto.
+# "90%, 45%" só acerta o botão de um produto na resolução exata em que alguém
+# mediu o ponto. Muda o tamanho da janela e o toque cai em outro lugar.
+- tapOn:
+    point: "90%, 45%"
+
+# ❌ Anti-padrão 3: assume que o segundo produto já está visível, sem rolar.
+# Em uma tela menor, o item fica fora da viewport e o toque por coordenada erra.
+- tapOn:
+    point: "90%, 70%"
+
+# ❌ Anti-padrão 4: o fluxo termina sem nenhuma assertion. Se nada tiver entrado
+# no carrinho, ninguém fica sabendo — ele "passa" por ter executado os toques.

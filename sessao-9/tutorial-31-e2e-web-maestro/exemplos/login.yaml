@@ -1,0 +1,23 @@
+# Subflow de login reutilizável no saucedemo.com.
+#
+# Não é um fluxo de teste completo: é um trecho que outros fluxos chamam com
+# `runFlow`, para não copiar a sequência de login em cada arquivo. Recebe o
+# usuário por parâmetro (env); a senha é sempre "secret_sauce" no ambiente de
+# demonstração. O valor de USUARIO abaixo é apenas o padrão — quem chama pode
+# sobrescrevê-lo.
+appId: "https://www.saucedemo.com"
+env:
+  USUARIO: standard_user
+---
+- launchApp:
+    clearState: true          # começa deslogado e com o carrinho vazio, sempre
+- tapOn:
+    id: "user-name"
+- inputText: "${USUARIO}"
+- tapOn:
+    id: "password"
+- inputText: "secret_sauce"
+- tapOn:
+    id: "login-button"
+- assertVisible:
+    id: "inventory_container"  # confirma que o login levou ao catálogo

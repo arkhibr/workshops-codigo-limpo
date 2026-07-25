@@ -1,28 +1,37 @@
-# Exercício — endureça este fluxo.
+# Exercício — complete e endureça este fluxo de checkout no saucedemo.
 #
-# Objetivo do fluxo: adicionar o livro duas vezes ao carrinho e finalizar
-# o pedido, confirmando que o total soma R$ 60,00 e que o pedido é
-# confirmado. Como está, o fluxo até executa esses passos, mas depende
-# de coordenadas de tela e não confirma nenhum resultado — qualquer
-# mudança de layout ou qualquer regressão silenciosa passa despercebida.
+# Objetivo: entrar, adicionar a mochila (Sauce Labs Backpack) ao carrinho,
+# abrir o carrinho, concluir o checkout preenchendo o formulário e confirmar
+# que o pedido foi finalizado ("Thank you for your order!").
 #
-# Sua tarefa: reescrever fluxo.yaml usando seletores estáveis (id/text)
-# e uma assertion depois de cada ação relevante. Compare o resultado
-# com gabarito.yaml quando terminar.
-appId: "http://localhost:8080"
+# Como está, o fluxo tem os problemas de sempre: repete o login em vez de
+# reusar o subflow, toca por coordenada, não espera as telas e não confirma
+# nenhum resultado. Além disso, ele para no meio — não chega ao checkout.
+#
+# Sua tarefa:
+#   1. Troque o login copiado por `runFlow` do subflow login.yaml.
+#   2. Troque as coordenadas por ids estáveis.
+#   3. Complete o checkout: abrir o carrinho, tocar em "Checkout" (id: checkout),
+#      preencher first-name / last-name / postal-code, "Continue" (id: continue)
+#      e "Finish" (id: finish).
+#   4. Confirme o resultado com uma assertion do texto "Thank you for your order!".
+# Descubra o seletor do link do carrinho com `maestro studio`. Compare com gabarito.yaml.
+appId: "https://www.saucedemo.com"
 ---
 - launchApp
 
-# ❌ coordenada, não id — quebra se o layout mudar
+# ❌ login copiado em vez de reusar login.yaml
 - tapOn:
-    point: "50%, 30%"
-
-# ❌ coordenada de novo, para o segundo clique em "Adicionar"
+    id: "user-name"
+- inputText: "standard_user"
 - tapOn:
-    point: "50%, 30%"
-
-# ❌ nenhuma assertion aqui — o fluxo não confirma que o total é R$ 60,00
+    id: "password"
+- inputText: "secret_sauce"
 - tapOn:
-    point: "50%, 80%"
+    id: "login-button"
 
-# ❌ fluxo termina sem verificar a confirmação do pedido
+# ❌ coordenada em vez de id
+- tapOn:
+    point: "90%, 45%"
+
+# ❌ para aqui: não abre o carrinho, não faz o checkout, não confirma nada

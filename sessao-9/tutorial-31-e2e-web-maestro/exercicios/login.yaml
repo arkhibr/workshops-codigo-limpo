@@ -1,0 +1,22 @@
+# Subflow de login reutilizável no saucedemo.com (cópia local do exercício).
+#
+# Este arquivo é idêntico ao de exemplos/login.yaml. Ele é replicado aqui
+# porque o gabarito.yaml o chama com `runFlow: file: login.yaml`, e o caminho
+# é resolvido a partir da pasta do fluxo que chama — então o subflow precisa
+# existir dentro de exercicios/.
+appId: "https://www.saucedemo.com"
+env:
+  USUARIO: standard_user
+---
+- launchApp:
+    clearState: true
+- tapOn:
+    id: "user-name"
+- inputText: "${USUARIO}"
+- tapOn:
+    id: "password"
+- inputText: "secret_sauce"
+- tapOn:
+    id: "login-button"
+- assertVisible:
+    id: "inventory_container"

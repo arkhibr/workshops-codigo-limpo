@@ -1,17 +1,28 @@
-# Fluxo Maestro robusto — E2E de checkout web.
-# Executar: maestro test fluxo_bons.yaml  (com o alvo servido em http://localhost:8080)
-appId: "http://localhost:8080"
+# Fluxo robusto — entra no saucedemo, adiciona dois produtos e confirma que
+# ambos entraram no carrinho, verificando o estado da tela (não só os cliques).
+# Executar: maestro test fluxo_bons.yaml
+appId: "https://www.saucedemo.com"
 ---
-- launchApp
-- assertVisible:
-    id: "produto-livro"
+# Login reaproveitado como subflow parametrizado, em vez de copiado aqui.
+- runFlow:
+    file: login.yaml
+    env:
+      USUARIO: standard_user
+
+# Primeiro produto, por id estável.
 - tapOn:
-    id: "adicionar"
+    id: "add-to-cart-sauce-labs-backpack"
+# Estado derivado: o botão "Add to cart" vira "Remove" quando o item entra.
+# Verificar essa troca prova que a ação teve efeito, e não apenas que houve um toque.
 - assertVisible:
-    text: "Total: R$ 30,00"
+    id: "remove-sauce-labs-backpack"
+
+# O segundo produto está mais abaixo na lista: role até ele antes de tocar.
+- scrollUntilVisible:
+    element:
+      id: "add-to-cart-sauce-labs-bike-light"
+    direction: DOWN
 - tapOn:
-    id: "finalizar"
+    id: "add-to-cart-sauce-labs-bike-light"
 - assertVisible:
-    id: "confirmacao"
-- assertVisible:
-    text: "Pedido confirmado"
+    id: "remove-sauce-labs-bike-light"
