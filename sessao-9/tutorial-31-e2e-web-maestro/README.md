@@ -248,27 +248,134 @@ Os comandos que aparecem nos fluxos deste tutorial, e quando cada um entra:
 
 Os flows do Maestro são escritos em **YAML**, para as três plataformas que a ferramenta suporta — web, Android e iOS. Não existe uma sintaxe do Maestro em Python, PHP, TypeScript ou ADVPL/TLPP: o YAML é a linguagem nativa da ferramenta. Por isso este tutorial não traz arquivos `equivalente.*`; o material vive nos fluxos YAML descritos acima.
 
-**Instalar o Maestro:**
+O restante desta seção assume que você **nunca rodou o Maestro** e pega na mão, do zero até ver o primeiro fluxo passar, nos três sistemas operacionais. São cinco passos, na ordem:
 
-```bash
-curl -Ls "https://get.maestro.mobile.dev" | bash
+```mermaid
+flowchart LR
+    J["1. Java 17+<br/>(pré-requisito)"] --> M["2. instalar<br/>o Maestro"]
+    M --> R["3. rodar<br/>o fluxo"] --> O["4. ler<br/>a saída"] --> S["5. maestro<br/>studio"]
 ```
 
-**Rodar um flow** (o alvo é o saucedemo na internet, então basta ter conexão e um navegador; o Maestro cuida de abri-lo):
+### (a) Pré-requisito comum: Java 17+
+
+O Maestro roda sobre a JVM, então o único pré-requisito em todos os sistemas é o **Java 17 ou superior**, com a variável de ambiente `JAVA_HOME` apontando para ele. Antes de qualquer coisa, veja o que você já tem:
+
+```bash
+java -version
+```
+
+Se o comando falhar (Java não instalado) ou mostrar uma versão abaixo de 17, instale um JDK 17+ antes de seguir — Temurin, Oracle JDK, ou, no Linux e no WSL, o `openjdk-17-jdk` do gerenciador de pacotes:
+
+```bash
+# Linux / WSL (Ubuntu/Debian)
+sudo apt update && sudo apt install openjdk-17-jdk
+```
+
+> **Nota:** `JAVA_HOME` é a variável de ambiente que diz às ferramentas onde o Java está instalado. No macOS e no Linux, o instalador do JDK costuma configurá-la sozinho; no Windows, às vezes é preciso defini-la à mão, nas *Variáveis de Ambiente do Sistema*, apontando para a pasta do JDK 17. Confirme com `echo $JAVA_HOME` (macOS/Linux) ou `echo %JAVA_HOME%` (Windows).
+
+### (b) Instalar o Maestro
+
+Escolha o bloco do seu sistema.
+
+**macOS** — via script oficial, ou via Homebrew:
+
+```bash
+# opção 1: script oficial
+curl -fsSL "https://get.maestro.mobile.dev" | bash
+
+# opção 2: Homebrew
+brew tap mobile-dev-inc/tap
+brew install mobile-dev-inc/tap/maestro
+```
+
+Para testar apps **iOS** você precisaria também do Xcode e das Command Line Tools; para os fluxos **web** deste tutorial, não — bastam o Java e o Maestro.
+
+**Linux** — o mesmo script:
+
+```bash
+curl -fsSL "https://get.maestro.mobile.dev" | bash
+```
+
+O script instala o Maestro em `~/.maestro` e adiciona `~/.maestro/bin` ao PATH. Abra um terminal novo depois de instalar, para o PATH recarregar.
+
+**Windows** — o Maestro roda de forma nativa, sem WSL:
+
+1. Baixe o `maestro.zip` da página de *releases* do Maestro no GitHub.
+2. Extraia para uma pasta estável, por exemplo `C:\maestro`.
+3. Adicione ao PATH, no PowerShell:
+
+   ```powershell
+   setx PATH "%PATH%;C:\maestro\bin"
+   ```
+
+4. Feche e reabra o terminal, para o PATH recarregar.
+
+> **Atenção (Windows):** a documentação do Maestro só recomenda o caminho por **WSL2** "se for estritamente necessário", porque ele exige configuração de portas mais avançada. Para os fluxos web deste tutorial, a instalação nativa acima é o caminho mais simples. Se você já trabalha dentro do WSL, aí sim instale o `openjdk-17-jdk` e rode o mesmo `curl` de dentro dele, exportando `JAVA_HOME` e `~/.maestro/bin` no `~/.bashrc`.
+
+**Confirme a instalação**, em qualquer sistema:
+
+```bash
+maestro --help
+```
+
+Se o comando lista os subcomandos do Maestro (`test`, `studio`, ...), está tudo pronto.
+
+### (c) Rodar o primeiro fluxo
+
+Com o Maestro instalado, rode o fluxo bom deste tutorial. O alvo é o saucedemo, na internet, então você só precisa de conexão:
 
 ```bash
 maestro test sessao-9/tutorial-31-e2e-web-maestro/exemplos/fluxo_bons.yaml
 ```
 
-**Inspecionar a tela para descobrir seletores** — abre a árvore de elementos da página atual, com os seletores que cada elemento aceita:
+Na **primeira** execução, o Maestro baixa sozinho uma versão gerenciada do **Chromium** — você não instala navegador nem driver à mão. Isso leva alguns segundos só na primeira vez; nas seguintes, ele abre na hora. Uma janela do Chromium surge, e você vê o Maestro digitar o login, tocar nos produtos e rolar a página, sozinho.
+
+> **Atenção (sintaxe web):** nas versões atuais do Maestro, um fluxo web declara o alvo com o campo `url:` (por exemplo, `url: "https://www.saucedemo.com"`). Os arquivos deste tutorial usam `appId:` com a URL, sintaxe que versões mais antigas aceitavam para web. Se o seu Maestro reclamar do `appId` num fluxo web, troque-o por `url:` — o resto do fluxo continua igual. É a mesma razão pela qual o suporte web ainda é Beta: a sintaxe varia entre versões.
+
+### (d) Ler a saída: como é um fluxo que passa e um que falha
+
+Este é o passo que quem nunca rodou o Maestro não conhece. Ao rodar, o Maestro imprime o nome do fluxo e vai marcando cada comando conforme executa. Quando tudo passa, a saída tem, aproximadamente, esta forma:
+
+```text
+ ║  > Flow: fluxo_bons
+ ║
+ ║    ✅  Run flow: login.yaml
+ ║    ✅  Tap on id: add-to-cart-sauce-labs-backpack
+ ║    ✅  Assert visible id: remove-sauce-labs-backpack
+ ║    ✅  Scroll until visible id: add-to-cart-sauce-labs-bike-light
+ ║    ✅  Tap on id: add-to-cart-sauce-labs-bike-light
+ ║    ✅  Assert visible id: remove-sauce-labs-bike-light
+ ║
+
+Flow Passed
+```
+
+Quando um comando falha — um `id` que não existe, uma assertion que não se confirma —, o Maestro para naquele passo, marca-o em vermelho e diz o que estava procurando:
+
+```text
+ ║    ✅  Tap on id: add-to-cart-sauce-labs-backpack
+ ║    ❌  Assert visible id: remove-sauce-labs-backpack
+ ║        Element not found: id: remove-sauce-labs-backpack
+ ║
+
+Flow Failed
+```
+
+O detalhe que fecha o ciclo com a Sessão 8: o `maestro test` encerra com código de saída zero quando o fluxo passa e diferente de zero quando falha. É isso que permite plugá-lo num pipeline de CI — o job quebra sozinho, sem ninguém precisar ler a saída à mão.
+
+> **Nota:** o formato exato da saída varia entre versões do Maestro (cores, símbolos, molduras), mas a estrutura é sempre esta: um comando por linha, marcado como passou ou falhou, e um veredito final do fluxo. Rode com `maestro test --debug-output <pasta>` se quiser que ele grave capturas de tela e logs de cada passo, para inspecionar depois.
+
+### (e) Descobrir seletores com o `maestro studio`
+
+Antes de escrever um fluxo, você precisa saber por qual `id` ou texto apontar cada elemento. O `maestro studio` abre a tela num navegador controlado pelo Maestro e mostra, para cada elemento que você clica, os seletores que ele aceita:
 
 ```bash
 maestro studio
 ```
 
-> **Dica:** o `maestro studio` é a forma prática de encontrar o `id` ou o texto de um elemento em vez de recorrer a coordenadas. Você abre a tela no navegador controlado pelo Maestro, clica num elemento e ele mostra os seletores que aquele elemento aceita. Alguns elementos do saucedemo têm `id` estável (os campos de login, os botões de "adicionar", os campos do checkout); outros, como o link do carrinho, convém confirmar com o `studio` no seu ambiente antes de fixar o seletor.
+> **Dica:** o `studio` é a forma prática de achar o `id` ou o texto de um elemento em vez de recorrer a coordenadas. Alguns elementos do saucedemo têm `id` estável (os campos de login, os botões de "adicionar", os campos do checkout); outros, como o link do carrinho, convém confirmar com o `studio` no seu ambiente antes de fixar o seletor.
 
-> **Nota:** duas ressalvas sobre este tutorial. O suporte do Maestro a web é mais recente que o de Android e iOS, e a sintaxe de alguns comandos pode variar entre versões — vale conferir em maestro.mobile.dev. E o Maestro não está instalado no ambiente do workshop; os fluxos aqui foram verificados por validação estrutural do YAML e uso de seletores reais do saucedemo, não por execução contra o navegador.
+> **Nota:** o Maestro não está instalado no ambiente deste workshop; os fluxos aqui foram verificados por validação estrutural do YAML e uso de seletores reais do saucedemo, não por execução contra o navegador. As saídas mostradas em (d) são representativas do que você verá ao rodar na sua máquina.
 
 ---
 
