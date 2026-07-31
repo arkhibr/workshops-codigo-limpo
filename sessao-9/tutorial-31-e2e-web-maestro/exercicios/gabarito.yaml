@@ -1,28 +1,52 @@
-# Gabarito — checkout completo no saucedemo, com login reaproveitado,
-# seletores estáveis e uma assertion depois de cada etapa relevante.
+# Gabarito — compra robusta no saucedemo, exercitando os recursos do guia:
+# login reaproveitado (runFlow + env), espera por condição (extendedWaitUntil),
+# rolagem até o produto (scrollUntilVisible), asserção de estado derivado na
+# adição e na remoção (assertVisible / assertNotVisible) e o checkout completo.
 # Executar: maestro test gabarito.yaml
 url: "https://www.saucedemo.com"   # alvo web: Maestro estável 2.x usa url: (não appId:)
 ---
-# Login como subflow, não copiado.
+# Login como subflow parametrizado, não copiado.
 - runFlow:
     file: login.yaml
     env:
       USUARIO: standard_user
 
-# Adiciona a mochila e confirma pelo estado derivado (botão vira "Remove").
+# Espera explícita até o catálogo carregar.
+- extendedWaitUntil:
+    visible:
+      id: "inventory_container"
+    timeout: 10000
+
+# Adiciona a mochila (topo da lista) e confirma pelo estado derivado.
 - tapOn:
     id: "add-to-cart-sauce-labs-backpack"
 - assertVisible:
     id: "remove-sauce-labs-backpack"
 
-# Abre o carrinho. O container do carrinho tem id estável no saucedemo;
-# confirme o seletor exato com `maestro studio` no seu ambiente.
+# Segundo produto, mais abaixo: rola até ele antes de tocar.
+- scrollUntilVisible:
+    element:
+      id: "add-to-cart-sauce-labs-fleece-jacket"
+    direction: DOWN
+- tapOn:
+    id: "add-to-cart-sauce-labs-fleece-jacket"
+- assertVisible:
+    id: "remove-sauce-labs-fleece-jacket"
+
+# Abre o carrinho e confirma os dois itens pelo nome.
 - tapOn:
     id: "shopping_cart_container"
-- assertVisible:
-    id: "checkout"
+- assertVisible: "Sauce Labs Backpack"
+- assertVisible: "Sauce Labs Fleece Jacket"
 
-# Checkout: formulário de dados e finalização, tudo por id.
+# Remove um item e confirma pelo estado derivado que ele saiu (assertNotVisible),
+# e que o outro permaneceu — verificar o efeito da ação, não só o clique.
+- tapOn:
+    id: "remove-sauce-labs-fleece-jacket"
+- assertNotVisible: "Sauce Labs Fleece Jacket"
+- assertVisible: "Sauce Labs Backpack"
+
+# Checkout do item restante: formulário, revisão e finalização.
 - tapOn:
     id: "checkout"
 - tapOn:
@@ -36,8 +60,14 @@ url: "https://www.saucedemo.com"   # alvo web: Maestro estável 2.x usa url: (n�
 - inputText: "31000-000"
 - tapOn:
     id: "continue"
+- assertVisible:
+    id: "finish"
 - tapOn:
     id: "finish"
 
-# Confirma o resultado final pelo texto da tela de sucesso.
+# Confirma o resultado final e volta ao catálogo.
 - assertVisible: "Thank you for your order!"
+- tapOn:
+    id: "back-to-products"
+- assertVisible:
+    id: "inventory_container"

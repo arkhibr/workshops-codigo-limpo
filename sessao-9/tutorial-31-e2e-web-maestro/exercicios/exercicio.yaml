@@ -1,23 +1,30 @@
-# Exercício — complete e endureça este fluxo de checkout no saucedemo.
+# Exercício — complete e endureça este fluxo de compra no saucedemo.
 #
-# Objetivo: entrar, adicionar a mochila (Sauce Labs Backpack) ao carrinho,
-# abrir o carrinho, concluir o checkout preenchendo o formulário e confirmar
-# que o pedido foi finalizado ("Thank you for your order!").
+# Objetivo (veja o gabarito.yaml para o alvo): entrar reaproveitando o subflow
+# de login, adicionar dois produtos (o segundo fora da viewport, alcançado com
+# rolagem), abrir o carrinho, remover um item confirmando pelo estado derivado
+# que ele saiu, concluir o checkout preenchendo o formulário e confirmar o
+# pedido ("Thank you for your order!").
 #
-# Como está, o fluxo tem os problemas de sempre: repete o login em vez de
-# reusar o subflow, toca por coordenada, não espera as telas e não confirma
-# nenhum resultado. Além disso, ele para no meio — não chega ao checkout.
+# Como está, o fluxo tem os problemas de sempre: abre sem clearState, repete o
+# login em vez de reusar o subflow, toca por coordenada, não espera as telas e
+# não confirma nenhum resultado. Além disso, ele para no meio — não chega ao
+# carrinho nem ao checkout.
 #
 # Sua tarefa:
-#   1. Troque o login copiado por `runFlow` do subflow login.yaml.
-#   2. Troque as coordenadas por ids estáveis.
-#   3. Complete o checkout: abrir o carrinho, tocar em "Checkout" (id: checkout),
-#      preencher first-name / last-name / postal-code, "Continue" (id: continue)
-#      e "Finish" (id: finish).
-#   4. Confirme o resultado com uma assertion do texto "Thank you for your order!".
-# Descubra o seletor do link do carrinho com `maestro studio`. Compare com gabarito.yaml.
+#   1. Reinicie o estado no login (o subflow login.yaml já faz clearState) e
+#      troque o login copiado por `runFlow` de login.yaml, com env USUARIO.
+#   2. Troque as coordenadas por ids estáveis; alcance o segundo produto com
+#      `scrollUntilVisible` e confirme cada adição pelo botão que vira "Remove".
+#   3. Abra o carrinho (id: shopping_cart_container), remova um item e confirme
+#      com `assertNotVisible` que ele saiu e `assertVisible` que o outro ficou.
+#   4. Complete o checkout: "Checkout" (id: checkout), first-name / last-name /
+#      postal-code, "Continue" (id: continue), "Finish" (id: finish).
+#   5. Confirme o resultado com `assertVisible` do texto "Thank you for your order!".
+# Descubra qualquer seletor incerto com `maestro studio`. Compare com gabarito.yaml.
 url: "https://www.saucedemo.com"   # alvo web: Maestro estável 2.x usa url: (não appId:)
 ---
+# ❌ abre sem clearState — pode herdar carrinho de execução anterior
 - launchApp
 
 # ❌ login copiado em vez de reusar login.yaml
@@ -30,8 +37,9 @@ url: "https://www.saucedemo.com"   # alvo web: Maestro estável 2.x usa url: (n�
 - tapOn:
     id: "login-button"
 
-# ❌ coordenada em vez de id
+# ❌ coordenada em vez de id, e sem confirmar que o item entrou
 - tapOn:
     point: "90%, 45%"
 
-# ❌ para aqui: não abre o carrinho, não faz o checkout, não confirma nada
+# ❌ para aqui: não rola até o segundo produto, não abre o carrinho, não faz o
+#    checkout e não confirma nada

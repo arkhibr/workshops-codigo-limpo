@@ -207,12 +207,12 @@ A verificação que dá confiança olha o **estado derivado** da ação. No sauc
 # Segundo produto, mais abaixo na lista: role até ele antes de tocar
 - scrollUntilVisible:
     element:
-      id: "add-to-cart-sauce-labs-bike-light"
+      id: "add-to-cart-sauce-labs-onesie"
     direction: DOWN
 - tapOn:
-    id: "add-to-cart-sauce-labs-bike-light"
+    id: "add-to-cart-sauce-labs-onesie"
 - assertVisible:
-    id: "remove-sauce-labs-bike-light"
+    id: "remove-sauce-labs-onesie"
 ```
 
 O mesmo raciocínio vale para o contador do carrinho, que passa a exibir o número de itens, ou para o total na tela de checkout. É a mesma lição da Sessão 8, onde um teste de integração conferia o corpo da resposta, e não só o código de status: verificar o resultado, não o gesto.
@@ -334,36 +334,37 @@ Na **primeira** execução, o Maestro baixa sozinho uma versão gerenciada do **
 
 ### (d) Ler a saída: como é um fluxo que passa e um que falha
 
-Este é o passo que quem nunca rodou o Maestro não conhece. Ao rodar, o Maestro imprime o nome do fluxo e vai marcando cada comando conforme executa. Quando tudo passa, a saída tem, aproximadamente, esta forma:
+Este é o passo que quem nunca rodou o Maestro não conhece. Ao rodar, o Maestro imprime o nome do fluxo e marca cada comando com `COMPLETED` conforme executa. Esta é a saída real do [`exemplos/fluxo_bons.yaml`](exemplos/fluxo_bons.yaml), rodado com o Maestro 2.8 contra o saucedemo (abreviada no meio):
 
 ```text
- ║  > Flow: fluxo_bons
- ║
- ║    ✅  Run flow: login.yaml
- ║    ✅  Tap on id: add-to-cart-sauce-labs-backpack
- ║    ✅  Assert visible id: remove-sauce-labs-backpack
- ║    ✅  Scroll until visible id: add-to-cart-sauce-labs-bike-light
- ║    ✅  Tap on id: add-to-cart-sauce-labs-bike-light
- ║    ✅  Assert visible id: remove-sauce-labs-bike-light
- ║
-
-Flow Passed
+ > Flow fluxo_bons
+Run login.yaml...
+  Launch app "https://www.saucedemo.com" with clear state... COMPLETED
+  Tap on id: user-name... COMPLETED
+  Input text ${USUARIO}... COMPLETED
+  Tap on id: login-button... COMPLETED
+  Assert that id: inventory_container is visible... COMPLETED
+Run login.yaml... COMPLETED
+Tap on id: add-to-cart-sauce-labs-backpack... COMPLETED
+Assert that id: remove-sauce-labs-backpack is visible... COMPLETED
+Scrolling DOWN until id: add-to-cart-sauce-labs-onesie is visible... COMPLETED
+Tap on id: shopping_cart_container... COMPLETED
+Tap on id: finish... COMPLETED
+Assert that "Thank you for your order!" is visible... COMPLETED
 ```
 
-Quando um comando falha — um `id` que não existe, uma assertion que não se confirma —, o Maestro para naquele passo, marca-o em vermelho e diz o que estava procurando:
+Quando um comando falha — um `id` que não existe, uma assertion que não se confirma —, o Maestro para naquele passo, marca-o com `FAILED` e diz o que estava procurando. Este é um erro real que aconteceu ao escrever o fluxo, quando tentei asserir o contador do carrinho por um `id` que ele não tem:
 
 ```text
- ║    ✅  Tap on id: add-to-cart-sauce-labs-backpack
- ║    ❌  Assert visible id: remove-sauce-labs-backpack
- ║        Element not found: id: remove-sauce-labs-backpack
- ║
+Tap on id: add-to-cart-sauce-labs-onesie... COMPLETED
+Assert that id: shopping_cart_badge is visible... FAILED
 
-Flow Failed
+Assertion is false: id: shopping_cart_badge is visible
 ```
 
 O detalhe que fecha o ciclo com a Sessão 8: o `maestro test` encerra com código de saída zero quando o fluxo passa e diferente de zero quando falha. É isso que permite plugá-lo num pipeline de CI — o job quebra sozinho, sem ninguém precisar ler a saída à mão.
 
-> **Nota:** o formato exato da saída varia entre versões do Maestro (cores, símbolos, molduras), mas a estrutura é sempre esta: um comando por linha, marcado como passou ou falhou, e um veredito final do fluxo. Rode com `maestro test --debug-output <pasta>` se quiser que ele grave capturas de tela e logs de cada passo, para inspecionar depois.
+> **Nota:** o formato exato da saída varia entre versões do Maestro (cores, molduras), mas a estrutura é sempre esta: um comando por linha, marcado `COMPLETED` ou `FAILED`, e o código de saída como veredito. Rode com `maestro test --debug-output <pasta>` se quiser que ele grave capturas de tela e logs de cada passo, para inspecionar depois.
 
 ### (e) Descobrir seletores com o `maestro studio`
 
@@ -375,28 +376,36 @@ maestro studio
 
 > **Dica:** o `studio` é a forma prática de achar o `id` ou o texto de um elemento em vez de recorrer a coordenadas. Alguns elementos do saucedemo têm `id` estável (os campos de login, os botões de "adicionar", os campos do checkout); outros, como o link do carrinho, convém confirmar com o `studio` no seu ambiente antes de fixar o seletor.
 
-> **Nota:** o workshop pressupõe que **você** instale o Maestro (a versão estável) e rode os fluxos na sua máquina — é assim que se pratica E2E. Durante a escrita deste material, os fluxos foram conferidos por validação estrutural do YAML e por seletores reais do saucedemo, não executados contra o navegador; por isso as saídas de (d) mostram o formato, e o que vale é o resultado que aparecer quando você rodar.
+> **Nota:** os quatro fluxos deste tutorial (`fluxo_bons.yaml`, `fluxo_ruins.yaml` e os de `exercicios/`) foram **executados** com o Maestro 2.8 contra o saucedemo. Os dois corretos — `fluxo_bons.yaml` e `gabarito.yaml` — passam de ponta a ponta; os dois de anti-padrão — `fluxo_ruins.yaml` e `exercicio.yaml` — rodam em verde de propósito, para mostrar que um fluxo sem assertion "passa" sem provar nada. Ainda assim, rode-os você: o alvo é um site externo que pode mudar, e praticar E2E é rodar de verdade, não ler o YAML.
 
 ---
 
 ## 4. Exercício
 
-O arquivo [`exercicios/exercicio.yaml`](exercicios/exercicio.yaml) começa um fluxo de compra no saucedemo e para no meio: ele repete o login em vez de reusar o subflow, toca por coordenada e não chega ao checkout nem confirma nada. O objetivo é completá-lo e endurecê-lo até o fim da compra.
+O arquivo [`exercicios/exercicio.yaml`](exercicios/exercicio.yaml) começa um fluxo de compra no saucedemo e para no meio: abre sem `clearState`, repete o login em vez de reusar o subflow, toca por coordenada e não chega ao carrinho nem confirma nada. O objetivo é completá-lo e endurecê-lo até o fim da compra, no padrão do [`exercicios/gabarito.yaml`](exercicios/gabarito.yaml).
 
 **Etapas:**
 
-1. Troque o login copiado por `runFlow` do subflow [`exercicios/login.yaml`](exercicios/login.yaml).
-2. Troque as coordenadas por `id` estáveis (`add-to-cart-sauce-labs-backpack` para a mochila).
-3. Abra o carrinho — descubra o seletor do link do carrinho com `maestro studio` — e siga o checkout: `checkout`, depois os campos `first-name`, `last-name` e `postal-code`, depois `continue` e `finish`.
-4. Confirme o resultado com uma assertion do texto `Thank you for your order!`.
-5. Compare com [`exercicios/gabarito.yaml`](exercicios/gabarito.yaml).
+1. Troque o login copiado por `runFlow` do subflow [`exercicios/login.yaml`](exercicios/login.yaml) (que já faz `clearState`), passando o usuário por `env`.
+2. Troque as coordenadas por `id` estáveis; alcance o segundo produto com `scrollUntilVisible` e confirme cada adição pelo botão que vira "Remove".
+3. Abra o carrinho (`shopping_cart_container`), remova um item e confirme com `assertNotVisible` que ele saiu e `assertVisible` que o outro ficou.
+4. Siga o checkout: `checkout`, depois `first-name`, `last-name` e `postal-code`, depois `continue` e `finish`.
+5. Confirme o resultado com uma assertion do texto `Thank you for your order!`, e compare com o gabarito.
+
+Antes de rodar com o Maestro, dá para validar só a estrutura do YAML:
 
 ```bash
-# Validar a estrutura YAML (não substitui rodar com o Maestro instalado)
 python3 -c "import yaml; list(yaml.safe_load_all(open('sessao-9/tutorial-31-e2e-web-maestro/exercicios/gabarito.yaml')))"
 ```
 
-> **Dica:** ao chegar ao checkout, resista a confirmar só que a tela final apareceu. A assertion de `Thank you for your order!` prova que a compra fechou, mas o passo anterior — o total na tela de resumo — é onde um bug de cálculo apareceria. Verificar o resultado intermediário, e não só a tela de sucesso, é a mesma disciplina da seção (h).
+E então rodar de verdade, que é o que prova o fluxo:
+
+```bash
+cd sessao-9/tutorial-31-e2e-web-maestro/exercicios
+maestro test gabarito.yaml   # o seu exercicio.yaml deve terminar igual: verde e completo
+```
+
+> **Dica:** a etapa de remover um item é onde mora a disciplina da seção (h). Não basta tocar em "Remove" — o `assertNotVisible` do item que saiu, junto do `assertVisible` do que ficou, é o que prova que a ação teve efeito. Um fluxo que só toca em "Remove" e segue passa mesmo que o item continue no carrinho.
 
 ---
 

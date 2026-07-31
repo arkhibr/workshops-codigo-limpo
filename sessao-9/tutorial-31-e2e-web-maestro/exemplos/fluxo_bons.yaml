@@ -1,28 +1,84 @@
-# Fluxo robusto — entra no saucedemo, adiciona dois produtos e confirma que
-# ambos entraram no carrinho, verificando o estado da tela (não só os cliques).
+# Fluxo robusto de compra ponta a ponta no saucedemo, exercitando os recursos
+# apresentados no guia deste tutorial: subflow de login parametrizado (runFlow +
+# env), seletores estáveis, espera por condição (extendedWaitUntil), condicional
+# (when), rolagem até o elemento (scrollUntilVisible), asserção de estado derivado
+# e o checkout completo, terminando com logout.
 # Executar: maestro test fluxo_bons.yaml
 url: "https://www.saucedemo.com"   # alvo web: Maestro estável 2.x usa url: (não appId:)
 ---
-# Login reaproveitado como subflow parametrizado, em vez de copiado aqui.
+# 1. Login reaproveitado como subflow parametrizado, em vez de copiado aqui.
 - runFlow:
     file: login.yaml
     env:
       USUARIO: standard_user
 
-# Primeiro produto, por id estável.
-- tapOn:
-    id: "add-to-cart-sauce-labs-backpack"
+# 2. Espera explícita, com limite próprio, até o catálogo carregar.
+- extendedWaitUntil:
+    visible:
+      id: "inventory_container"
+    timeout: 10000
+
+# 3. Primeiro produto — só adiciona se ainda não estiver no carrinho.
+#    O when torna o passo idempotente: rodar o fluxo duas vezes não quebra.
+- runFlow:
+    when:
+      notVisible:
+        id: "remove-sauce-labs-backpack"
+    commands:
+      - tapOn:
+          id: "add-to-cart-sauce-labs-backpack"
 # Estado derivado: o botão "Add to cart" vira "Remove" quando o item entra.
-# Verificar essa troca prova que a ação teve efeito, e não apenas que houve um toque.
 - assertVisible:
     id: "remove-sauce-labs-backpack"
 
-# O segundo produto está mais abaixo na lista: role até ele antes de tocar.
+# 4. Segundo produto, mais abaixo na lista: rola até ele antes de tocar.
 - scrollUntilVisible:
     element:
-      id: "add-to-cart-sauce-labs-bike-light"
+      id: "add-to-cart-sauce-labs-onesie"
     direction: DOWN
 - tapOn:
-    id: "add-to-cart-sauce-labs-bike-light"
+    id: "add-to-cart-sauce-labs-onesie"
 - assertVisible:
-    id: "remove-sauce-labs-bike-light"
+    id: "remove-sauce-labs-onesie"
+
+# 6. Abre o carrinho e confirma os dois itens pelo nome — o estado derivado
+#    mais forte: os itens que os cliques deveriam ter colocado ali de fato estão.
+- tapOn:
+    id: "shopping_cart_container"
+- assertVisible: "Sauce Labs Backpack"
+- assertVisible: "Sauce Labs Onesie"
+
+# 7. Checkout: formulário de dados, revisão e finalização.
+- tapOn:
+    id: "checkout"
+- tapOn:
+    id: "first-name"
+- inputText: "Ana"
+- tapOn:
+    id: "last-name"
+- inputText: "Souza"
+- tapOn:
+    id: "postal-code"
+- inputText: "31000-000"
+- tapOn:
+    id: "continue"
+# Confirma que a etapa de revisão foi alcançada: o botão "Finish" só existe nela.
+- assertVisible:
+    id: "finish"
+- tapOn:
+    id: "finish"
+
+# 8. Confirmação final e volta ao catálogo.
+- assertVisible: "Thank you for your order!"
+- tapOn:
+    id: "back-to-products"
+- assertVisible:
+    id: "inventory_container"
+
+# 9. Encerra a sessão pelo menu lateral (deixa o estado limpo para a próxima).
+- tapOn:
+    id: "react-burger-menu-btn"
+- tapOn:
+    id: "logout_sidebar_link"
+- assertVisible:
+    id: "login-button"
