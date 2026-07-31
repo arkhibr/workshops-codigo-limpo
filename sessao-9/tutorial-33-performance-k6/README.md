@@ -161,7 +161,7 @@ Os testes do K6 são escritos em **JavaScript**, e essa é a linguagem nativa da
 
 > **Nota:** o K6 roda os scripts num runtime JavaScript próprio (o goja, embarcado no binário Go da ferramenta), e não no Node. Na prática isso significa que módulos de Node (`fs`, `path`, pacotes de `npm`) não estão disponíveis — só a API que o K6 expõe, como `k6/http` e `k6`. O `import http from 'k6/http'` no topo do script é dessa API, não de um pacote instalado.
 
-**Instalar o k6** (exemplos; veja a documentação para o seu sistema):
+**Instalar o k6** — a **versão estável** (linha 2.x); a API de script usada aqui (`stages`, `thresholds`, `check`, `k6/http`) é estável entre versões:
 
 ```bash
 brew install k6                      # macOS
@@ -182,7 +182,7 @@ k6 run sessao-9/tutorial-33-performance-k6/exemplos/teste_bons.js
 
 Ao final, o K6 imprime um resumo com as métricas coletadas e o resultado de cada threshold, marcado com um sinal de aprovado ou reprovado. Quando um threshold é reprovado, o comando encerra com código diferente de zero, e é assim que ele integra a um pipeline: o job de performance falha por conta própria, sem ninguém precisar ler o relatório para decidir.
 
-> **Nota:** o k6 não está instalado neste ambiente de workshop; os scripts aqui foram verificados quanto à sintaxe JavaScript, não executados contra o alvo.
+> **Nota:** o workshop pressupõe que **você** instale o k6 (a versão estável, linha 2.x) e suba o alvo local para rodar os scripts — é assim que se mede carga. Durante a escrita deste material, os scripts foram conferidos quanto à sintaxe JavaScript, não executados contra o alvo; como a API usada é estável entre versões, o que vale é o relatório que o k6 imprimir quando você rodar.
 
 ---
 

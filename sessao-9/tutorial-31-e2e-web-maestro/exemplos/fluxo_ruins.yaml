@@ -1,7 +1,7 @@
 # Fluxo frágil — mesmo objetivo de fluxo_bons.yaml (entrar e adicionar dois
 # produtos no saucedemo), com os anti-padrões mais comuns em E2E web.
 # Executar: maestro test fluxo_ruins.yaml
-appId: "https://www.saucedemo.com"
+url: "https://www.saucedemo.com"   # alvo web: Maestro estável 2.x usa url: (não appId:)
 ---
 - launchApp
 

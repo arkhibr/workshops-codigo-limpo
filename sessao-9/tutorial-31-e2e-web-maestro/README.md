@@ -41,12 +41,12 @@ O Tutorial 32 leva a mesma ferramenta ao mobile; o 33 fecha a Sessão 9 com o K6
 
 ### (a) O flow e o seletor
 
-Um **flow** é a unidade de trabalho do Maestro: um arquivo YAML que descreve, passo a passo, o que uma pessoa faria na aplicação — abrir a tela, tocar em um botão, digitar, verificar que algo apareceu. O arquivo tem duas partes separadas pela marcação `---`: um cabeçalho, com o campo `appId` (o identificador do app mobile ou, no caso web, a URL a abrir), e a lista de comandos, executados de cima para baixo.
+Um **flow** é a unidade de trabalho do Maestro: um arquivo YAML que descreve, passo a passo, o que uma pessoa faria na aplicação — abrir a tela, tocar em um botão, digitar, verificar que algo apareceu. O arquivo tem duas partes separadas pela marcação `---`: um cabeçalho, com o campo que identifica o alvo — `url:` para uma aplicação web (a página a abrir) ou `appId:` para um app mobile (o identificador do pacote) —, e a lista de comandos, executados de cima para baixo.
 
 ```mermaid
 flowchart TB
     subgraph flow["um arquivo .yaml"]
-      H["cabeçalho<br/>appId, env"]
+      H["cabeçalho<br/>url, env"]
       SEP["---"]
       CMD["lista de comandos<br/>(de cima para baixo)"]
       H --> SEP --> CMD
@@ -105,7 +105,7 @@ O `login.yaml` não é um teste completo; é um pedaço reutilizável. Ele carre
 
 ```yaml
 # exemplos/login.yaml — o subflow de login, invocado por runFlow
-appId: "https://www.saucedemo.com"
+url: "https://www.saucedemo.com"   # alvo web (Maestro 2.x)
 env:
   USUARIO: standard_user
 ---
@@ -275,7 +275,7 @@ sudo apt update && sudo apt install openjdk-17-jdk
 
 ### (b) Instalar o Maestro
 
-Escolha o bloco do seu sistema.
+Instale a **versão estável** mais recente do Maestro (a linha 2.x) — é a que os fluxos deste tutorial seguem, em especial o alvo web declarado com `url:`. Escolha o bloco do seu sistema.
 
 **macOS** — via script oficial, ou via Homebrew:
 
@@ -330,7 +330,7 @@ maestro test sessao-9/tutorial-31-e2e-web-maestro/exemplos/fluxo_bons.yaml
 
 Na **primeira** execução, o Maestro baixa sozinho uma versão gerenciada do **Chromium** — você não instala navegador nem driver à mão. Isso leva alguns segundos só na primeira vez; nas seguintes, ele abre na hora. Uma janela do Chromium surge, e você vê o Maestro digitar o login, tocar nos produtos e rolar a página, sozinho.
 
-> **Atenção (sintaxe web):** nas versões atuais do Maestro, um fluxo web declara o alvo com o campo `url:` (por exemplo, `url: "https://www.saucedemo.com"`). Os arquivos deste tutorial usam `appId:` com a URL, sintaxe que versões mais antigas aceitavam para web. Se o seu Maestro reclamar do `appId` num fluxo web, troque-o por `url:` — o resto do fluxo continua igual. É a mesma razão pela qual o suporte web ainda é Beta: a sintaxe varia entre versões.
+> **Nota (versão e sintaxe web):** os fluxos deste tutorial foram escritos para a versão **estável** do Maestro — a linha 2.x (2.8 no momento da escrita). Nessa versão, um fluxo web declara o alvo com o campo `url:`, e é o que os `.yaml` de `exemplos/` e `exercicios/` usam. Versões anteriores à 2.x usavam `appId:` com a URL para web; se você instalar uma dessas, troque `url:` por `appId:` no cabeçalho. Como o suporte web ainda é Beta, instalar a versão estável mais recente é o caminho mais seguro.
 
 ### (d) Ler a saída: como é um fluxo que passa e um que falha
 
@@ -375,7 +375,7 @@ maestro studio
 
 > **Dica:** o `studio` é a forma prática de achar o `id` ou o texto de um elemento em vez de recorrer a coordenadas. Alguns elementos do saucedemo têm `id` estável (os campos de login, os botões de "adicionar", os campos do checkout); outros, como o link do carrinho, convém confirmar com o `studio` no seu ambiente antes de fixar o seletor.
 
-> **Nota:** o Maestro não está instalado no ambiente deste workshop; os fluxos aqui foram verificados por validação estrutural do YAML e uso de seletores reais do saucedemo, não por execução contra o navegador. As saídas mostradas em (d) são representativas do que você verá ao rodar na sua máquina.
+> **Nota:** o workshop pressupõe que **você** instale o Maestro (a versão estável) e rode os fluxos na sua máquina — é assim que se pratica E2E. Durante a escrita deste material, os fluxos foram conferidos por validação estrutural do YAML e por seletores reais do saucedemo, não executados contra o navegador; por isso as saídas de (d) mostram o formato, e o que vale é o resultado que aparecer quando você rodar.
 
 ---
 

@@ -16,7 +16,7 @@
 #      e "Finish" (id: finish).
 #   4. Confirme o resultado com uma assertion do texto "Thank you for your order!".
 # Descubra o seletor do link do carrinho com `maestro studio`. Compare com gabarito.yaml.
-appId: "https://www.saucedemo.com"
+url: "https://www.saucedemo.com"   # alvo web: Maestro estável 2.x usa url: (não appId:)
 ---
 - launchApp
 

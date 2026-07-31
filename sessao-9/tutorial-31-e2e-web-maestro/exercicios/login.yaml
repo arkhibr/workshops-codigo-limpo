@@ -4,7 +4,7 @@
 # porque o gabarito.yaml o chama com `runFlow: file: login.yaml`, e o caminho
 # é resolvido a partir da pasta do fluxo que chama — então o subflow precisa
 # existir dentro de exercicios/.
-appId: "https://www.saucedemo.com"
+url: "https://www.saucedemo.com"   # alvo web: Maestro estável 2.x usa url: (não appId:)
 env:
   USUARIO: standard_user
 ---

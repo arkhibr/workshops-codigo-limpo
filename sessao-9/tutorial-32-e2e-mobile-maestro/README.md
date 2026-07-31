@@ -174,7 +174,7 @@ Como no Tutorial 31, os flows são escritos em **YAML**, a linguagem nativa da f
 
 **Pré-requisitos para executar os flows:**
 
-- O Maestro instalado (`curl -Ls "https://get.maestro.mobile.dev" | bash`).
+- O Maestro instalado, na **versão estável** (linha 2.x) — o passo a passo por sistema operacional (macOS, Linux e Windows) está no [Tutorial 31, seção 3](../tutorial-31-e2e-web-maestro/README.md#3-ferramentas-modernas-por-linguagem). Em resumo: `curl -fsSL "https://get.maestro.mobile.dev" | bash` no macOS/Linux, ou o `maestro.zip` nativo no Windows. O pré-requisito comum é o Java 17+.
 - Um emulador Android ou simulador iOS em execução.
 - O **Sauce Labs My Demo App** instalado nesse emulador. O binário (`.apk` para Android, `.app`/`.ipa` para iOS) está disponível no repositório público da Sauce Labs no GitHub (`saucelabs/my-demo-app-rn`, na seção de releases). Instale-o no emulador antes de rodar os flows.
 
@@ -192,7 +192,7 @@ maestro studio
 
 > **Dica:** o `maestro studio` é indispensável no mobile, mais até que na web. Os identificadores de acessibilidade de um app React Native variam por versão e por plataforma, então os seletores usados nestes flows (`Username input field`, `Add To Cart`, `Remove Item`, etc.) devem ser conferidos com o `studio` no seu ambiente antes de fixá-los. Abra o app no emulador, rode o `studio` e clique nos elementos para ver os seletores que cada um aceita naquele aparelho.
 
-> **Nota:** o Maestro não está instalado no ambiente do workshop; os flows aqui foram verificados por validação estrutural do YAML e comandos reais da ferramenta, não por execução contra um emulador.
+> **Nota:** o workshop pressupõe que **você** instale o Maestro (a versão estável, linha 2.x), suba um emulador ou simulador com o app-alvo e rode os flows na sua máquina — é assim que se pratica E2E mobile. Durante a escrita deste material, os flows foram conferidos por validação estrutural do YAML e comandos reais da ferramenta, não executados contra um emulador; o que vale é o resultado quando você rodar. Diferente do alvo web (que usa `url:`), um app mobile é identificado por `appId:` — aqui, `com.saucelabs.mydemoapp.rn`.
 
 ---
 

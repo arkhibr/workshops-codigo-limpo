@@ -5,7 +5,7 @@
 # usuário por parâmetro (env); a senha é sempre "secret_sauce" no ambiente de
 # demonstração. O valor de USUARIO abaixo é apenas o padrão — quem chama pode
 # sobrescrevê-lo.
-appId: "https://www.saucedemo.com"
+url: "https://www.saucedemo.com"   # alvo web: Maestro estável 2.x usa url: (não appId:)
 env:
   USUARIO: standard_user
 ---
