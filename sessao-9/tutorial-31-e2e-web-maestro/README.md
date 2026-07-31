@@ -6,11 +6,34 @@
 
 A Sessão 7 apresentou a pirâmide de testes e colocou o teste end-to-end no topo: poucos, lentos, caros, e ainda assim insubstituíveis para uma pergunta que nenhum teste de unidade ou de integração responde sozinho — a pessoa que usa o produto consegue, de fato, percorrer o fluxo até o fim pela interface real?
 
-Um teste de unidade chama uma função e confere o retorno. Um teste de integração, como os da Sessão 8, envia uma requisição HTTP e examina a resposta. Ambos verificam o sistema por dentro, a partir do código ou do contrato de API. Nenhum dos dois abre uma página no navegador, faz login, adiciona um item ao carrinho e confirma o que aparece na tela. É esse último passo que separa "o back-end calcula o total corretamente" de "o cliente consegue comprar".
+Cada andar da pirâmide verifica o sistema por um ângulo diferente, e é útil ver os três lado a lado antes de subir ao topo:
+
+```mermaid
+flowchart TB
+    E["E2E — pela interface real<br/>(navegador, app)<br/>poucos, lentos, caros"]
+    I["Integração — pela API/contrato<br/>(HTTP, banco)<br/>Sessão 8"]
+    U["Unidade — pela função<br/>(chamada direta)<br/>Sessão 7 — muitos, rápidos"]
+    E --- I --- U
+```
+
+Um teste de unidade chama uma função e confere o retorno. Um teste de integração, como os da Sessão 8, envia uma requisição HTTP e examina a resposta. Ambos verificam o sistema por dentro, a partir do código ou do contrato de API. Nenhum dos dois abre uma página no navegador, faz login, adiciona um item ao carrinho e confirma o que aparece na tela. É esse último passo que separa "o backend calcula o total corretamente" de "o cliente consegue comprar".
 
 O teste end-to-end percorre esse caminho pela interface, sem atalho para dentro do código, e por isso encontra uma categoria de defeito que os andares de baixo não alcançam: o botão que existe no HTML mas não dispara o evento certo, o texto que o JavaScript esquece de atualizar, o elemento que carrega tarde demais, a tela que só aparece depois do login.
 
-Este tutorial usa o **Maestro**, uma ferramenta que descreve o teste como um arquivo YAML declarativo em vez de código imperativo, e o aplica a uma aplicação real: o **[saucedemo.com](https://www.saucedemo.com)**, a loja de demonstração da Sauce Labs, feita justamente para praticar automação. Ela tem o que uma aplicação de verdade tem e um exemplo de brinquedo não tem — login obrigatório, um catálogo com vários produtos e rolagem, um carrinho que guarda estado, e um checkout de várias etapas com formulário. São esses elementos que exigem os recursos do Maestro que este tutorial cobre. O Tutorial 32 leva a mesma ferramenta ao mobile; o 33 fecha a Sessão 9 com o K6, medindo carga em vez de interface.
+Este tutorial usa o **Maestro**, uma ferramenta que descreve o teste como um arquivo YAML declarativo em vez de código imperativo, e o aplica a uma aplicação real: o **[saucedemo.com](https://www.saucedemo.com)**, a loja de demonstração da Sauce Labs, feita justamente para praticar automação. Ela tem o que uma aplicação de verdade tem e um exemplo de brinquedo não tem — login obrigatório, um catálogo com vários produtos e rolagem, um carrinho que guarda estado, e um checkout de várias etapas com formulário. São esses elementos que exigem os recursos do Maestro que este tutorial cobre.
+
+O fluxo de compra que os exemplos exercitam passa por estas etapas, cada uma cobrindo um recurso da ferramenta:
+
+```mermaid
+flowchart LR
+    L["Login<br/>(runFlow + env)"] --> C["Catálogo<br/>(scrollUntilVisible)"]
+    C --> A["Adicionar<br/>(tapOn + assertVisible)"]
+    A --> K["Carrinho<br/>(estado derivado)"]
+    K --> O["Checkout<br/>(formulário)"]
+    O --> F["Confirmação<br/>(assertVisible do texto)"]
+```
+
+O Tutorial 32 leva a mesma ferramenta ao mobile; o 33 fecha a Sessão 9 com o K6, medindo carga em vez de interface.
 
 ---
 
@@ -19,6 +42,16 @@ Este tutorial usa o **Maestro**, uma ferramenta que descreve o teste como um arq
 ### (a) O flow e o seletor
 
 Um **flow** é a unidade de trabalho do Maestro: um arquivo YAML que descreve, passo a passo, o que uma pessoa faria na aplicação — abrir a tela, tocar em um botão, digitar, verificar que algo apareceu. O arquivo tem duas partes separadas pela marcação `---`: um cabeçalho, com o campo `appId` (o identificador do app mobile ou, no caso web, a URL a abrir), e a lista de comandos, executados de cima para baixo.
+
+```mermaid
+flowchart TB
+    subgraph flow["um arquivo .yaml"]
+      H["cabeçalho<br/>appId, env"]
+      SEP["---"]
+      CMD["lista de comandos<br/>(de cima para baixo)"]
+      H --> SEP --> CMD
+    end
+```
 
 Para agir sobre um elemento, o Maestro precisa apontar para ele. Essa forma de apontar chama-se **seletor**, e a escolha do seletor decide se o fluxo é estável. Um seletor **estável** identifica o elemento por algo que descreve o que ele é e não muda com o layout — um `id`, um texto visível, uma propriedade de acessibilidade. Um seletor **frágil** identifica pela posição na tela, como a coordenada `point: "90%, 45%"`, que só acerta o alvo na resolução exata em que alguém a mediu.
 
@@ -32,7 +65,7 @@ Para agir sobre um elemento, o Maestro precisa apontar para ele. Essa forma de a
     id: "add-to-cart-sauce-labs-backpack"
 ```
 
-O flow frágil não fica lento nem acusa erro: ele simplesmente clica no lugar errado e segue relatando sucesso. Por isso o seletor estável é a primeira decisão de um teste confiável.
+> **Atenção:** o seletor por coordenada é perigoso porque ele **não falha**. Um `id` errado quebra o fluxo na hora e você conserta. Uma coordenada que aponta para o lugar errado clica no vazio, ou pior, no botão vizinho, e o fluxo segue relatando sucesso. Um teste que passa clicando no lugar errado é pior que um teste que falha: ele dá confiança falsa. Por isso o seletor estável é a primeira decisão de um teste confiável.
 
 ### (b) Assertion em vez de espera fixa
 
@@ -46,11 +79,21 @@ Uma **assertion** resolve o mesmo problema esperando pela condição, não pelo 
     id: "inventory_container"
 ```
 
+> **Dica:** pense na `assertVisible` como uma espera que também é um checkpoint. Ela não gasta o tempo-limite inteiro toda vez — sai no instante em que o elemento aparece. O `timeout` é só o teto, para o caso de o elemento nunca vir. Uma suíte cheia de `assertVisible` roda tão rápido quanto o app permite; uma suíte cheia de `sleep` roda na velocidade do maior chute que alguém deu.
+
 ### (c) Reaproveitar um fluxo: o subflow de login (`runFlow`)
 
 Num app real, quase todo fluxo começa pela mesma coisa: o login. Copiar a sequência de login em cada arquivo de teste cria o mesmo problema que a duplicação cria em qualquer código — no dia em que a tela de login mudar, será preciso corrigir arquivo por arquivo, e uma das cópias vai ficar para trás.
 
 O Maestro resolve isso com o comando `runFlow`, que executa outro arquivo de fluxo como um trecho do fluxo atual. A sequência de login vive em um único lugar — o [`exemplos/login.yaml`](exemplos/login.yaml) — e cada teste a invoca:
+
+```mermaid
+flowchart LR
+    F1["fluxo_bons.yaml"] -->|runFlow| L["login.yaml"]
+    F2["fluxo de checkout"] -->|runFlow| L
+    F3["fluxo de erro"] -->|runFlow| L
+    L -.->|"muda em 1 lugar"| L
+```
 
 ```yaml
 # Em vez de repetir os passos de login, chama o subflow que os contém
@@ -58,7 +101,29 @@ O Maestro resolve isso com o comando `runFlow`, que executa outro arquivo de flu
     file: login.yaml
 ```
 
-O `login.yaml` não é um teste completo; é um pedaço reutilizável. Quando a tela de login mudar, corrige-se um arquivo, e todos os fluxos que o chamam continuam corretos.
+O `login.yaml` não é um teste completo; é um pedaço reutilizável. Ele carrega a sequência inteira — abrir o app, preencher usuário e senha, tocar em entrar, confirmar que chegou ao catálogo:
+
+```yaml
+# exemplos/login.yaml — o subflow de login, invocado por runFlow
+appId: "https://www.saucedemo.com"
+env:
+  USUARIO: standard_user
+---
+- launchApp:
+    clearState: true
+- tapOn:
+    id: "user-name"
+- inputText: "${USUARIO}"
+- tapOn:
+    id: "password"
+- inputText: "secret_sauce"
+- tapOn:
+    id: "login-button"
+- assertVisible:
+    id: "inventory_container"  # confirma que o login levou ao catálogo
+```
+
+Quando a tela de login mudar, corrige-se esse arquivo, e todos os fluxos que o chamam continuam corretos.
 
 ### (d) Parametrizar um fluxo (`env`)
 
@@ -95,7 +160,7 @@ Nem tudo aparece sempre. Um banner de cookies surge só na primeira visita; um a
       - tapOn: "Aceitar cookies"
 ```
 
-O `when` aceita `visible` e `notVisible`. Ele torna o fluxo robusto a variações de estado que não são o objeto do teste, sem transformar cada uma delas em uma falha.
+O `when` aceita `visible` e `notVisible`. Ele protege o fluxo de variações de estado que não são o objeto do teste — um banner que às vezes aparece —, sem transformar cada uma delas em uma falha.
 
 ### (f) Alcançar o que está fora da tela (`scrollUntilVisible`)
 
@@ -129,14 +194,25 @@ A diferença para a espera fixa continua valendo: `extendedWaitUntil` espera *pe
 
 O erro mais comum em E2E é confirmar que a ação foi executada — o toque aconteceu — sem confirmar que ela teve efeito. Um fluxo que toca em "adicionar ao carrinho" e segue em frente passa mesmo que o item nunca tenha entrado no carrinho.
 
-A verificação que dá confiança olha o **estado derivado** da ação. No saucedemo, quando um produto entra no carrinho, o botão "Add to cart" daquele item vira "Remove". Verificar essa troca prova que a ação surtiu efeito:
+A verificação que dá confiança olha o **estado derivado** da ação. No saucedemo, quando um produto entra no carrinho, o botão "Add to cart" daquele item vira "Remove". Verificar essa troca prova que a ação surtiu efeito. O [`exemplos/fluxo_bons.yaml`](exemplos/fluxo_bons.yaml) aplica isso a cada produto que adiciona:
 
 ```yaml
+# Primeiro produto, por id estável
 - tapOn:
     id: "add-to-cart-sauce-labs-backpack"
 # Estado derivado: o botão trocou de "Add to cart" para "Remove"
 - assertVisible:
     id: "remove-sauce-labs-backpack"
+
+# Segundo produto, mais abaixo na lista: role até ele antes de tocar
+- scrollUntilVisible:
+    element:
+      id: "add-to-cart-sauce-labs-bike-light"
+    direction: DOWN
+- tapOn:
+    id: "add-to-cart-sauce-labs-bike-light"
+- assertVisible:
+    id: "remove-sauce-labs-bike-light"
 ```
 
 O mesmo raciocínio vale para o contador do carrinho, que passa a exibir o número de itens, ou para o total na tela de checkout. É a mesma lição da Sessão 8, onde um teste de integração conferia o corpo da resposta, e não só o código de status: verificar o resultado, não o gesto.
@@ -151,6 +227,20 @@ Um bom fluxo produz o mesmo resultado toda vez que roda, quantas vezes já tenha
 ```
 
 Com o estado reiniciado no início, o fluxo é repetível e pode rodar em paralelo com outros sem que um interfira no outro.
+
+### (j) Referência rápida dos comandos
+
+Os comandos que aparecem nos fluxos deste tutorial, e quando cada um entra:
+
+| Comando | Para que serve | Quando usar |
+|---|---|---|
+| `launchApp` | abre o alvo (com `clearState`) | início do fluxo, no subflow de login |
+| `tapOn` | toca num elemento | agir sobre botão, campo, link |
+| `inputText` | digita num campo | preencher usuário, senha, formulário |
+| `assertVisible` | espera e verifica um elemento | confirmar estado derivado; esperar carregar |
+| `runFlow` | executa outro flow como trecho | reusar o login; condicionar com `when` |
+| `scrollUntilVisible` | rola até o elemento aparecer | alcançar item fora da viewport |
+| `extendedWaitUntil` | espera longa por uma condição | conteúdo que demora mais que o padrão |
 
 ---
 
@@ -176,7 +266,9 @@ maestro test sessao-9/tutorial-31-e2e-web-maestro/exemplos/fluxo_bons.yaml
 maestro studio
 ```
 
-O `maestro studio` é a forma prática de encontrar o `id` ou o texto de um elemento em vez de recorrer a coordenadas. Alguns elementos do saucedemo têm `id` estável (os campos de login, os botões de "adicionar", os campos do checkout); outros, como o link do carrinho, convém confirmar com o `studio` no seu ambiente antes de fixar o seletor. Duas observações sobre este tutorial: o suporte do Maestro a web é mais recente que o de Android e iOS, e a sintaxe de alguns comandos pode variar entre versões — vale conferir em maestro.mobile.dev. E o Maestro não está instalado no ambiente do workshop; os fluxos aqui foram verificados por validação estrutural do YAML e uso de seletores reais do saucedemo, não por execução contra o navegador.
+> **Dica:** o `maestro studio` é a forma prática de encontrar o `id` ou o texto de um elemento em vez de recorrer a coordenadas. Você abre a tela no navegador controlado pelo Maestro, clica num elemento e ele mostra os seletores que aquele elemento aceita. Alguns elementos do saucedemo têm `id` estável (os campos de login, os botões de "adicionar", os campos do checkout); outros, como o link do carrinho, convém confirmar com o `studio` no seu ambiente antes de fixar o seletor.
+
+> **Nota:** duas ressalvas sobre este tutorial. O suporte do Maestro a web é mais recente que o de Android e iOS, e a sintaxe de alguns comandos pode variar entre versões — vale conferir em maestro.mobile.dev. E o Maestro não está instalado no ambiente do workshop; os fluxos aqui foram verificados por validação estrutural do YAML e uso de seletores reais do saucedemo, não por execução contra o navegador.
 
 ---
 
@@ -196,6 +288,8 @@ O arquivo [`exercicios/exercicio.yaml`](exercicios/exercicio.yaml) começa um fl
 # Validar a estrutura YAML (não substitui rodar com o Maestro instalado)
 python3 -c "import yaml; list(yaml.safe_load_all(open('sessao-9/tutorial-31-e2e-web-maestro/exercicios/gabarito.yaml')))"
 ```
+
+> **Dica:** ao chegar ao checkout, resista a confirmar só que a tela final apareceu. A assertion de `Thank you for your order!` prova que a compra fechou, mas o passo anterior — o total na tela de resumo — é onde um bug de cálculo apareceria. Verificar o resultado intermediário, e não só a tela de sucesso, é a mesma disciplina da seção (h).
 
 ---
 

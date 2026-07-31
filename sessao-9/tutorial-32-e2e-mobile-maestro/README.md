@@ -8,7 +8,18 @@ O Tutorial 31 usou o Maestro contra uma aplicação web real e, no caminho, apre
 
 O alvo aqui é o **Sauce Labs My Demo App**, o equivalente mobile do saucedemo: um aplicativo React Native de loja, com login, catálogo, carrinho e checkout, publicado pela Sauce Labs justamente para praticar automação. O `appId` dele é `com.saucelabs.mydemoapp.rn`. Ao contrário do alvo web, um app mobile não roda "na internet": ele precisa estar instalado em um emulador Android ou simulador iOS. Este tutorial não empacota o app — construir e distribuir um binário está fora do escopo —, mas os flows são escritos contra esse app real e conhecido, e a seção 3 explica como obtê-lo.
 
-O que o mobile acrescenta, além dos recursos já vistos: o app mantém estado entre aberturas (a sessão de quem logou continua ativa), pede permissões do sistema operacional por cima da interface, exige gestos como rolar e deslizar, tem o botão "voltar" físico do Android e um teclado virtual que cobre parte da tela. Cada um desses pontos é uma fonte de instabilidade que o flow precisa tratar de propósito.
+O que o mobile acrescenta são cinco fontes de instabilidade que a web não tem, e cada uma exige um cuidado próprio no flow:
+
+```mermaid
+flowchart TB
+    M["app mobile"] --> E1["estado entre aberturas<br/>→ clearState"]
+    M --> E2["permissões do SO<br/>→ permissions / when"]
+    M --> E3["teclado virtual cobre a tela<br/>→ hideKeyboard"]
+    M --> E4["botão voltar do Android<br/>→ back"]
+    M --> E5["gestos (rolar, deslizar)<br/>→ scroll / swipe"]
+```
+
+Uma página web recarrega do zero a cada abertura e não pede permissão de câmera nem tem botão físico de voltar. O app, sim — e cada um desses pontos é uma fonte de falha que o flow precisa tratar de propósito.
 
 ---
 
@@ -29,11 +40,13 @@ A solução é reiniciar o estado no início. O `launchApp` aceita `clearState`,
     clearState: true
 ```
 
-Existe também `stopApp`, que encerra o processo sem apagar os dados — útil para simular o usuário fechando e reabrindo o app no meio de um cenário. `clearState` zera os dados; `stopApp` só encerra.
+Existe também `stopApp`, que encerra o processo sem apagar os dados — útil para simular o usuário fechando e reabrindo o app no meio de um cenário.
+
+> **Nota:** `clearState` e `stopApp` são fáceis de confundir, e a diferença importa. `clearState` **apaga os dados** (você volta à instalação limpa: deslogado, carrinho vazio). `stopApp` **só encerra o processo** e o mantém desligado até o próximo `launchApp` — os dados continuam lá. Use `clearState` para garantir um ponto de partida limpo; use `stopApp` quando o cenário é justamente "o usuário fechou o app e voltou", e você quer que a sessão anterior continue.
 
 ### (b) O login reutilizável, no mobile (`runFlow` + `env`)
 
-O raciocínio do Tutorial 31 vale igual aqui: como quase todo fluxo começa pelo login, ele vive em um subflow — o [`exemplos/login.yaml`](exemplos/login.yaml) — chamado com `runFlow`, e recebe o usuário por parâmetro com `env`. No mobile, esse subflow carrega também a sequência de abrir o menu e navegar até a tela de login, além do `hideKeyboard` (adiante). Concentrar isso em um arquivo evita repetir a navegação de login em cada teste:
+O raciocínio do Tutorial 31 vale igual aqui: como quase todo fluxo começa pelo login, ele vive em um subflow — o [`exemplos/login.yaml`](exemplos/login.yaml) — chamado com `runFlow`, e recebe o usuário por parâmetro com `env`:
 
 ```yaml
 - runFlow:
@@ -41,6 +54,32 @@ O raciocínio do Tutorial 31 vale igual aqui: como quase todo fluxo começa pelo
     env:
       USUARIO: "bob@example.com"
 ```
+
+A diferença em relação à web está no tamanho do subflow. No navegador, a tela de login já era a primeira coisa que aparecia. No app, é preciso navegar até ela primeiro — abrir o menu, escolher "Log In" — e ainda lidar com o teclado. Por isso o `login.yaml` mobile carrega mais passos:
+
+```yaml
+# exemplos/login.yaml — o subflow de login mobile, com navegação e teclado
+appId: com.saucelabs.mydemoapp.rn
+env:
+  USUARIO: "bob@example.com"
+---
+- launchApp:
+    clearState: true          # começa deslogado a cada execução
+- tapOn: "Open menu"
+- tapOn: "Log In"
+- tapOn:
+    id: "Username input field"
+- inputText: "${USUARIO}"
+- tapOn:
+    id: "Password input field"
+- inputText: "10203040"
+- hideKeyboard               # fecha o teclado antes de tocar no botão
+- tapOn:
+    id: "Login button"
+- assertVisible: "Products"   # confirma que o login levou ao catálogo
+```
+
+Concentrar essa navegação em um arquivo evita repeti-la em cada teste — e no dia em que o app mudar o caminho até o login, corrige-se um lugar só.
 
 ### (c) Permissões e telas de abertura: condicionais (`when`)
 
@@ -66,9 +105,11 @@ A segunda é a condicional `when`, para o que é opcional e não é uma permiss�
       - tapOn: "Pular introdução"
 ```
 
+> **Atenção:** a distinção entre os dois casos é prática. Permissão do sistema (o diálogo cinza do Android/iOS pedindo acesso a algo) resolve-se com `permissions` no `launchApp`, porque o `when` nem sempre alcança elementos desenhados pelo SO, e não pela sua interface. Tela da sua aplicação que aparece de vez em quando (boas-vindas, promoção, aviso) resolve-se com `when`. Trocar um pelo outro é uma causa comum de flow instável.
+
 ### (d) Gestos e listas: `scroll`, `swipe` e `scrollUntilVisible`
 
-Na web, quase tudo era tocar. No mobile, boa parte do conteúdo só aparece depois de rolar, e algumas ações se fazem por gesto. O `swipe` executa um deslize entre dois pontos (descartar um card, avançar um carrossel). Para alcançar um item numa lista longa, vale a mesma lição da espera: rolar uma quantidade fixa depende do tamanho do aparelho, então o certo é rolar *até a condição*, com `scrollUntilVisible`:
+Na web, quase tudo era tocar. No mobile, boa parte do conteúdo só aparece depois de rolar, e algumas ações se fazem por gesto. O `swipe` executa um deslize entre dois pontos (descartar um card, avançar um carrossel). Para alcançar um item numa lista longa, vale a mesma lição da espera: rolar uma quantidade fixa depende do tamanho do aparelho, então o certo é rolar *até a condição*, com `scrollUntilVisible`. O [`exemplos/fluxo_bons.yaml`](exemplos/fluxo_bons.yaml) usa isso para chegar ao produto:
 
 ```yaml
 # Rola a lista de produtos até o item aparecer, e só então para
@@ -90,11 +131,13 @@ A grade de produtos tem vários botões "Add To Cart" idênticos — um por prod
     index: 1
 ```
 
-O `index` resolve o empate, mas depende da ordem na tela; quando existe um seletor único (um `id` ou um nome de produto), ele é preferível. O `index` é o recurso para quando não há.
+> **Dica:** o `index` é o último recurso, não o primeiro. Ele depende da ordem na tela, então quebra quando a lista muda de ordem ou ganha um item novo no começo. Sempre que existir um seletor único — um `id`, ou o nome do produto — prefira-o. Deixe o `index` para o caso em que não há nada que distinga um elemento do outro além da posição.
 
 ### (f) O botão "voltar" e o teclado
 
 Duas particularidades aparecem o tempo todo. O botão "voltar" do Android é acionado pelo comando `back` — não tem equivalente no iOS nem na web, e muitos apps o usam para fechar telas. E o teclado virtual: ao usar `inputText` num campo, o teclado sobe e pode cobrir o botão do próximo passo. O `hideKeyboard` o fecha antes de seguir — é por isso que ele aparece no `login.yaml`, entre a senha e o botão de entrar.
+
+> **Atenção:** o teclado que não foi fechado é uma das falhas mais confusas de diagnosticar. O flow toca em `inputText`, o teclado sobe, e o `tapOn` seguinte tenta alcançar um botão que agora está coberto — o toque cai na tecla do teclado, não no botão. O fluxo falha com uma mensagem que não aponta para o teclado. A regra: depois de digitar, se o próximo passo é tocar em algo na parte de baixo da tela, feche o teclado com `hideKeyboard`.
 
 ### (g) Verificar estado, não cliques
 
@@ -108,6 +151,20 @@ Como na web, a verificação que dá confiança olha o efeito da ação, não o 
 ### (h) Diferenças entre iOS e Android
 
 O mesmo flow roda nas duas plataformas, mas nem tudo se comporta igual. O `back` existe no Android e não no iOS. Os diálogos de permissão têm textos e botões diferentes em cada sistema. A árvore de elementos — de onde saem os `id` e textos dos seletores — pode variar entre as duas, porque quem construiu o app pode ter nomeado as coisas de forma diferente. Um flow para ambos se apoia em seletores presentes nos dois, e o `maestro studio` (seção 3) mostra quais são em cada aparelho.
+
+### (i) Referência rápida: o que o mobile acrescenta
+
+Os comandos e recursos que aparecem só no mobile (ou pesam mais aqui que na web):
+
+| Comando / recurso | Para que serve | Cuidado |
+|---|---|---|
+| `launchApp: clearState` | zera os dados antes de abrir | sem ele, começa no estado que sobrou |
+| `stopApp` | encerra o processo, sem apagar dados | não confundir com `clearState` |
+| `permissions` | responde diálogos do SO no `launchApp` | para permissão do sistema, não use `when` |
+| `hideKeyboard` | fecha o teclado virtual | depois de `inputText`, antes de tocar embaixo |
+| `back` | botão voltar do Android | não existe no iOS |
+| `swipe` | deslize entre dois pontos | descartar card, avançar carrossel |
+| `tapOn: index` | desambigua elementos iguais | último recurso; depende da ordem |
 
 ---
 
@@ -133,7 +190,9 @@ maestro test sessao-9/tutorial-32-e2e-mobile-maestro/exemplos/fluxo_bons.yaml
 maestro studio
 ```
 
-O `maestro studio` mostra a árvore de elementos do app no emulador, com os seletores (accessibility id, texto) que cada elemento aceita. Ele é indispensável no mobile: os identificadores de acessibilidade de um app React Native variam por versão e por plataforma, então os seletores usados nestes flows (`Username input field`, `Add To Cart`, `Remove Item`, etc.) devem ser conferidos com o `studio` no seu ambiente antes de fixá-los. O Maestro não está instalado no ambiente do workshop; os flows aqui foram verificados por validação estrutural do YAML e comandos reais da ferramenta, não por execução contra um emulador.
+> **Dica:** o `maestro studio` é indispensável no mobile, mais até que na web. Os identificadores de acessibilidade de um app React Native variam por versão e por plataforma, então os seletores usados nestes flows (`Username input field`, `Add To Cart`, `Remove Item`, etc.) devem ser conferidos com o `studio` no seu ambiente antes de fixá-los. Abra o app no emulador, rode o `studio` e clique nos elementos para ver os seletores que cada um aceita naquele aparelho.
+
+> **Nota:** o Maestro não está instalado no ambiente do workshop; os flows aqui foram verificados por validação estrutural do YAML e comandos reais da ferramenta, não por execução contra um emulador.
 
 ---
 
@@ -152,6 +211,8 @@ O arquivo [`exercicios/exercicio.yaml`](exercicios/exercicio.yaml) começa mal u
 # Validar a estrutura YAML (não substitui rodar com o Maestro instalado)
 python3 -c "import yaml; list(yaml.safe_load_all(open('sessao-9/tutorial-32-e2e-mobile-maestro/exercicios/gabarito.yaml')))"
 ```
+
+> **Dica:** ao trocar a abertura pelo subflow de login, repare que o `clearState` já está lá dentro — não o repita no fluxo que chama. Um dos ganhos de concentrar o login no subflow é que o ponto de partida limpo vem junto, de graça, para todo flow que o invoca.
 
 ---
 

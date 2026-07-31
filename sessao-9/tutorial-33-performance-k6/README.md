@@ -8,23 +8,55 @@ Todos os testes deste workshop até agora responderam à mesma pergunta, em nív
 
 Essa pergunta não aparece nos outros andares da pirâmide, porque todos eles rodam com um usuário de cada vez. Uma API pode passar em todos os testes de integração e ainda assim ficar lenta, ou começar a devolver erros, quando mil pessoas fazem pedidos simultaneamente — o banco satura, um pool de conexões se esgota, a memória acaba. Nada disso se manifesta com uma requisição por vez. Só aparece sob carga, e é justamente a carga que um teste de performance aplica de propósito, para medir o que acontece.
 
-Há vários tipos de teste de performance, e eles se distinguem pelo formato da carga que aplicam. O **smoke test** usa uma carga mínima, só para confirmar que o teste e o alvo funcionam. O **load test** aplica a carga esperada em produção, para verificar o comportamento no dia a dia. O **stress test** empurra a carga acima do esperado, para descobrir onde o sistema quebra. O **soak test** mantém a carga por muito tempo, para revelar problemas que só surgem com horas de uso, como vazamento de memória. O **spike test** dispara um pico repentino, para ver como o sistema reage e se recupera. Este tutorial se concentra no load test, que é o ponto de partida mais útil, mas os conceitos valem para todos.
+Há vários tipos de teste de performance, e eles se distinguem pelo formato da carga que aplicam:
 
-A ferramenta é o **K6**, da Grafana. Os testes são escritos em JavaScript, e o alvo é uma API de pedidos mínima em [`exemplos/alvo/servidor.py`](exemplos/alvo/servidor.py), escrita com a biblioteca padrão do Python e com uma latência artificial de 20 ms por requisição, para que haja algo concreto para medir.
+| Tipo | Carga aplicada | Pergunta que responde |
+|---|---|---|
+| **Smoke** | mínima (1–2 usuários) | o teste e o alvo funcionam? |
+| **Load** | a esperada em produção | o comportamento no dia a dia é aceitável? |
+| **Stress** | acima do esperado | onde o sistema começa a quebrar? |
+| **Soak** | a esperada, por muito tempo | há vazamento que só surge com horas de uso? |
+| **Spike** | pico repentino | como o sistema reage e se recupera de um susto? |
+
+Este tutorial se concentra no **load test**, que é o ponto de partida mais útil, mas os conceitos valem para todos.
+
+A ferramenta é o **K6**, da Grafana. Os testes são escritos em JavaScript, e o alvo é uma API de pedidos mínima em [`exemplos/alvo/servidor.py`](exemplos/alvo/servidor.py), escrita com a biblioteca padrão do Python e com uma latência artificial de 20 ms por requisição, para que haja algo concreto para medir:
+
+```python
+# exemplos/alvo/servidor.py — a latência artificial dá ao teste o que medir
+def do_GET(self):
+    time.sleep(0.02)  # 20 ms de latência de propósito
+    if self.path == "/pedidos":
+        self._responder(200, _pedidos)
+```
+
+> **Nota:** o alvo é de brinquedo — um servidor de biblioteca padrão, com 20 ms fixos de atraso — porque o objeto do tutorial é o teste de carga, não o sistema testado. Contra uma API real, os mesmos scripts do K6 mediriam o comportamento de verdade: a latência que sobe quando o banco satura, os erros que aparecem quando o pool de conexões esgota. O `time.sleep(0.02)` só garante que o `p(95)` tenha um número diferente de zero para observar.
 
 ---
 
 ## 2. Conceito Central
 
-### Usuários virtuais e iterações
+### (a) Usuários virtuais e iterações
 
-O K6 aplica carga por meio de **usuários virtuais** (VUs, na sigla em inglês que a ferramenta usa): threads independentes que executam, cada uma, a função de teste em repetição. Dez usuários virtuais são dez cópias do fluxo rodando em paralelo, cada uma fazendo requisições uma após a outra. Cada volta completa da função é uma **iteração**. O número de usuários virtuais determina a intensidade da carga; o número de iterações que eles conseguem completar num intervalo determina a vazão que o alvo suportou.
+O K6 aplica carga por meio de **usuários virtuais**: threads independentes que executam, cada uma, a função de teste em repetição. Dez usuários virtuais são dez cópias do fluxo rodando em paralelo, cada uma fazendo requisições uma após a outra. Cada volta completa da função é uma **iteração**. O número de usuários virtuais determina a intensidade da carga; o número de iterações que eles conseguem completar num intervalo determina a vazão que o alvo suportou.
 
-### Ramp-up com stages: por que não disparar tudo de uma vez
+> **Nota:** o K6 chama os usuários virtuais de "VUs" (virtual users), e você verá essa sigla no relatório e na documentação. Não confunda usuário virtual com iteração: o usuário virtual é o *trabalhador* (uma thread que repete o fluxo); a iteração é uma *volta* que ele deu. Cinco usuários virtuais que dão vinte voltas cada produzem cem iterações. É a iteração que vira uma unidade de vazão; o usuário virtual é o que gera a pressão.
+
+### (b) Ramp-up com stages: por que não disparar tudo de uma vez
 
 A forma como a carga entra importa tanto quanto o seu tamanho. Subir de zero para cinquenta usuários instantaneamente não corresponde a nada que aconteça em produção, onde o tráfego cresce ao longo de minutos ou horas. Um pico seco na largada mede principalmente como o sistema reage ao susto, e não como ele se comporta no regime sustentado que interessa.
 
-Os **stages** descrevem a carga como uma sequência de rampas. Cada stage tem uma duração e um alvo de usuários virtuais, e o K6 interpola linearmente entre um e o próximo. Uma configuração típica de load test sobe a carga aos poucos (ramp-up), sustenta no nível desejado por um tempo, e desce de volta a zero (ramp-down):
+Os **stages** descrevem a carga como uma sequência de rampas. Cada stage tem uma duração e um alvo de usuários virtuais, e o K6 interpola linearmente entre um e o próximo. Uma configuração típica de load test sobe a carga aos poucos (ramp-up), sustenta no nível desejado por um tempo, e desce de volta a zero (ramp-down). A curva de carga do [`exemplos/teste_bons.js`](exemplos/teste_bons.js) tem esta forma — sobe em 10 s, sustenta 30 s, desce em 10 s:
+
+```mermaid
+xychart-beta
+    title "Carga em stages (usuários virtuais × tempo)"
+    x-axis "tempo (s)" [0, 10, 20, 30, 40, 50]
+    y-axis "usuários virtuais" 0 --> 12
+    line [0, 10, 10, 10, 10, 0]
+```
+
+Em YAML de opções, essa mesma curva são três stages:
 
 ```javascript
 export const options = {
@@ -36,7 +68,7 @@ export const options = {
 };
 ```
 
-### Thresholds: o SLO versionado junto do teste
+### (c) Thresholds: o SLO versionado junto do teste
 
 Um teste de carga que só gera tráfego produz números, mas não um veredito. É preciso definir o que conta como aprovado, e é isso que os **thresholds** fazem. Um threshold é uma condição sobre uma métrica que, se não for cumprida, faz o K6 encerrar com código de saída diferente de zero — o que reprova o job num pipeline de CI, do mesmo modo que um teste de unidade que falha.
 
@@ -49,7 +81,9 @@ thresholds: {
 },
 ```
 
-### Checks e thresholds: verificações diferentes
+> **Nota:** SLO é o objetivo de nível de serviço — a meta acordada de quão rápido e quão confiável o sistema deve ser ("95% em menos de 500 ms", "menos de 1% de erro"). O threshold é onde esse acordo deixa de viver num documento e passa a ser verificado por máquina, a cada mudança de código. Se ninguém escreveu o SLO como threshold, o teste de carga mede, mas não julga — e alguém precisa ler o relatório à mão para decidir se passou.
+
+### (d) Checks e thresholds: verificações diferentes
 
 `check` e `threshold` são fáceis de confundir, e fazem coisas distintas. Um **check** valida uma resposta individual — o status foi 200? o corpo é a lista esperada? — e registra a proporção de acertos. Um check que falha não reprova o teste sozinho; ele revela que, sob carga, a aplicação passou a responder errado, algo que a latência sozinha não mostraria.
 
@@ -60,17 +94,72 @@ check(res, {
 });
 ```
 
-Um **threshold**, por outro lado, é o critério de aprovação do teste como um todo, aplicado sobre uma métrica agregada. A relação prática entre os dois é útil: dá para promover a taxa de sucesso de um check a threshold, exigindo, por exemplo, que pelo menos 99% dos checks passem para o teste ser aprovado. O check observa cada resposta; o threshold decide se o conjunto passou.
+Um **threshold**, por outro lado, é o critério de aprovação do teste como um todo, aplicado sobre uma métrica agregada. A tabela resume a diferença:
 
-### As métricas que importam: percentis, não média
+| | `check` | `threshold` |
+|---|---|---|
+| Olha | uma resposta por vez | uma métrica agregada de todas |
+| Falhar sozinho reprova? | não (só registra a taxa) | sim (encerra com erro) |
+| Responde | a app respondeu certo? | o conjunto cumpriu o SLO? |
 
-O K6 coleta métricas automaticamente, e duas concentram a maior parte das decisões. `http_req_duration` mede o tempo de resposta, e o número a observar quase nunca é a média. A média esconde os piores casos: um sistema com média de 100 ms pode estar entregando 2 segundos para uma fração dos usuários, e são esses que reclamam. Por isso se olha o **percentil** — `p(95)` é o tempo abaixo do qual 95% das requisições responderam, e `p(99)` estende isso para 99%. A outra métrica é `http_req_failed`, a proporção de requisições que falharam, que responde à pergunta complementar: quanto do que o sistema entregou sob carga estava correto?
+> **Dica:** a relação prática entre os dois fecha o ciclo: dá para promover a taxa de sucesso de um check a threshold, exigindo, por exemplo, que pelo menos 99% dos checks passem para o teste ser aprovado (`checks: ['rate>0.99']`). Assim o check deixa de ser só um registro e vira também critério de reprovação — a app responder errado sob carga passa a derrubar o job, não só a aparecer no relatório.
+
+### (e) As métricas que importam: percentis, não média
+
+O K6 coleta métricas automaticamente, e duas concentram a maior parte das decisões:
+
+| Métrica | O que mede | O número a observar |
+|---|---|---|
+| `http_req_duration` | tempo de resposta | `p(95)`, `p(99)` — quase nunca a média |
+| `http_req_failed` | proporção de requisições que falharam | a taxa (`rate`) |
+
+`http_req_duration` mede o tempo de resposta, e o número a observar quase nunca é a média. A média esconde os piores casos: um sistema com média de 100 ms pode estar entregando 2 segundos para uma fração dos usuários, e são esses que reclamam. Por isso se olha o **percentil** — `p(95)` é o tempo abaixo do qual 95% das requisições responderam, e `p(99)` estende isso para 99%. A outra métrica é `http_req_failed`, a proporção de requisições que falharam, que responde à pergunta complementar: quanto do que o sistema entregou sob carga estava correto?
+
+> **Atenção:** a média é a métrica que engana. Imagine cem requisições: noventa e cinco respondem em 50 ms e cinco respondem em 3 segundos. A média dá ~200 ms, um número que parece saudável e não corresponde à experiência de ninguém — os cinco usuários lentos esperaram 3 segundos, e é deles que vem a reclamação. O `p(95)` mostra 50 ms; o `p(99)`, os 3 segundos. É por isso que um SLO se escreve em percentil, nunca em média.
+
+### (f) A anatomia de um script K6
+
+Um script K6 tem duas partes, e vale separá-las na cabeça. O bloco `options` descreve *a forma da carga e o critério de aprovação* — roda uma vez, no começo. A `default function` descreve *o que cada usuário virtual faz em cada iteração* — roda em repetição, por cada VU, do início ao fim do teste:
+
+```mermaid
+flowchart TB
+    subgraph script["teste_bons.js"]
+      O["options<br/>stages + thresholds<br/>(roda 1 vez, define a carga)"]
+      D["default function<br/>http.get → check → sleep<br/>(cada VU repete, a cada iteração)"]
+    end
+    O -.->|"controla quantos VUs<br/>e por quanto tempo"| D
+```
+
+O [`exemplos/teste_bons.js`](exemplos/teste_bons.js) inteiro cabe nessa divisão — `options` no topo, `default function` embaixo:
+
+```javascript
+import http from 'k6/http';
+import { check, sleep } from 'k6';
+
+export const options = {
+  stages: [ /* ramp-up, sustentado, ramp-down */ ],
+  thresholds: { /* o SLO como código */ },
+};
+
+export default function () {
+  const res = http.get('http://localhost:8000/pedidos');
+  check(res, {
+    'status é 200': (r) => r.status === 200,
+    'corpo é uma lista de pedidos': (r) => Array.isArray(r.json()),
+  });
+  sleep(1); // pausa entre iterações, aproximando o ritmo de um usuário real
+}
+```
+
+O `sleep(1)` no fim não é desperdício: ele aproxima o ritmo de um usuário real, que não dispara requisições sem pausa. Sem ele, cada usuário virtual martelaria o alvo tão rápido quanto a máquina permitisse, medindo a saturação do cliente em vez do comportamento realista sob carga.
 
 ---
 
 ## 3. Ferramentas Modernas por Linguagem
 
 Os testes do K6 são escritos em **JavaScript**, e essa é a linguagem nativa da ferramenta — o K6 executa os scripts em um runtime JavaScript próprio, não no Node. Não há uma versão desses testes em Python, PHP ou ADVPL/TLPP: como no Maestro dos tutoriais anteriores, a linguagem é da ferramenta, não uma escolha deste workshop. Por isso o tutorial não traz arquivos `equivalente.*`; o par bom/ruim vive nos dois arquivos `.js` de `exemplos/`.
+
+> **Nota:** o K6 roda os scripts num runtime JavaScript próprio (o goja, embarcado no binário Go da ferramenta), e não no Node. Na prática isso significa que módulos de Node (`fs`, `path`, pacotes de `npm`) não estão disponíveis — só a API que o K6 expõe, como `k6/http` e `k6`. O `import http from 'k6/http'` no topo do script é dessa API, não de um pacote instalado.
 
 **Instalar o k6** (exemplos; veja a documentação para o seu sistema):
 
@@ -91,7 +180,9 @@ python3 sessao-9/tutorial-33-performance-k6/exemplos/alvo/servidor.py
 k6 run sessao-9/tutorial-33-performance-k6/exemplos/teste_bons.js
 ```
 
-Ao final, o K6 imprime um resumo com as métricas coletadas e o resultado de cada threshold, marcado com um sinal de aprovado ou reprovado. Quando um threshold é reprovado, o comando encerra com código diferente de zero, e é assim que ele integra a um pipeline: o job de performance falha por conta própria, sem ninguém precisar ler o relatório para decidir. O k6 não está instalado neste ambiente de workshop; os scripts aqui foram verificados quanto à sintaxe JavaScript, não executados contra o alvo.
+Ao final, o K6 imprime um resumo com as métricas coletadas e o resultado de cada threshold, marcado com um sinal de aprovado ou reprovado. Quando um threshold é reprovado, o comando encerra com código diferente de zero, e é assim que ele integra a um pipeline: o job de performance falha por conta própria, sem ninguém precisar ler o relatório para decidir.
+
+> **Nota:** o k6 não está instalado neste ambiente de workshop; os scripts aqui foram verificados quanto à sintaxe JavaScript, não executados contra o alvo.
 
 ---
 
@@ -111,6 +202,8 @@ O arquivo [`exercicios/exercicio.js`](exercicios/exercicio.js) exercita a rota `
 node --check sessao-9/tutorial-33-performance-k6/exercicios/exercicio.js
 node --check sessao-9/tutorial-33-performance-k6/exercicios/gabarito.js
 ```
+
+> **Dica:** o `POST /pedidos` responde `201`, não `200` — o exercício muda a rota de propósito para você não copiar o check do exemplo cru. É a mesma disciplina do check da seção (d): valide o status certo *e* o corpo (o `id` que voltou), para provar que a criação funcionou sob carga, e não só que o servidor respondeu algo.
 
 ---
 
