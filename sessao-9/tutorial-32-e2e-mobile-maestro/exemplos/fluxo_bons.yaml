@@ -1,9 +1,10 @@
-# Fluxo mobile robusto — entra no Sauce Labs My Demo App, encontra um produto
-# na lista rolável e o adiciona ao carrinho, confirmando pelo estado da tela.
+# Fluxo mobile robusto — Sauce Labs My Demo App: login reaproveitado, rolagem
+# até o produto, uso do contador de quantidade, adição verificada pelo estado
+# derivado (contador do carrinho), abertura do carrinho e checkout completo.
 # Requer emulador/simulador com o app instalado. Executar: maestro test fluxo_bons.yaml
 appId: com.saucelabs.mydemoapp.rn
 ---
-# Login reaproveitado como subflow, não copiado.
+# Login reaproveitado como subflow parametrizado, não copiado.
 - runFlow:
     file: login.yaml
     env:
@@ -17,8 +18,97 @@ appId: com.saucelabs.mydemoapp.rn
     direction: DOWN
 - tapOn: "Sauce Labs Backpack"
 
-# Na tela do produto, adiciona ao carrinho.
-- tapOn: "Add To Cart"
-# Estado derivado: o botão troca de "Add To Cart" para "Remove Item".
-# Verificar a troca prova que o item entrou, e não apenas que houve um toque.
+# Na tela do produto, aumenta a quantidade para 2 pelo contador e adiciona.
+- tapOn: "counter plus button"
+- tapOn: "Add To Cart button"
+
+# Estado derivado: o contador do carrinho, no topo, passa a exibir 2 itens.
+- assertVisible: "2"
+
+# Abre o carrinho pelo ícone no topo.
+- tapOn: "cart badge"
+
+# No carrinho, confirma o item e o botão de remover (estado derivado da tela).
+- assertVisible: "Sauce Labs Backpack"
 - assertVisible: "Remove Item"
+
+# Segue para o checkout.
+- tapOn: "Proceed To Checkout button"
+
+# Formulário de endereço. O teclado sobe a cada campo e cobre os de baixo:
+# por isso, fecha o teclado (hideKeyboard) e rola até cada campo seguinte.
+- tapOn: "Full Name* input field"
+- inputText: "Ana Souza"
+- tapOn: "Address Line 1* input field"
+- inputText: "Rua das Flores, 100"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      text: "City*"
+    direction: DOWN
+- tapOn: "City* input field"
+- inputText: "Belo Horizonte"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      text: "Zip Code*"
+    direction: DOWN
+- tapOn: "Zip Code* input field"
+- inputText: "31000000"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      text: "Country*"
+    direction: DOWN
+- tapOn: "Country* input field"
+- inputText: "Brasil"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      text: "To Payment"
+    direction: DOWN
+- tapOn: "To Payment button"
+
+# Formulário de pagamento, mesma disciplina de teclado e rolagem.
+- tapOn: "Full Name* input field"
+- inputText: "Ana Souza"
+- tapOn: "Card Number* input field"
+- inputText: "3258123540641259"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      text: "Expiration Date*"
+    direction: DOWN
+- tapOn: "Expiration Date* input field"
+- inputText: "0330"          # data futura: um cartão "vencido" trava o checkout
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      text: "Security Code*"
+    direction: DOWN
+- tapOn: "Security Code* input field"
+- inputText: "123"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      text: "Review Order"
+    direction: DOWN
+- tapOn: "Review Order button"
+# Em React Native, o primeiro toque depois de digitar às vezes só tira o foco do
+# último campo, sem acionar o botão. Se ainda estivermos na tela de pagamento,
+# toca de novo — o when torna essa repetição segura (não toca à toa).
+- runFlow:
+    when:
+      visible: "Enter a payment method"
+    commands:
+      - tapOn: "Review Order button"
+
+# Revisão: a tela de resumo é longa; rola até o botão final antes de tocar.
+- scrollUntilVisible:
+    element:
+      text: "Place Order"
+    direction: DOWN
+- tapOn: "Place Order button"
+
+# Confirmação final do pedido.
+- assertVisible: "Checkout Complete"

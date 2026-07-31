@@ -1,28 +1,35 @@
-# Exercício — complete e torne hermético este fluxo mobile no Sauce Labs My Demo App.
+# Exercício — complete e torne robusto este fluxo mobile no Sauce Labs My Demo App.
 #
-# Objetivo: começar do zero, fazer login, encontrar o "Sauce Labs Backpack" na
-# lista rolável e adicioná-lo ao carrinho, confirmando pelo estado da tela.
+# Objetivo (veja o gabarito.yaml para o alvo): começar do zero, fazer login,
+# encontrar o "Sauce Labs Backpack" na lista rolável, adicioná-lo ao carrinho,
+# abrir o carrinho, e concluir o checkout até a confirmação do pedido, tratando
+# o teclado e as rolagens dos formulários.
 #
 # Como está, o fluxo não reinicia o estado (presume uma sessão anterior), toca
 # por coordenada, não rola a lista e não confirma nada.
 #
 # Sua tarefa:
-#   1. Comece do zero: troque o login copiado/ausente por `runFlow` de login.yaml
-#      (com clearState, que já está no subflow).
-#   2. Role até o produto com `scrollUntilVisible` e toque nele por texto.
-#   3. Adicione ao carrinho e confirme pelo estado derivado ("Remove Item").
-# Descubra os seletores exatos com `maestro studio`. Compare com gabarito.yaml.
+#   1. Comece do zero: troque a abertura por `runFlow` de login.yaml (o subflow
+#      já faz clearState e o login por rótulos de acessibilidade).
+#   2. Role até o produto com `scrollUntilVisible` e toque nele por texto; na tela
+#      do produto, adicione ao carrinho e confirme pelo contador (estado derivado).
+#   3. Abra o carrinho ("cart badge"), confirme o item e o botão "Remove Item".
+#   4. Faça o checkout: "Proceed To Checkout button", preencha o endereço e o
+#      pagamento fechando o teclado (`hideKeyboard`) e rolando (`scrollUntilVisible`)
+#      até cada campo e botão; use uma data de validade futura.
+#   5. Confirme o resultado com `assertVisible` de "Checkout Complete".
+# Descubra qualquer seletor incerto com `maestro studio`. Compare com gabarito.yaml.
 appId: com.saucelabs.mydemoapp.rn
 ---
 # ❌ abre o app sem limpar o estado — conta com uma sessão anterior
 - launchApp
 
-# ❌ coordenada, presumindo que o catálogo já está aberto
+# ❌ coordenada, presumindo que o catálogo já está aberto e o produto nessa posição
 - tapOn:
     point: "50%, 40%"
 
-# ❌ coordenada para adicionar ao carrinho, sem rolar a lista
+# ❌ coordenada para adicionar ao carrinho, sem rolar a lista nem confirmar nada
 - tapOn:
     point: "85%, 90%"
 
-# ❌ termina sem confirmar que o item entrou no carrinho
+# ❌ termina sem abrir o carrinho, sem checkout e sem confirmar o pedido

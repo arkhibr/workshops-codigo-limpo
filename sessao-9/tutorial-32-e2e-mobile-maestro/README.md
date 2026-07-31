@@ -65,21 +65,18 @@ env:
 ---
 - launchApp:
     clearState: true          # começa deslogado a cada execução
-- tapOn: "Open menu"
+- tapOn: "open menu"
 - tapOn: "Log In"
-- tapOn:
-    id: "Username input field"
+- tapOn: "Username input field"
 - inputText: "${USUARIO}"
-- tapOn:
-    id: "Password input field"
+- tapOn: "Password input field"
 - inputText: "10203040"
 - hideKeyboard               # fecha o teclado antes de tocar no botão
-- tapOn:
-    id: "Login button"
+- tapOn: "Login button"
 - assertVisible: "Products"   # confirma que o login levou ao catálogo
 ```
 
-Concentrar essa navegação em um arquivo evita repeti-la em cada teste — e no dia em que o app mudar o caminho até o login, corrige-se um lugar só.
+Repare que os seletores são **textos**, não `id:`. Neste app React Native os elementos não têm resource-id; o Maestro os encontra pelo rótulo de acessibilidade (`"Username input field"`, `"Login button"`). Concentrar essa navegação em um arquivo evita repeti-la em cada teste — e no dia em que o app mudar o caminho até o login, corrige-se um lugar só.
 
 ### (c) Permissões e telas de abertura: condicionais (`when`)
 
@@ -122,7 +119,7 @@ Na web, quase tudo era tocar. No mobile, boa parte do conteúdo só aparece depo
 
 ### (e) Quando há vários elementos iguais: o seletor por `index`
 
-A grade de produtos tem vários botões "Add To Cart" idênticos — um por produto. Um seletor por esse texto encontra mais de um elemento, e o Maestro não sabe em qual tocar. Duas saídas: navegar por algo único (o nome do produto, como acima) ou desambiguar pela posição entre os elementos que casam, com `index` (contado a partir de zero):
+Quando uma tela mostra vários elementos com o mesmo rótulo — uma lista de itens com um botão repetido, ou várias linhas "Remove Item" no carrinho —, um seletor por esse texto encontra mais de um, e o Maestro não sabe em qual tocar. Duas saídas: navegar por algo único (o nome do produto) ou desambiguar pela posição entre os elementos que casam, com `index` (contado a partir de zero):
 
 ```yaml
 # Toca no segundo botão "Add To Cart" da tela (índice 1)
@@ -141,12 +138,22 @@ Duas particularidades aparecem o tempo todo. O botão "voltar" do Android é aci
 
 ### (g) Verificar estado, não cliques
 
-Como na web, a verificação que dá confiança olha o efeito da ação, não o toque. No My Demo App, ao adicionar um produto, o botão "Add To Cart" da tela do item vira "Remove Item". Confirmar essa troca prova que o item entrou:
+Como na web, a verificação que dá confiança olha o efeito da ação, não o toque. No My Demo App há dois estados derivados úteis, em telas diferentes. Na tela do **produto**, tocar em "Add To Cart button" não muda o botão — o que muda é o **contador do carrinho**, no topo, que passa a exibir a quantidade:
 
 ```yaml
-- tapOn: "Add To Cart"
+- tapOn: "Add To Cart button"
+- assertVisible: "1"          # o contador do carrinho passou a mostrar 1 item
+```
+
+Já na tela do **carrinho**, cada item tem um botão "Remove Item". Confirmar que ele está lá prova que o produto realmente entrou:
+
+```yaml
+- tapOn: "cart badge"         # abre o carrinho
+- assertVisible: "Sauce Labs Backpack"
 - assertVisible: "Remove Item"
 ```
+
+Verificar o toque ("Add To Cart") não prova nada; verificar o contador e, depois, o item dentro do carrinho, prova. É a mesma lição da Sessão 8 e do Tutorial 31: confirmar o resultado, não o gesto.
 
 ### (h) Diferenças entre iOS e Android
 
@@ -168,51 +175,151 @@ Os comandos e recursos que aparecem só no mobile (ou pesam mais aqui que na web
 
 ---
 
-## 3. Ferramentas Modernas por Linguagem
+## 3. Ferramentas Modernas por Linguagem: montar o ambiente mobile e rodar
 
 Como no Tutorial 31, os flows são escritos em **YAML**, a linguagem nativa da ferramenta — não há versão em Python, PHP, TypeScript ou ADVPL/TLPP, e por isso não há arquivos `equivalente.*`. O material vive nos YAML de `exemplos/`.
 
-**Pré-requisitos para executar os flows:**
+O que muda no mobile é o alvo: em vez de um site na internet, o flow precisa de um **app instalado em um emulador Android ou simulador iOS**. Esta seção assume que você **nunca montou um ambiente de teste mobile** e pega na mão. O pré-requisito, como no web, é o Maestro estável (linha 2.x) e o Java 17+ — a instalação do Maestro por sistema operacional está no [Tutorial 31, seção 3](../tutorial-31-e2e-web-maestro/README.md#3-ferramentas-modernas-por-linguagem-instalar-e-rodar-o-maestro-do-zero). Daqui em diante, o caminho:
 
-- O Maestro instalado, na **versão estável** (linha 2.x) — o passo a passo por sistema operacional (macOS, Linux e Windows) está no [Tutorial 31, seção 3](../tutorial-31-e2e-web-maestro/README.md#3-ferramentas-modernas-por-linguagem-instalar-e-rodar-o-maestro-do-zero). Em resumo: `curl -fsSL "https://get.maestro.mobile.dev" | bash` no macOS/Linux, ou o `maestro.zip` nativo no Windows. O pré-requisito comum é o Java 17+.
-- Um emulador Android ou simulador iOS em execução.
-- O **Sauce Labs My Demo App** instalado nesse emulador. O binário (`.apk` para Android, `.app`/`.ipa` para iOS) está disponível no repositório público da Sauce Labs no GitHub (`saucelabs/my-demo-app-rn`, na seção de releases). Instale-o no emulador antes de rodar os flows.
+```mermaid
+flowchart TB
+    subgraph AND["Android — Linux e Mac"]
+      A1["SDK do Android<br/>(command-line tools)"] --> A2["system image<br/>+ AVD"]
+      A2 --> A3["subir o emulador"] --> A4["instalar o .apk"]
+    end
+    subgraph IOS["iOS — só no Mac"]
+      B1["Xcode"] --> B2["iniciar o simulador"] --> B3["instalar o .app"]
+    end
+    A4 --> R["maestro test<br/>fluxo_bons.yaml"]
+    B3 --> R
+```
 
-**Rodar um flow:**
+### (a) Android — o caminho que vale para Linux e Mac
+
+O emulador Android roda igual nos dois sistemas; muda só como você instala as *command-line tools* do SDK.
+
+```bash
+# macOS (Homebrew) — instala as command-line tools do Android:
+brew install --cask android-commandlinetools
+export ANDROID_HOME=/opt/homebrew/share/android-commandlinetools
+
+# Linux — baixe "Command line tools" em developer.android.com/studio e descompacte:
+#   mkdir -p ~/Android/sdk/cmdline-tools
+#   unzip commandlinetools-linux-*.zip -d ~/Android/sdk/cmdline-tools
+#   mv ~/Android/sdk/cmdline-tools/cmdline-tools ~/Android/sdk/cmdline-tools/latest
+export ANDROID_HOME=$HOME/Android/sdk
+
+# Ambos: aponte as variáveis e o PATH (adicione ao ~/.zshrc / ~/.bashrc):
+export ANDROID_SDK_ROOT="$ANDROID_HOME"
+export PATH="$ANDROID_HOME/cmdline-tools/latest/bin:$ANDROID_HOME/platform-tools:$ANDROID_HOME/emulator:$PATH"
+```
+
+Com o `sdkmanager` no PATH, aceite as licenças e instale as peças: as ferramentas de linha (`platform-tools`, que traz o `adb`), o `emulator`, a plataforma da API 34 e uma **system image**. A ABI segue o processador da máquina — `arm64-v8a` no Apple Silicon e em Linux ARM, `x86_64` em Intel:
+
+```bash
+yes | sdkmanager --licenses
+sdkmanager "platform-tools" "emulator" "platforms;android-34" \
+  "system-images;android-34;google_apis;arm64-v8a"
+```
+
+Crie um dispositivo virtual (AVD) com essa imagem e suba o emulador. O `-no-window` roda sem abrir janela (útil em servidor de CI); tire-o para ver a tela:
+
+```bash
+avdmanager create avd -n workshop -k "system-images;android-34;google_apis;arm64-v8a" -d pixel_6
+emulator -avd workshop -no-window -no-snapshot -gpu swiftshader_indirect &
+# espera o boot completar (o sleep roda dentro do emulador, via adb):
+adb wait-for-device shell 'while [[ -z $(getprop sys.boot_completed) ]]; do sleep 2; done; echo BOOTED'
+adb devices     # deve listar: emulator-5554   device
+```
+
+### (b) Instalar o app-alvo no emulador
+
+O Maestro pressupõe que o app já está instalado. Baixe o `.apk` do **Sauce Labs My Demo App** (release público) e instale com o `adb`:
+
+```bash
+curl -sSL -o mda.apk \
+  "https://github.com/saucelabs/my-demo-app-rn/releases/download/v1.3.0/Android-MyDemoAppRN.1.3.0.build-244.apk"
+adb install -r mda.apk
+adb shell pm list packages | grep sauce   # -> package:com.saucelabs.mydemoapp.rn
+```
+
+### (c) iOS — só no macOS
+
+O simulador iOS vem com o **Xcode** e só existe no Mac. Instale o Xcode (App Store) e as Command Line Tools, inicie um simulador e instale o `.app` de simulador do mesmo release da Sauce Labs:
+
+```bash
+xcode-select --install
+xcrun simctl list devices | grep -i iphone      # nomes disponíveis
+xcrun simctl boot "iPhone 15" && open -a Simulator
+# baixe o .app de simulador em saucelabs/my-demo-app-rn (releases) e instale:
+xcrun simctl install booted MyRNDemoApp.app
+```
+
+O `back` (botão voltar do Android) não existe no iOS, e alguns rótulos de acessibilidade diferem entre as plataformas — confira com o `maestro studio` (adiante).
+
+### (d) Rodar um flow e ler a saída
+
+Com o emulador no ar e o app instalado, rode o fluxo. O Maestro conecta sozinho ao emulador que estiver rodando:
 
 ```bash
 maestro test sessao-9/tutorial-32-e2e-mobile-maestro/exemplos/fluxo_bons.yaml
 ```
 
-**Descobrir os seletores da tela atual:**
+Esta é a saída real do `fluxo_bons.yaml`, rodado com o Maestro 2.8 contra o emulador Android (abreviada):
+
+```text
+Running on workshop
+ > Flow fluxo_bons
+Run login.yaml...
+  Launch app "com.saucelabs.mydemoapp.rn" with clear state... COMPLETED
+  Tap on "open menu"... COMPLETED
+  Tap on "Log In"... COMPLETED
+  Tap on "Username input field"... COMPLETED
+  ...
+Run login.yaml... COMPLETED
+Scrolling DOWN until "Sauce Labs Backpack" is visible... COMPLETED
+Tap on "Add To Cart button"... COMPLETED
+Assert that "2" is visible... COMPLETED
+Tap on "cart badge"... COMPLETED
+Assert that "Remove Item" is visible... COMPLETED
+...
+Assert that "Checkout Complete" is visible... COMPLETED
+```
+
+### (e) Descobrir os seletores com o `maestro studio`
 
 ```bash
 maestro studio
 ```
 
-> **Dica:** o `maestro studio` é indispensável no mobile, mais até que na web. Os identificadores de acessibilidade de um app React Native variam por versão e por plataforma, então os seletores usados nestes flows (`Username input field`, `Add To Cart`, `Remove Item`, etc.) devem ser conferidos com o `studio` no seu ambiente antes de fixá-los. Abra o app no emulador, rode o `studio` e clique nos elementos para ver os seletores que cada um aceita naquele aparelho.
+> **Dica:** o `maestro studio` é indispensável no mobile, mais até que na web. Neste app React Native, os elementos **não têm resource-id** — são identificados por rótulo de acessibilidade (o *content-desc*), então o seletor é o texto do rótulo: `"Username input field"`, `"Add To Cart button"`, `"cart badge"`, `"Remove Item"`. Foi assim que os seletores destes flows foram descobertos: rodando o `studio` (ou lendo a hierarquia que o Maestro grava em cada falha) contra o app no emulador. Confirme-os no seu ambiente, porque variam por versão do app e por plataforma.
 
-> **Nota:** o workshop pressupõe que **você** instale o Maestro (a versão estável, linha 2.x), suba um emulador ou simulador com o app-alvo e rode os flows na sua máquina — é assim que se pratica E2E mobile. Durante a escrita deste material, os flows foram conferidos por validação estrutural do YAML e comandos reais da ferramenta, não executados contra um emulador; o que vale é o resultado quando você rodar. Diferente do alvo web (que usa `url:`), um app mobile é identificado por `appId:` — aqui, `com.saucelabs.mydemoapp.rn`.
+> **Nota:** os quatro flows deste tutorial **foram executados** com o Maestro 2.8 contra um emulador Android (Pixel 6, Android 14, arm64) com o My Demo App `v1.3.0`. Os dois corretos — `fluxo_bons.yaml` e `gabarito.yaml` — passam de ponta a ponta, incluindo o checkout completo; os dois de anti-padrão — `fluxo_ruins.yaml` e `exercicio.yaml` — rodam em verde de propósito, provando que um flow sem assertion "passa" sem provar nada. O caminho iOS acima está documentado mas não foi executado aqui (o ambiente de escrita não tinha Xcode). Rode você, na sua máquina: praticar E2E é rodar de verdade.
 
 ---
 
 ## 4. Exercício
 
-O arquivo [`exercicios/exercicio.yaml`](exercicios/exercicio.yaml) começa mal um fluxo de compra no My Demo App: abre o app sem `clearState`, presume uma sessão anterior, toca por coordenada e não confirma nada. O objetivo é reescrevê-lo para começar do zero e chegar, de forma confiável, a um item no carrinho.
+O arquivo [`exercicios/exercicio.yaml`](exercicios/exercicio.yaml) começa mal um fluxo de compra no My Demo App: abre o app sem `clearState`, presume uma sessão anterior, toca por coordenada e não confirma nada. O objetivo é reescrevê-lo para começar do zero e ir até a **confirmação do pedido**, no padrão do [`exercicios/gabarito.yaml`](exercicios/gabarito.yaml).
 
 **Etapas:**
 
 1. Troque a abertura por `runFlow` do subflow [`exercicios/login.yaml`](exercicios/login.yaml) (que já inclui `clearState`), começando sempre deslogado.
-2. Alcance o produto com `scrollUntilVisible` e toque nele pelo texto (`Sauce Labs Backpack`), em vez de coordenadas.
-3. Adicione ao carrinho e confirme pelo estado derivado (`Remove Item`).
-4. Descubra os seletores exatos com `maestro studio` e compare com [`exercicios/gabarito.yaml`](exercicios/gabarito.yaml).
+2. Alcance o produto com `scrollUntilVisible` e toque nele pelo texto (`Sauce Labs Backpack`); na tela do produto, adicione ao carrinho e confirme pelo contador (estado derivado).
+3. Abra o carrinho (`cart badge`) e confirme o item e o botão `Remove Item`.
+4. Faça o checkout: `Proceed To Checkout button`, preencha endereço e pagamento fechando o teclado (`hideKeyboard`) e rolando (`scrollUntilVisible`) até cada campo; use uma data de validade **futura** (um cartão vencido trava o checkout).
+5. Confirme com `assertVisible` de `Checkout Complete`, e compare com o gabarito.
 
 ```bash
-# Validar a estrutura YAML (não substitui rodar com o Maestro instalado)
+# Validar só a estrutura do YAML antes de rodar:
 python3 -c "import yaml; list(yaml.safe_load_all(open('sessao-9/tutorial-32-e2e-mobile-maestro/exercicios/gabarito.yaml')))"
+
+# E rodar de verdade (emulador no ar, app instalado — veja a seção 3):
+cd sessao-9/tutorial-32-e2e-mobile-maestro/exercicios
+maestro test gabarito.yaml   # o seu exercicio.yaml deve terminar igual: verde e completo
 ```
 
-> **Dica:** ao trocar a abertura pelo subflow de login, repare que o `clearState` já está lá dentro — não o repita no fluxo que chama. Um dos ganhos de concentrar o login no subflow é que o ponto de partida limpo vem junto, de graça, para todo flow que o invoca.
+> **Dica:** o checkout é onde a disciplina do teclado (seção f) mais aparece. Cada campo que você toca faz o teclado subir e cobrir os de baixo; sem `hideKeyboard` + `scrollUntilVisible` entre eles, o próximo `tapOn` cai numa tecla do teclado, e o flow falha com uma mensagem que não aponta para a causa. Foi exatamente esse o primeiro erro ao escrever o gabarito.
 
 ---
 

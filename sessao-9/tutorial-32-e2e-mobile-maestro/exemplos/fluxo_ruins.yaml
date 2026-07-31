@@ -1,23 +1,28 @@
-# Fluxo mobile frágil — mesmo objetivo de fluxo_bons.yaml (entrar e adicionar
-# um produto no Sauce Labs My Demo App), com os anti-padrões típicos de E2E mobile.
+# Fluxo mobile frágil — mesmo objetivo do fluxo_bons.yaml (entrar e comprar no
+# Sauce Labs My Demo App), com os anti-padrões típicos de E2E mobile. Ele roda e
+# termina em verde, e é justamente esse o problema: passa sem provar nada.
 # Executar: maestro test fluxo_ruins.yaml
 appId: com.saucelabs.mydemoapp.rn
 ---
-# ❌ Anti-padrão 1: launchApp sem clearState.
-# O app guarda a sessão entre aberturas — quem rodou o fluxo antes continua
-# logado. Este fluxo pula o login presumindo essa sessão. Passa na segunda
-# execução (quando já há sessão) e falha na primeira, numa máquina limpa ou
-# logo após reinstalar o app. O resultado depende do que ficou para trás.
+# ❌ Anti-padrão 1 (idempotência): launchApp sem clearState. O app guarda a
+# sessão entre aberturas — este fluxo presume que já existe uma sessão e pula o
+# login. Passa quando sobrou uma sessão de antes e se comporta de forma
+# imprevisível numa instalação limpa. O resultado depende do que ficou para trás,
+# não do que o fluxo faz.
 - launchApp
 
-# ❌ Anti-padrão 2: toca por coordenada, presumindo que o catálogo já está na
-# tela e que o produto está nessa posição — some em telas de tamanho diferente.
+# ❌ Anti-padrão 2 (seletor frágil): toca por coordenada, presumindo que o
+# catálogo está aberto e que o produto está exatamente nessa posição. Numa tela
+# de tamanho diferente, o toque cai em outro lugar — e sem erro nenhum.
 - tapOn:
     point: "50%, 40%"
 
-# ❌ Anti-padrão 3: assume o produto visível sem rolar a lista.
+# ❌ Anti-padrão 3 (sem rolar): assume o botão de adicionar já visível, sem
+# scrollUntilVisible. Numa lista mais longa, o alvo fica fora da tela.
 - tapOn:
     point: "85%, 90%"
 
-# ❌ Anti-padrão 4: o fluxo termina sem nenhuma assertion. Se o item não entrou
-# no carrinho, ninguém fica sabendo — ele "passa" por ter executado os toques.
+# ❌ Anti-padrão 4 (sem verificação): o fluxo termina sem nenhuma assertion de
+# estado derivado. Se nada entrou no carrinho, ninguém fica sabendo — ele "passa"
+# por ter executado os toques, não por ter comprado alguma coisa. Compare, passo
+# a passo, com o fluxo_bons.yaml.

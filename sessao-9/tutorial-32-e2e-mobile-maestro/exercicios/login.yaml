@@ -2,22 +2,20 @@
 #
 # Idêntico a exemplos/login.yaml. Replicado aqui porque o gabarito.yaml o chama
 # com `runFlow: file: login.yaml`, e o caminho é resolvido a partir da pasta do
-# fluxo que chama. Confirme os seletores exatos com `maestro studio`.
+# fluxo que chama. Neste app React Native os elementos são identificados por
+# rótulo de acessibilidade (texto), não por resource-id.
 appId: com.saucelabs.mydemoapp.rn
 env:
   USUARIO: "bob@example.com"
 ---
 - launchApp:
     clearState: true
-- tapOn: "Open menu"
+- tapOn: "open menu"
 - tapOn: "Log In"
-- tapOn:
-    id: "Username input field"
+- tapOn: "Username input field"
 - inputText: "${USUARIO}"
-- tapOn:
-    id: "Password input field"
+- tapOn: "Password input field"
 - inputText: "10203040"
 - hideKeyboard
-- tapOn:
-    id: "Login button"
+- tapOn: "Login button"
 - assertVisible: "Products"

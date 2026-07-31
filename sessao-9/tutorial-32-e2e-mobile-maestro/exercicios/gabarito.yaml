@@ -1,21 +1,100 @@
-# Gabarito — mesmo objetivo de exercicio.yaml, agora começando do zero, com o
-# login reaproveitado como subflow, rolagem até o produto e assertion de estado.
+# Gabarito — compra mobile completa no Sauce Labs My Demo App: login
+# reaproveitado, rolagem até o produto, adição verificada pelo contador do
+# carrinho, uso do botão "voltar" do Android, abertura do carrinho com estado
+# derivado (Remove Item) e checkout completo até a confirmação.
 # Executar: maestro test gabarito.yaml
 appId: com.saucelabs.mydemoapp.rn
 ---
-# ✅ login como subflow (já inclui clearState), não copiado
+# Login como subflow parametrizado, não copiado.
 - runFlow:
     file: login.yaml
     env:
       USUARIO: "bob@example.com"
 
-# ✅ rola a lista até o produto, em vez de supor sua posição
+# Rola até o produto e abre a tela dele.
 - scrollUntilVisible:
     element:
       text: "Sauce Labs Backpack"
     direction: DOWN
 - tapOn: "Sauce Labs Backpack"
 
-# ✅ adiciona ao carrinho e confirma pelo estado derivado
-- tapOn: "Add To Cart"
+# Adiciona ao carrinho e confirma pelo estado derivado (o contador vira 1).
+- tapOn: "Add To Cart button"
+- assertVisible: "1"
+
+# Volta ao catálogo pelo botão "voltar" do Android e abre o carrinho pelo ícone.
+- back
+- tapOn: "cart badge"
+
+# No carrinho, confirma o item e o botão de remover (estado derivado da tela).
+- assertVisible: "Sauce Labs Backpack"
 - assertVisible: "Remove Item"
+
+# Checkout: endereço, com teclado fechado e rolagem entre os campos de baixo.
+- tapOn: "Proceed To Checkout button"
+- tapOn: "Full Name* input field"
+- inputText: "Ana Souza"
+- tapOn: "Address Line 1* input field"
+- inputText: "Rua das Flores, 100"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      text: "City*"
+    direction: DOWN
+- tapOn: "City* input field"
+- inputText: "Belo Horizonte"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      text: "Zip Code*"
+    direction: DOWN
+- tapOn: "Zip Code* input field"
+- inputText: "31000000"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      text: "Country*"
+    direction: DOWN
+- tapOn: "Country* input field"
+- inputText: "Brasil"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      text: "To Payment"
+    direction: DOWN
+- tapOn: "To Payment button"
+
+# Pagamento.
+- tapOn: "Full Name* input field"
+- inputText: "Ana Souza"
+- tapOn: "Card Number* input field"
+- inputText: "3258123540641259"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      text: "Expiration Date*"
+    direction: DOWN
+- tapOn: "Expiration Date* input field"
+- inputText: "0330"          # data futura: cartão vencido trava o checkout
+- tapOn: "Security Code* input field"
+- inputText: "123"
+- hideKeyboard
+- scrollUntilVisible:
+    element:
+      text: "Review Order"
+    direction: DOWN
+- tapOn: "Review Order button"
+# Em RN o primeiro toque às vezes só tira o foco do campo; repete com segurança.
+- runFlow:
+    when:
+      visible: "Enter a payment method"
+    commands:
+      - tapOn: "Review Order button"
+
+# Revisão e finalização.
+- scrollUntilVisible:
+    element:
+      text: "Place Order"
+    direction: DOWN
+- tapOn: "Place Order button"
+- assertVisible: "Checkout Complete"
