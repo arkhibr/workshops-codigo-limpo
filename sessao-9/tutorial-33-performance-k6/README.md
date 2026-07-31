@@ -180,9 +180,22 @@ python3 sessao-9/tutorial-33-performance-k6/exemplos/alvo/servidor.py
 k6 run sessao-9/tutorial-33-performance-k6/exemplos/teste_bons.js
 ```
 
-Ao final, o K6 imprime um resumo com as métricas coletadas e o resultado de cada threshold, marcado com um sinal de aprovado ou reprovado. Quando um threshold é reprovado, o comando encerra com código diferente de zero, e é assim que ele integra a um pipeline: o job de performance falha por conta própria, sem ninguém precisar ler o relatório para decidir.
+Ao final, o K6 imprime um resumo com as métricas e o resultado de cada threshold, marcado com ✓ (cumprido) ou ✗ (reprovado). Esta é a saída real do `teste_bons.js`, rodada com o k6 2.1 contra o alvo local (abreviada):
 
-> **Nota:** o workshop pressupõe que **você** instale o k6 (a versão estável, linha 2.x) e suba o alvo local para rodar os scripts — é assim que se mede carga. Durante a escrita deste material, os scripts foram conferidos quanto à sintaxe JavaScript, não executados contra o alvo; como a API usada é estável entre versões, o que vale é o relatório que o k6 imprimir quando você rodar.
+```text
+     ✓ status é 200
+     ✓ corpo é uma lista de pedidos
+
+     checks_succeeded...: 100.00% 800 out of 800
+     ✓ 'p(95)<500'  p(95)=26.2ms          (http_req_duration)
+     ✓ 'rate<0.01'  rate=0.00%            (http_req_failed)
+     http_req_duration: avg=24.5ms  p(95)=26.2ms  max=26.4ms
+     http_req_failed..: 0.00%  0 out of 400
+```
+
+Quando um threshold é reprovado, o ✓ vira ✗ e o comando encerra com código diferente de zero, e é assim que ele integra a um pipeline: o job de performance falha por conta própria, sem ninguém precisar ler o relatório para decidir.
+
+> **Nota:** os quatro scripts deste tutorial **foram executados** com o k6 2.1 contra o alvo `servidor.py`. Os dois corretos — `teste_bons.js` e `gabarito.js` — passam com os thresholds cumpridos (p(95) ≈ 26 ms, bem abaixo dos 500 ms; 0% de falhas) e 100% dos checks. Os dois sem critério — `teste_ruins.js` e `exercicio.js` — encerram em verde por não terem threshold nenhum, e é exatamente esse o defeito deles: "passam" sem nunca definir o que seria reprovar. Rode você também: como o alvo é local, o número que importa (a latência) depende da sua máquina.
 
 ---
 
