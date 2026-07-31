@@ -244,7 +244,7 @@ Os comandos que aparecem nos fluxos deste tutorial, e quando cada um entra:
 
 ---
 
-## 3. Ferramentas Modernas por Linguagem
+## 3. Ferramentas Modernas por Linguagem: instalar e rodar o Maestro do zero
 
 Os flows do Maestro são escritos em **YAML**, para as três plataformas que a ferramenta suporta — web, Android e iOS. Não existe uma sintaxe do Maestro em Python, PHP, TypeScript ou ADVPL/TLPP: o YAML é a linguagem nativa da ferramenta. Por isso este tutorial não traz arquivos `equivalente.*`; o material vive nos fluxos YAML descritos acima.
 

@@ -174,7 +174,7 @@ Como no Tutorial 31, os flows são escritos em **YAML**, a linguagem nativa da f
 
 **Pré-requisitos para executar os flows:**
 
-- O Maestro instalado, na **versão estável** (linha 2.x) — o passo a passo por sistema operacional (macOS, Linux e Windows) está no [Tutorial 31, seção 3](../tutorial-31-e2e-web-maestro/README.md#3-ferramentas-modernas-por-linguagem). Em resumo: `curl -fsSL "https://get.maestro.mobile.dev" | bash` no macOS/Linux, ou o `maestro.zip` nativo no Windows. O pré-requisito comum é o Java 17+.
+- O Maestro instalado, na **versão estável** (linha 2.x) — o passo a passo por sistema operacional (macOS, Linux e Windows) está no [Tutorial 31, seção 3](../tutorial-31-e2e-web-maestro/README.md#3-ferramentas-modernas-por-linguagem-instalar-e-rodar-o-maestro-do-zero). Em resumo: `curl -fsSL "https://get.maestro.mobile.dev" | bash` no macOS/Linux, ou o `maestro.zip` nativo no Windows. O pré-requisito comum é o Java 17+.
 - Um emulador Android ou simulador iOS em execução.
 - O **Sauce Labs My Demo App** instalado nesse emulador. O binário (`.apk` para Android, `.app`/`.ipa` para iOS) está disponível no repositório público da Sauce Labs no GitHub (`saucelabs/my-demo-app-rn`, na seção de releases). Instale-o no emulador antes de rodar os flows.
 
